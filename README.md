@@ -1,7 +1,7 @@
 # PromptKeeper
 
 ## Vision
-PromptKeeper is designed to revolutionize how we interact with generative AI LLMs. It addresses the challenge of managing, fine-tuning, and reusing engineered prompts in a user-friendly and efficient way.
+PromptKeeper is designed to help improve how we interact with generative AI LLMs. It addresses the challenge of managing, fine-tuning, and reusing engineered prompts in a user-friendly and efficient way.
 
 ## Proposed Solution
 This Google Chrome extension allows users to easily write, save, and reuse prompts across various LLMs. It brings a convenient tool right into the browser, enhancing the workflow of AI enthusiasts, researchers, and professionals.

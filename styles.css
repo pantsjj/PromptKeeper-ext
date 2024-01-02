@@ -46,3 +46,11 @@ button {
 .prompt-entry:hover {
     background-color: #f0f0f0;
 }
+
+#stats {
+    width: 100px;
+    padding: 10px;
+    box-sizing: border-box; /* Include padding in width calculation */
+    text-align: center; /* Center-align text */
+    border-left: 1px solid #ddd; /* Separator from main content */
+}
