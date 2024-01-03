@@ -54,39 +54,37 @@ document.getElementById('save-button').addEventListener('click', function() {
     chrome.storage.local.get({prompts: []}, function(data) {
         let prompts = data.prompts;
         let newTitle = baseTitle;
-        let existingTitles = prompts.map(prompt => prompt.title.split(' - ')[0]);
+        let existingTitles = prompts.map(p => p.title);
 
-        if (existingTitles.includes(baseTitle)) {
-            let titleOccurrences = prompts.filter(prompt => prompt.title.startsWith(baseTitle + ' - '));
-            let maxNumber = 0;
+        let titleCounts = existingTitles.reduce((acc, title) => {
+            let match = title.match(new RegExp(`^${baseTitle}( - (\\d+))?$`));
+            if (match) {
+                let count = match[2] ? parseInt(match[2], 10) : 0;
+                acc[baseTitle] = Math.max(acc[baseTitle] || 0, count);
+            }
+            return acc;
+        }, {});
 
-            titleOccurrences.forEach(prompt => {
-                let splitTitle = prompt.title.split(' - ');
-                if (splitTitle.length > 1) {
-                    let versionNumber = parseInt(splitTitle[splitTitle.length - 1], 10);
-                    if (versionNumber > maxNumber) {
-                        maxNumber = versionNumber;
-                    }
-                }
-            });
-
-            newTitle = `${baseTitle} - ${maxNumber + 1}`;
+        if (baseTitle in titleCounts) {
+            // Increment the count for this title
+            newTitle += ` - ${titleCounts[baseTitle] + 1}`;
+        } else {
+            // No duplicates, append "- 1"
+            newTitle += ' - 1';
         }
 
-        prompts.unshift({ title: newTitle, text: text, saved: datetime }); // Add new prompt at the beginning of the array
+        prompts.unshift({ title: newTitle, text: text, saved: datetime });
 
         chrome.storage.local.set({prompts: prompts}, function() {
-            document.getElementById('prompt-title').value = '';
+            document.getElementById('prompt-title').value = newTitle;
             document.getElementById('prompt-text').value = '';
             displayPrompts();
             updateCurrentTextStats();
             updateTotalStorageUsed();
-            currentPromptIndex = 0; // Set the current index to the new prompt
+            currentPromptIndex = 0; // Reset index for new prompt
         });
     });
 });
-
-
 
 
 
@@ -151,10 +149,6 @@ function updateCurrentTextStats(baseTitle) {
         updateTotalStorageUsed();
     });
 }
-
-
-
-
 
 document.getElementById('delete-prompt-button').addEventListener('click', function() {
     // Retrieve the title of the prompt that is currently being displayed.
@@ -247,13 +241,16 @@ function pasteText(text) {
     }
 }
 
-// Add a click event listener to the "Tunables" button
 document.getElementById('toggle-tunables').addEventListener('click', function() {
     let tunablesDiv = document.getElementById('tunables');
+    let toggleButton = document.getElementById('toggle-tunables');
+    
     if (tunablesDiv.style.display === "none") {
         tunablesDiv.style.display = "block";
+        toggleButton.textContent = "Less";  // Change the button text to "Less"
     } else {
         tunablesDiv.style.display = "none";
+        toggleButton.textContent = "More";  // Change back the button text to "More"
     }
 });
 
@@ -299,7 +296,6 @@ document.getElementById('import-file').addEventListener('change', function(event
 });
 
 
-
 document.getElementById('export-prompts').addEventListener('click', function() {
     const version = chrome.runtime.getManifest().version;
     const dateStamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 12); // YYMMDDHHMMSS
@@ -311,19 +307,15 @@ document.getElementById('export-prompts').addEventListener('click', function() {
         const blob = new Blob([json], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
 
-        chrome.downloads.download({
-            url: url,
-            filename: filename,
-            saveAs: true
-        }, function(downloadId) {
-            if (chrome.runtime.lastError) {
-                console.error(`Error exporting prompts: ${chrome.runtime.lastError.message}`);
-                alert('There was an error exporting your prompts.');
-            } else {
-                URL.revokeObjectURL(url);
-                // We can't provide the exact path, but we can confirm the download started.
-                alert(`Export: Please choose a save location for the file "${filename}"`);
-            }
-        });
+        // Create a temporary anchor element and trigger a download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        URL.revokeObjectURL(url);
+        alert(`Export: Your Prompt Exporting will start shortly. If it does not, please check your browser settings.`);
     });
 });
