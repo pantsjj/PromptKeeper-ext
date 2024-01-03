@@ -24,6 +24,14 @@ body, html {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
+
+.date-stamp {
+    display: block;
+    font-size: 0.75em;
+    color: #aaa;
+    margin-top: 5px;
+}
+
 #editor {
     display: flex;
     flex-direction: column;
