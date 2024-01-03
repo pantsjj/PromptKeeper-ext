@@ -319,3 +319,11 @@ document.getElementById('export-prompts').addEventListener('click', function() {
         alert(`Export: Your Prompt Exporting will start shortly. If it does not, please check your browser settings.`);
     });
 });
+
+document.getElementById('new-prompt-button').addEventListener('click', function() {
+    document.getElementById('prompt-title').value = ''; // Clear the title input
+    document.getElementById('prompt-text').value = '';  // Clear the text area
+    currentPromptIndex = null; // Reset the current prompt index
+    // Optionally, you can also clear the stats if you have functionality to display stats for the current prompt
+    updateCurrentTextStats();
+});
