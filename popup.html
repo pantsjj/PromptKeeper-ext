@@ -10,19 +10,40 @@
             <!-- List of prompts will be displayed here -->
         </div>
         <div id="editor">
-            <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
-            <textarea id="prompt-text" placeholder="Write your prompt here..." rows="10"></textarea>
-            <button id="save-button">Save</button>
-            <button id="delete-prompt-button">Delete Prompt</button>
-            <button id="paste-prompt-button">Paste Prompt</button>
+            <div id="editor-content">
+                <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
+                <textarea id="prompt-text" placeholder="Write your prompt here..." rows="10"></textarea>
+                <div id="editor-buttons">
+                    <button id="save-button">Save</button>
+                    <button id="delete-prompt-button">Delete Prompt</button>
+                    <button id="paste-prompt-button">Paste Prompt</button>
+                    <button id="toggle-tunables">Tunables</button>
+                </div>
+            </div>
+            
         </div>
-        <div id="stats">
-            <div id="word-count">Words: 0</div>
-            <div id="version-count">Versions: 0</div>
-            <!-- Add this line for total storage used -->
-            <div id="storage-used">Storage: 0 KB</div>
-        </div>
+    
+    <div id="tunables" style="display: none;">
+        <h3>Tunables - Configuration Settings</h3>
+        <p>Purpose and description for this project with upcoming features and improvements:</p>
+        <ul>
+            <li>Integration with multiple AI services for prompt testing</li>
+            <li>Automated prompt quality scoring</li>
+            <li>Cloud synchronization of prompts across devices</li>
+            <li>User-defined prompt templates for quick reuse</li>
+        </ul>
+        <!-- Import/Export buttons -->
+        <button id="export-prompts">Export Prompts</button>
+        <button id="import-prompts">Import Prompts</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" />
     </div>
+    <div id="stats">
+        <div id="word-count">Words: 0</div>
+        <div id="version-count">Versions: 0</div>
+        <div id="storage-used">Storage: 0 KB</div>
+    </div>
+    </div>
+    
     <script src="popup.js"></script>
 </body>
 </html>
