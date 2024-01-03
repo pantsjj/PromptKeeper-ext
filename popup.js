@@ -53,38 +53,38 @@ document.getElementById('save-button').addEventListener('click', function() {
 
     chrome.storage.local.get({prompts: []}, function(data) {
         let prompts = data.prompts;
+        // Initialize the new title with the base title
         let newTitle = baseTitle;
-        let existingTitles = prompts.map(p => p.title);
 
-        let titleCounts = existingTitles.reduce((acc, title) => {
-            let match = title.match(new RegExp(`^${baseTitle}( - (\\d+))?$`));
-            if (match) {
-                let count = match[2] ? parseInt(match[2], 10) : 0;
-                acc[baseTitle] = Math.max(acc[baseTitle] || 0, count);
-            }
-            return acc;
-        }, {});
+        // Create an array of titles that start with the base title
+        let relatedTitles = prompts.filter(prompt => prompt.title.startsWith(baseTitle)).map(prompt => prompt.title);
 
-        if (baseTitle in titleCounts) {
-            // Increment the count for this title
-            newTitle += ` - ${titleCounts[baseTitle] + 1}`;
-        } else {
-            // No duplicates, append "- 1"
-            newTitle += ' - 1';
+        if (relatedTitles.length > 0) {
+            // Extract the numeric version suffixes and find the max
+            let versionNumbers = relatedTitles.map(title => {
+                let versionMatch = title.match(new RegExp('^' + baseTitle + ' - (\\d+)$'));
+                return versionMatch ? parseInt(versionMatch[1], 10) : 0;
+            });
+            let maxVersion = Math.max(...versionNumbers);
+            // Create the new title with the incremented version number
+            newTitle = `${baseTitle} - ${maxVersion + 1}`;
         }
 
+        // Add the new prompt to the beginning of the prompts array
         prompts.unshift({ title: newTitle, text: text, saved: datetime });
 
+        // Save the updated array of prompts
         chrome.storage.local.set({prompts: prompts}, function() {
             document.getElementById('prompt-title').value = newTitle;
             document.getElementById('prompt-text').value = '';
             displayPrompts();
             updateCurrentTextStats();
             updateTotalStorageUsed();
-            currentPromptIndex = 0; // Reset index for new prompt
         });
     });
 });
+
+
 
 
 
@@ -187,7 +187,7 @@ document.getElementById('delete-prompt-button').addEventListener('click', functi
 function updateTotalStorageUsed() {
     chrome.storage.local.getBytesInUse(null, function(bytesInUse) {
         let sizeInKB = bytesInUse / 1024;
-        document.getElementById('storage-used').textContent = 'Storage: ' + sizeInKB.toFixed(2) + ' KB';
+        document.getElementById('storage-used').textContent = 'Total Storage: ' + sizeInKB.toFixed(2) + ' KB';
     });
 }
 
