@@ -67,16 +67,31 @@ button {
     width: 100px;
     padding: 10px;
     box-sizing: border-box; /* Include padding in width calculation */
-    text-align: center; /* Center-align text */
+    text-align: left; /* Center-align text */
     border-left: 1px solid #dfd; /* Separator from main content */
 }
 
-/* Style the tunables content */
 #tunables {
     display: none; /* Keep this as 'none' by default */
     width: 60%;
-    padding: 10px;
-    text-align: center; /* Center-align text */
-    background-color: #fff; /* Set a background color for content */
 
+
+}
+.paste-button {
+    background-color: teal; /* Teal background */
+    color: white;           /* White text */
+    border: 1px solid transparent; /* Hide any default borders */
+}
+
+.paste-button:hover {
+    background-color: #008080; /* Slightly darker teal on hover for better user experience */
+}
+.toggle-button {
+    background-color: #007BFF; /* Bootstrap primary blue */
+    color: white; /* White text */
+    border: 1px solid transparent; /* Hide any default borders */
+}
+
+.toggle-button:hover {
+    background-color: #0056b3; /* A darker shade of blue on hover */
 }
