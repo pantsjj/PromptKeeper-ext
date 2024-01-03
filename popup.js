@@ -135,26 +135,32 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('paste-prompt-button').addEventListener('click', function() {
     let text = document.getElementById('prompt-text').value;
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        // First, inject the content script into the active tab
-        chrome.scripting.executeScript({
-            target: {tabId: tabs[0].id},
-            files: ['contentScript.js']
-        }, () => {
-            // Now that the content script is injected, send the message
-            if (chrome.runtime.lastError) {
-                console.error(`Error injecting script: ${chrome.runtime.lastError.message}`);
-            } else {
-                chrome.tabs.sendMessage(tabs[0].id, {action: "pastePrompt", text: text}, response => {
-                    if (chrome.runtime.lastError) {
-                        console.error(`Error sending message: ${chrome.runtime.lastError.message}`);
-                    } else if (response) {
-                        console.log('Paste prompt success:', response.status);
-                    }
-                });
-            }
-        });
+        // Check if the tab's URL is not a chrome:// URL
+        if (!tabs[0].url.startsWith('chrome://')) {
+            // First, inject the content script into the active tab
+            chrome.scripting.executeScript({
+                target: {tabId: tabs[0].id},
+                files: ['contentScript.js']
+            }, () => {
+                // Now that the content script is injected, send the message
+                if (chrome.runtime.lastError) {
+                    console.error(`Error injecting script: ${chrome.runtime.lastError.message}`);
+                } else {
+                    chrome.tabs.sendMessage(tabs[0].id, {action: "pastePrompt", text: text}, response => {
+                        if (chrome.runtime.lastError) {
+                            console.error(`Error sending message: ${chrome.runtime.lastError.message}`);
+                        } else if (response) {
+                            console.log('Paste prompt success:', response.status);
+                        }
+                    });
+                }
+            });
+        } else {
+            alert('Cannot paste into a chrome:// page.');
+        }
     });
 });
+
 
 
 
@@ -182,6 +188,10 @@ document.getElementById('toggle-tunables').addEventListener('click', function() 
 
 
 document.getElementById('import-prompts').addEventListener('click', function() {
+    document.getElementById('import-file').click(); // Triggers the file selection
+});
+
+document.getElementById('import-prompts').addEventListener('click', function() {
     document.getElementById('import-file').click();
 });
 
@@ -190,25 +200,62 @@ document.getElementById('import-file').addEventListener('change', function(event
     if (file) {
         let reader = new FileReader();
         reader.onload = function(e) {
-            let prompts = JSON.parse(e.target.result);
-            chrome.storage.local.set({prompts: prompts}, function() {
-                displayPrompts();
-                // You may want to add a function to update the UI after import
-            });
+            try {
+                let importedData = JSON.parse(e.target.result);
+
+                // Validate the structure of the data
+                if (!Array.isArray(importedData)) {
+                    throw new Error('Invalid format: Expected an array of prompts.');
+                }
+                // Additional validation can be done here
+
+                chrome.storage.local.set({prompts: importedData}, function() {
+                    if (chrome.runtime.lastError) {
+                        throw new Error(`Error setting prompts: ${chrome.runtime.lastError.message}`);
+                    }
+                    displayPrompts();
+                    updateTotalStorageUsed();
+                    alert('Prompts imported successfully.');
+                });
+            } catch (error) {
+                alert(`Failed to import prompts: ${error.message}`);
+                console.error('Import Error:', error);
+            }
+        };
+        reader.onerror = function() {
+            alert('Failed to read the file.');
         };
         reader.readAsText(file);
     }
-    event.target.value = ''; // Reset the input after the file is processed
+    event.target.value = ''; // Reset the input
 });
 
+
+
 document.getElementById('export-prompts').addEventListener('click', function() {
+    const version = chrome.runtime.getManifest().version;
+    const dateStamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 12); // YYMMDDHHMMSS
+    const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+    const filename = `PromptKeeper_backup_${version}_${dateStamp}_${randomAnimal}.json`;
+
     chrome.storage.local.get({prompts: []}, function(data) {
-        let prompts = data.prompts;
-        let blob = new Blob([JSON.stringify(prompts, null, 2)], {type: 'application/json'});
-        let url = URL.createObjectURL(blob);
+        const json = JSON.stringify(data.prompts, null, 2);
+        const blob = new Blob([json], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+
         chrome.downloads.download({
             url: url,
-            filename: 'prompts-export.json'
+            filename: filename,
+            saveAs: true
+        }, function(downloadId) {
+            if (chrome.runtime.lastError) {
+                console.error(`Error exporting prompts: ${chrome.runtime.lastError.message}`);
+                alert('There was an error exporting your prompts.');
+            } else {
+                URL.revokeObjectURL(url);
+                // We can't provide the exact path, but we can confirm the download started.
+                alert(`Export: Please choose a save location for the file "${filename}"`);
+            }
         });
     });
 });
