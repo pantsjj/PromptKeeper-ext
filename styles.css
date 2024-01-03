@@ -66,7 +66,7 @@ button {
 /* Style the tunables content */
 #tunables {
     display: none; /* Keep this as 'none' by default */
-    width: 100%;
+    width: 60%;
     padding: 10px;
     text-align: center; /* Center-align text */
     background-color: #fff; /* Set a background color for content */
