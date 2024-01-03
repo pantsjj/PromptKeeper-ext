@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "PromptKeeper",
-    "description": "A simple extension to keep track of your GenAI prompts in one place",
+    "description": "A simple extension to keep track of your GenAI prompts in one place. Paste Directly from this Extension. Export your Prompts, to share with others.",
     "author": "Jaroslav Pantsjoha",
     "version": "1.0.6",
     "action": {
