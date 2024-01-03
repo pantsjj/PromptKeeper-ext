@@ -9,6 +9,8 @@ This Google Chrome extension allows users to easily write, save, and reuse promp
 <!-- ![Test Prompt Demo used with ChatGPT](images/test-prompt-demo.png) -->
 <img src="images/test-prompt-demo.png" alt="Test Prompt Demo used with ChatGPT" width="500px"/>
 
+[![PromptKeeper Chrome Extension Demo](https://img.youtube.com/vi/agapac9Mg04/0.jpg)](https://youtu.be/agapac9Mg04 "PromptKeeper Chrome Extension Demo - Streamline Your Creative Writing Process")
+
 
 ## About the Project
 PromptKeeper features a minimalist, monochrome widget that opens as a floating tab within a browser window, much like a bookmark sidebar. Key features to include:
