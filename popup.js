@@ -38,12 +38,12 @@ function generateRandomTitle() {
 
 
 document.getElementById('save-button').addEventListener('click', function() {
-    let title = document.getElementById('prompt-title').value.trim();
+    let baseTitle = document.getElementById('prompt-title').value.trim();
     let text = document.getElementById('prompt-text').value.trim();
+    let datetime = new Date().toISOString();
 
-    // If title is empty, generate a random title
-    if (title === '') {
-        title = generateRandomTitle();
+    if (baseTitle === '') {
+        baseTitle = generateRandomTitle();
     }
 
     if (text === '') {
@@ -53,10 +53,25 @@ document.getElementById('save-button').addEventListener('click', function() {
 
     chrome.storage.local.get({prompts: []}, function(data) {
         let prompts = data.prompts;
-        prompts.push({ title: title, text: text });
+        let titleExists = prompts.some(prompt => prompt.title.startsWith(baseTitle));
+        let newTitle = baseTitle;
+        
+        if (titleExists) {
+            // Extract the numeric part of the title, if any.
+            let maxNumber = prompts
+                .filter(prompt => new RegExp('^' + baseTitle + '( - \\d+)?$').test(prompt.title))
+                .reduce((max, prompt) => {
+                    let match = prompt.title.match(new RegExp('^' + baseTitle + ' - (\\d+)$'));
+                    return match ? Math.max(max, parseInt(match[1], 10)) : max;
+                }, 0);
+            newTitle = `${baseTitle} - ${maxNumber + 1}`;
+        }
+
+        // Add the new prompt at the start of the array
+        prompts.unshift({ title: newTitle, text: text, saved: datetime });
 
         chrome.storage.local.set({prompts: prompts}, function() {
-            document.getElementById('prompt-title').value = title; // Keep the generated title for reference
+            document.getElementById('prompt-title').value = newTitle; // Update the title to the new incremented title
             document.getElementById('prompt-text').value = '';
             displayPrompts();
             updateCurrentTextStats();
@@ -65,26 +80,10 @@ document.getElementById('save-button').addEventListener('click', function() {
     });
 });
 
-document.getElementById('delete-prompt-button').addEventListener('click', function() {
-    if (currentPromptIndex !== null) {
-        chrome.storage.local.get({prompts: []}, function(data) {
-            let prompts = data.prompts;
-            prompts.splice(currentPromptIndex, 1);
 
-            chrome.storage.local.set({prompts: prompts}, function() {
-                currentPromptIndex = null;
-                document.getElementById('prompt-title').value = '';
-                document.getElementById('prompt-text').value = '';
-                displayPrompts();
-                updateCurrentTextStats();
-                updateTotalStorageUsed();
-            });
-        });
-    } else {
-        alert('No prompt selected to delete.');
-    }
-});
 
+
+// Function to display prompts in the list
 function displayPrompts() {
     chrome.storage.local.get({prompts: []}, function(data) {
         let prompts = data.prompts;
@@ -94,28 +93,94 @@ function displayPrompts() {
         prompts.forEach(function(prompt, index) {
             let entry = document.createElement('div');
             entry.className = 'prompt-entry';
-            entry.textContent = prompt.title;
+
+            let titleSpan = document.createElement('span');
+            titleSpan.textContent = prompt.title;
+            entry.appendChild(titleSpan);
+
+            let dateSpan = document.createElement('span');
+            dateSpan.textContent = new Date(prompt.saved).toLocaleString();
+            dateSpan.className = 'date-stamp';
+            entry.appendChild(dateSpan);
+
             entry.addEventListener('click', function() {
+                currentPromptIndex = index; // Update the current index
                 document.getElementById('prompt-title').value = prompt.title;
                 document.getElementById('prompt-text').value = prompt.text;
-                currentPromptIndex = index;
-                updateCurrentTextStats();
+                updateCurrentTextStats(prompt.title.split(' - ')[0]); // Update stats based on the base title
             });
+
             promptListElement.appendChild(entry);
         });
 
-        if (prompts.length === 0) {
-            currentPromptIndex = null; // Reset if no prompts are available
+        if(prompts.length > 0) {
+            // Select the first prompt by default
+            promptListElement.firstChild.click();
+        } else {
+            // No prompts to display, clear the stats
+            clearStats();
         }
     });
 }
 
-function updateCurrentTextStats() {
+// Function to clear the stats
+function clearStats() {
+    document.getElementById('word-count').textContent = 'Words: 0';
+    document.getElementById('version-count').textContent = 'Versions: 0';
+    updateTotalStorageUsed(); // Update the storage usage
+}
+
+// Function to update the stats for the selected prompt
+function updateCurrentTextStats(baseTitle) {
     let currentText = document.getElementById('prompt-text').value;
     let wordCount = currentText.split(/\s+/).filter(Boolean).length;
     document.getElementById('word-count').textContent = 'Words: ' + wordCount;
-    document.getElementById('version-count').textContent = 'Versions: 0';
+
+    // Get the version count for the base title
+    chrome.storage.local.get({prompts: []}, function(data) {
+        let versionCount = data.prompts.filter(prompt => prompt.title.startsWith(baseTitle)).length;
+        document.getElementById('version-count').textContent = 'Versions: ' + versionCount;
+        updateTotalStorageUsed();
+    });
 }
+
+
+
+
+
+document.getElementById('delete-prompt-button').addEventListener('click', function() {
+    // Retrieve the title of the prompt that is currently being displayed.
+    let titleToDelete = document.getElementById('prompt-title').value;
+
+    // Get the existing prompts from storage.
+    chrome.storage.local.get({prompts: []}, function(data) {
+        let prompts = data.prompts;
+        
+        // Find the index of the prompt with the matching title.
+        let indexToDelete = prompts.findIndex(prompt => prompt.title === titleToDelete);
+
+        // If the prompt is found, delete it.
+        if (indexToDelete !== -1) {
+            prompts.splice(indexToDelete, 1);
+            
+            // Save the updated prompts list back to storage.
+            chrome.storage.local.set({prompts: prompts}, function() {
+                // Clear the input fields and reset the current prompt index.
+                document.getElementById('prompt-title').value = '';
+                document.getElementById('prompt-text').value = '';
+                
+                // Refresh the display of prompts.
+                displayPrompts();
+            });
+        } else {
+            // If no prompt is selected or the prompt was not found, alert the user.
+            alert('No prompt selected to delete or prompt not found.');
+        }
+    });
+});
+
+
+
 
 function updateTotalStorageUsed() {
     chrome.storage.local.getBytesInUse(null, function(bytesInUse) {
@@ -162,8 +227,6 @@ document.getElementById('paste-prompt-button').addEventListener('click', functio
 });
 
 
-
-
 function pasteText(text) {
     // This function gets injected into the tab's page context
     const activeElement = document.activeElement;
@@ -191,9 +254,6 @@ document.getElementById('import-prompts').addEventListener('click', function() {
     document.getElementById('import-file').click(); // Triggers the file selection
 });
 
-document.getElementById('import-prompts').addEventListener('click', function() {
-    document.getElementById('import-file').click();
-});
 
 document.getElementById('import-file').addEventListener('change', function(event) {
     let file = event.target.files[0];
