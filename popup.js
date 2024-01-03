@@ -170,5 +170,45 @@ function pasteText(text) {
     }
 }
 
+// Add a click event listener to the "Tunables" button
+document.getElementById('toggle-tunables').addEventListener('click', function() {
+    let tunablesDiv = document.getElementById('tunables');
+    if (tunablesDiv.style.display === "none") {
+        tunablesDiv.style.display = "block";
+    } else {
+        tunablesDiv.style.display = "none";
+    }
+});
 
 
+document.getElementById('import-prompts').addEventListener('click', function() {
+    document.getElementById('import-file').click();
+});
+
+document.getElementById('import-file').addEventListener('change', function(event) {
+    let file = event.target.files[0];
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let prompts = JSON.parse(e.target.result);
+            chrome.storage.local.set({prompts: prompts}, function() {
+                displayPrompts();
+                // You may want to add a function to update the UI after import
+            });
+        };
+        reader.readAsText(file);
+    }
+    event.target.value = ''; // Reset the input after the file is processed
+});
+
+document.getElementById('export-prompts').addEventListener('click', function() {
+    chrome.storage.local.get({prompts: []}, function(data) {
+        let prompts = data.prompts;
+        let blob = new Blob([JSON.stringify(prompts, null, 2)], {type: 'application/json'});
+        let url = URL.createObjectURL(blob);
+        chrome.downloads.download({
+            url: url,
+            filename: 'prompts-export.json'
+        });
+    });
+});

@@ -7,7 +7,13 @@ body, html {
 
 #app {
     display: flex;
-    width: 700px; /* Double the width */
+    flex-direction: row; /* This will layout the child divs in a row */
+    align-items: flex-start;
+    width: 800px; /* Adjust the width as needed */
+}
+
+#tunables {
+    padding: 10px;
 }
 
 #prompt-list {
@@ -19,6 +25,8 @@ body, html {
 }
 
 #editor {
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
     padding: 10px;
 }
@@ -52,5 +60,15 @@ button {
     padding: 10px;
     box-sizing: border-box; /* Include padding in width calculation */
     text-align: center; /* Center-align text */
-    border-left: 1px solid #ddd; /* Separator from main content */
+    border-left: 1px solid #dfd; /* Separator from main content */
+}
+
+/* Style the tunables content */
+#tunables {
+    display: none; /* Keep this as 'none' by default */
+    width: 100%;
+    padding: 10px;
+    text-align: center; /* Center-align text */
+    background-color: #fff; /* Set a background color for content */
+
 }
