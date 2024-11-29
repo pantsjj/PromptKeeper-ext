@@ -12,8 +12,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
           document.execCommand('insertText', false, request.text);
           sendResponse({ status: 'success' });
       } else {
-          alert('Please focus an input field or contentEditable element to paste the prompt.');
-          sendResponse({ status: 'failure', message: 'No editable element focused.' });
+          // Do not use alert here; send the error message back
+          sendResponse({ status: 'failure', message: 'Please focus an input field or contentEditable element to paste the prompt.' });
       }
   }
   return true; // Will respond asynchronously.

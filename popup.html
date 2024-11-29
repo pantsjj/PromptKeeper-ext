@@ -22,7 +22,7 @@
                 <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
 
                 <label for="prompt-text">Prompt Text</label>
-                <textarea id="prompt-text" placeholder="Write your prompt here..." rows="10"></textarea>
+                <textarea id="prompt-text" placeholder="Write your prompt here..." rows="9"></textarea>
 
                 <!-- Bias and Toxicity Scores -->
                 <div id="analysis-scores">
@@ -54,9 +54,11 @@
                         </div>
                         <div class="tunables-column">
                             <h4>About the Author</h4>
-                            <p>Author: <a href="https://github.com/jpantsjoha" target="_blank">Jaroslav</a></p>
-                            <p>Get involved: <a href="https://github.com/pantsjj/PromptKeeper-ext" target="_blank">GitHub Project</a></p>
-                            <p><b>Version:</b> 1.0.8</p>
+                            <li>Author: <a href="https://github.com/jpantsjoha" target="_blank">Jaroslav</a></li>
+                                <li>Get involved: <a href="https://github.com/pantsjj/PromptKeeper-ext" target="_blank">GitHub Project</a></li>
+                                    <li><b>Version:</b> 1.0.8</li>
+                                    <li>Open Source Under MIT License. No Guarantees or Warranty Howsoever Implied</li>
+                                    
                         </div>
                     </div>
                     <div class="tunables-buttons">
@@ -64,16 +66,20 @@
                         <button id="import-prompts">Import Prompts</button>
                         <input type="file" id="import-file" accept=".json" style="display: none;">
                     </div>
+                    
                 </section>
+                
             </div>
+            
         </main>
+        
     </div>
 
     <footer id="stats">
-        <h4>Stats</h4>
-        <p id="word-count">Words: 0</p>
-        <p id="version-count">Versions: 0</p>
-        <p id="storage-used">Total Storage: 0 KB</p>
+        <h4>Stats:</h4>
+        <span id="word-count">Words: 0</span>
+        <span id="version-count">Versions: 0</span>
+        <span id="storage-used">Total Storage: 0 KB</span>
     </footer>
 
     <script src="popup.js"></script>

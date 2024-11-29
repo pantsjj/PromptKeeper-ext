@@ -138,22 +138,34 @@ document.getElementById('paste-prompt-button').addEventListener('click', functio
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (tabs[0] && !tabs[0].url.startsWith('chrome://')) {
-            chrome.scripting.executeScript(
-                {
-                    target: { tabId: tabs[0].id },
-                    files: ['contentScript.js'],
-                },
-                () => {
-                    chrome.tabs.sendMessage(tabs[0].id, { action: "pastePrompt", text: text }, function(response) {
-                        if (chrome.runtime.lastError || (response && response.status !== 'success')) {
-                            console.error(chrome.runtime.lastError);
-                            alert('Error: Unable to paste the prompt. Please make sure the content script is properly loaded and an input field is focused.');
-                        } else {
-                            console.log('Text pasted successfully.');
+            // First, try sending the message without injecting the content script
+            chrome.tabs.sendMessage(tabs[0].id, { action: "pastePrompt", text: text }, function(response) {
+                if (chrome.runtime.lastError) {
+                    // Content script might not be injected yet; inject it and try again
+                    chrome.scripting.executeScript(
+                        {
+                            target: { tabId: tabs[0].id },
+                            files: ['contentScript.js'],
+                        },
+                        () => {
+                            // After injecting, try sending the message again
+                            chrome.tabs.sendMessage(tabs[0].id, { action: "pastePrompt", text: text }, function(response) {
+                                if (chrome.runtime.lastError || (response && response.status !== 'success')) {
+                                    console.error(chrome.runtime.lastError);
+                                    alert(response && response.message ? response.message : 'Error: Unable to paste the prompt. Please make sure an input field is focused.');
+                                } else {
+                                    console.log('Text pasted successfully.');
+                                }
+                            });
                         }
-                    });
+                    );
+                } else if (response && response.status !== 'success') {
+                    // Handle the error message sent from contentScript.js
+                    alert(response.message || 'Error: Unable to paste the prompt. Please make sure an input field is focused.');
+                } else {
+                    console.log('Text pasted successfully.');
                 }
-            );
+            });
         } else {
             alert('Cannot paste into a chrome:// page.');
         }
