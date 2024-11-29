@@ -1,52 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=840, height=680, user-scalable=no">
     <title>PromptKeeper</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
     <div id="app">
-        <div id="prompt-list">
-            <!-- List of prompts will be displayed here -->
-        </div>
-        <div id="editor">
+        <aside>
+            <h2>Saved Prompts</h2>
+            <div id="prompt-list">
+                <!-- List of prompts will be dynamically rendered here -->
+            </div>
+        </aside>
+
+        <main id="editor">
+            <h2>Current Prompt</h2>
             <div id="editor-content">
+                <label for="prompt-title">Title</label>
                 <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
+
+                <label for="prompt-text">Prompt Text</label>
                 <textarea id="prompt-text" placeholder="Write your prompt here..." rows="10"></textarea>
-                <div id="editor-buttons">
+
+                <!-- Bias and Toxicity Scores -->
+                <div id="analysis-scores">
+                    <p id="bias-score">Bias: --</p>
+                    <p id="toxicity-score">Toxicity: --</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="editor-buttons">
                     <button id="new-prompt-button">New</button>
                     <button id="save-button">Save</button>
-                    <button id="delete-prompt-button">Delete Prompt</button>
-                    <button id="paste-prompt-button" class="paste-button">Paste Prompt</button>
-                    <button id="toggle-tunables" class="toggle-button">More</button>
+                    <button id="delete-prompt-button">Delete</button>
+                    <button id="paste-prompt-button" class="paste-button">Paste</button>
+                    <button id="ai-improve-button" class="ai-button">AI-Improve</button>
                 </div>
+
+                <!-- Tunables Section -->
+                <section id="tunables">
+                    <h3>About PromptKeeper</h3>
+                    <div class="tunables-content">
+                        <div class="tunables-column">
+                            <h4>Upcoming Features</h4>
+                            <ul>
+                                <li>AI services integration</li>
+                                <li>Prompt quality scoring</li>
+                                <li>Cloud sync</li>
+                                <li>Reusable templates</li>
+                            </ul>
+                        </div>
+                        <div class="tunables-column">
+                            <h4>About the Author</h4>
+                            <p>Author: <a href="https://github.com/jpantsjoha" target="_blank">Jaroslav</a></p>
+                            <p>Get involved: <a href="https://github.com/pantsjj/PromptKeeper-ext" target="_blank">GitHub Project</a></p>
+                            <p><b>Version:</b> 1.0.8</p>
+                        </div>
+                    </div>
+                    <div class="tunables-buttons">
+                        <button id="export-prompts">Export Prompts</button>
+                        <button id="import-prompts">Import Prompts</button>
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                    </div>
+                </section>
             </div>
-        </div>
-    
-    <div id="tunables" style="display: none;">
-        <h3>Configs & About</h3>
-        <p>Upcoming features and improvements:</p>
-        <ul>
-            <li>Integration with AI services for testing</li>
-            <li>Automated prompt quality scoring</li>
-            <li>Cloud synchronization of prompts across devices</li>
-            <li>User-defined prompt templates for quick reuse</li>
-        </ul>
-        <p>Get Involved Contribute to the <a href="https://github.com/pantsjj/PromptKeeper-ext">PromptKeeper Project on GitHub</a> </p>
-        <p>About <a href="https://github.com/jpantsjoha">Jaroslav</a></p>
-        <p><b>Version: 1.0.7</b></p>
-        <!-- Import/Export buttons -->
-        <button id="export-prompts">Export Prompts</button>
-        <button id="import-prompts">Import Prompts</button>
-        <input type="file" id="import-file" accept=".json" style="display: none;" />
+        </main>
     </div>
-    <div id="stats">
-        <div id="word-count">Words: 0</div>
-        <div id="version-count">Versions: 0</div>
-        <br>
-        <smaller><div id="storage-used">Total Storage: 0 KB</div></smaller>
-    </div>
-    </div>
+
+    <footer id="stats">
+        <h4>Stats</h4>
+        <p id="word-count">Words: 0</p>
+        <p id="version-count">Versions: 0</p>
+        <p id="storage-used">Total Storage: 0 KB</p>
+    </footer>
 
     <script src="popup.js"></script>
 </body>
