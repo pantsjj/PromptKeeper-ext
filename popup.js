@@ -1,26 +1,9 @@
 let currentPromptIndex = null;
 
-// Expanded arrays with 20 entries each
-const adjectives = [
-    'Quick', 'Lazy', 'Charming', 'Diligent', 'Mighty',
-    'Calm', 'Brave', 'Elegant', 'Fierce', 'Gentle',
-    'Happy', 'Jolly', 'Kind', 'Lively', 'Nice',
-    'Proud', 'Quirky', 'Rapid', 'Sharp', 'Vigorous'
-];
-
-const animals = [
-    'Fox', 'Horse', 'Lion', 'Panda', 'Eagle',
-    'Bear', 'Cat', 'Dog', 'Elephant', 'Giraffe',
-    'Kangaroo', 'Leopard', 'Monkey', 'Otter', 'Penguin',
-    'Quail', 'Rabbit', 'Snake', 'Tiger', 'Wolf'
-];
-
-const objects = [
-    'Pencil', 'Monitor', 'Chair', 'Tablet', 'Camera',
-    'Book', 'Clock', 'Desk', 'Guitar', 'Hat',
-    'Igloo', 'Jug', 'Kite', 'Lamp', 'Map',
-    'Notebook', 'Orange', 'Pillow', 'Quilt', 'Ruler'
-];
+// Expanded arrays for generating random titles
+const adjectives = ['Quick', 'Lazy', 'Charming', 'Diligent', 'Mighty', 'Calm', 'Brave', 'Elegant', 'Fierce', 'Gentle', 'Happy', 'Jolly', 'Kind', 'Lively', 'Nice', 'Proud', 'Quirky', 'Rapid', 'Sharp', 'Vigorous'];
+const animals = ['Fox', 'Horse', 'Lion', 'Panda', 'Eagle', 'Bear', 'Cat', 'Dog', 'Elephant', 'Giraffe', 'Kangaroo', 'Leopard', 'Monkey', 'Otter', 'Penguin', 'Quail', 'Rabbit', 'Snake', 'Tiger', 'Wolf'];
+const objects = ['Pencil', 'Monitor', 'Chair', 'Tablet', 'Camera', 'Book', 'Clock', 'Desk', 'Guitar', 'Hat', 'Igloo', 'Jug', 'Kite', 'Lamp', 'Map', 'Notebook', 'Orange', 'Pillow', 'Quilt', 'Ruler'];
 
 // Function to generate a four-digit number
 function generateFourDigitNumber() {
@@ -36,294 +19,225 @@ function generateRandomTitle() {
     return `${adjective}-${animal}-${object}-${fourDigitNumber}`;
 }
 
-
-document.getElementById('save-button').addEventListener('click', function() {
+// Save a new prompt
+document.getElementById('save-button').addEventListener('click', function () {
     let baseTitle = document.getElementById('prompt-title').value.trim();
     let text = document.getElementById('prompt-text').value.trim();
     let datetime = new Date().toISOString();
 
-    if (baseTitle === '') {
-        baseTitle = generateRandomTitle();
-    }
-
-    if (text === '') {
+    if (!baseTitle) baseTitle = generateRandomTitle();
+    if (!text) {
         alert('Please enter some text for the prompt.');
         return;
     }
 
-    chrome.storage.local.get({prompts: []}, function(data) {
+    chrome.storage.local.get({ prompts: [] }, function (data) {
         let prompts = data.prompts;
-        // Initialize the new title with the base title
         let newTitle = baseTitle;
 
-        // Create an array of titles that start with the base title
+        // Handle title versioning
         let relatedTitles = prompts.filter(prompt => prompt.title.startsWith(baseTitle)).map(prompt => prompt.title);
-
         if (relatedTitles.length > 0) {
-            // Extract the numeric version suffixes and find the max
-            let versionNumbers = relatedTitles.map(title => {
-                let versionMatch = title.match(new RegExp('^' + baseTitle + ' - (\\d+)$'));
-                return versionMatch ? parseInt(versionMatch[1], 10) : 0;
-            });
-            let maxVersion = Math.max(...versionNumbers);
-            // Create the new title with the incremented version number
+            let maxVersion = Math.max(...relatedTitles.map(title => parseInt(title.split(' - ')[1] || 0, 10)));
             newTitle = `${baseTitle} - ${maxVersion + 1}`;
         }
 
-        // Add the new prompt to the beginning of the prompts array
-        prompts.unshift({ title: newTitle, text: text, saved: datetime });
+        prompts.unshift({ title: newTitle, text, saved: datetime });
 
-        // Save the updated array of prompts
-        chrome.storage.local.set({prompts: prompts}, function() {
+        chrome.storage.local.set({ prompts }, function () {
             document.getElementById('prompt-title').value = newTitle;
             document.getElementById('prompt-text').value = '';
+            currentPromptIndex = 0; // The new prompt is added at the beginning
             displayPrompts();
-            updateCurrentTextStats();
-            updateTotalStorageUsed();
+            updateStats();
         });
     });
 });
 
-
-
-
-
-
-// Function to display prompts in the list
+// Display prompts in the list
 function displayPrompts() {
-    chrome.storage.local.get({prompts: []}, function(data) {
-        let prompts = data.prompts;
-        let promptListElement = document.getElementById('prompt-list');
-        promptListElement.innerHTML = '';
+    chrome.storage.local.get({ prompts: [] }, function (data) {
+        const promptList = document.getElementById('prompt-list');
+        promptList.innerHTML = '';
 
-        prompts.forEach(function(prompt, index) {
-            let entry = document.createElement('div');
+        if (data.prompts.length === 0) {
+            promptList.innerHTML = '<p>No prompts saved. Create a new one!</p>';
+            clearStats();
+            return;
+        }
+
+        data.prompts.forEach((prompt, index) => {
+            const entry = document.createElement('div');
             entry.className = 'prompt-entry';
+            entry.innerHTML = `
+                <span class="prompt-title">${prompt.title}</span>
+                <span class="date-stamp">${new Date(prompt.saved).toLocaleString()}</span>
+            `;
 
-            let titleSpan = document.createElement('span');
-            titleSpan.textContent = prompt.title;
-            entry.appendChild(titleSpan);
-
-            let dateSpan = document.createElement('span');
-            dateSpan.textContent = new Date(prompt.saved).toLocaleString();
-            dateSpan.className = 'date-stamp';
-            entry.appendChild(dateSpan);
-
-            entry.addEventListener('click', function() {
-                currentPromptIndex = index; // Update the current index
+            entry.addEventListener('click', () => {
+                currentPromptIndex = index;
                 document.getElementById('prompt-title').value = prompt.title;
                 document.getElementById('prompt-text').value = prompt.text;
-                updateCurrentTextStats(prompt.title.split(' - ')[0]); // Update stats based on the base title
+                updateStats();
             });
 
-            promptListElement.appendChild(entry);
+            promptList.appendChild(entry);
         });
 
-        if(prompts.length > 0) {
-            // Select the first prompt by default
-            promptListElement.firstChild.click();
+        // Automatically select the prompt at currentPromptIndex if available
+        if (currentPromptIndex !== null && data.prompts[currentPromptIndex]) {
+            const entries = promptList.getElementsByClassName('prompt-entry');
+            entries[currentPromptIndex].click();
         } else {
-            // No prompts to display, clear the stats
-            clearStats();
+            currentPromptIndex = 0;
+            promptList.firstChild.click();
         }
     });
 }
 
-// Function to clear the stats
+// Clear stats display
 function clearStats() {
     document.getElementById('word-count').textContent = 'Words: 0';
     document.getElementById('version-count').textContent = 'Versions: 0';
-    updateTotalStorageUsed(); // Update the storage usage
+    document.getElementById('storage-used').textContent = 'Total Storage: 0 KB';
 }
 
-// Function to update the stats for the selected prompt
-function updateCurrentTextStats(baseTitle) {
-    let currentText = document.getElementById('prompt-text').value;
-    let wordCount = currentText.split(/\s+/).filter(Boolean).length;
-    document.getElementById('word-count').textContent = 'Words: ' + wordCount;
+// Update stats (word count, versions, storage)
+function updateStats() {
+    const promptText = document.getElementById('prompt-text').value.trim();
+    const wordCount = promptText ? promptText.split(/\s+/).filter(Boolean).length : 0;
+    document.getElementById('word-count').textContent = `Words: ${wordCount}`;
 
-    // Get the version count for the base title
-    chrome.storage.local.get({prompts: []}, function(data) {
-        let versionCount = data.prompts.filter(prompt => prompt.title.startsWith(baseTitle)).length;
-        document.getElementById('version-count').textContent = 'Versions: ' + versionCount;
-        updateTotalStorageUsed();
+    chrome.storage.local.get({ prompts: [] }, function (data) {
+        const baseTitle = document.getElementById('prompt-title').value.split(' - ')[0];
+        const versionCount = data.prompts.filter(prompt => prompt.title.startsWith(baseTitle)).length;
+        document.getElementById('version-count').textContent = `Versions: ${versionCount}`;
+    });
+
+    updateStorageStats();
+}
+
+// Display storage usage
+function updateStorageStats() {
+    chrome.storage.local.getBytesInUse(null, function (bytes) {
+        document.getElementById('storage-used').textContent = `Total Storage: ${(bytes / 1024).toFixed(2)} KB`;
     });
 }
 
-document.getElementById('delete-prompt-button').addEventListener('click', function() {
-    // Retrieve the title of the prompt that is currently being displayed.
-    let titleToDelete = document.getElementById('prompt-title').value;
-
-    // Get the existing prompts from storage.
-    chrome.storage.local.get({prompts: []}, function(data) {
-        let prompts = data.prompts;
-        
-        // Find the index of the prompt with the matching title.
-        let indexToDelete = prompts.findIndex(prompt => prompt.title === titleToDelete);
-
-        // If the prompt is found, delete it.
-        if (indexToDelete !== -1) {
-            prompts.splice(indexToDelete, 1);
-            
-            // Save the updated prompts list back to storage.
-            chrome.storage.local.set({prompts: prompts}, function() {
-                // Clear the input fields and reset the current prompt index.
-                document.getElementById('prompt-title').value = '';
-                document.getElementById('prompt-text').value = '';
-                
-                // Refresh the display of prompts.
-                displayPrompts();
-            });
-        } else {
-            // If no prompt is selected or the prompt was not found, alert the user.
-            alert('No prompt selected to delete or prompt not found.');
-        }
-    });
+// New Prompt Button: Clear inputs and reset the state
+document.getElementById('new-prompt-button').addEventListener('click', function () {
+    document.getElementById('prompt-title').value = '';
+    document.getElementById('prompt-text').value = '';
+    currentPromptIndex = null; // Reset index to indicate a new unsaved prompt
+    clearStats(); // Clear stats for the new unsaved prompt
 });
 
+// Paste Prompt Button: Inject text into an active webpage
+document.getElementById('paste-prompt-button').addEventListener('click', function () {
+    const text = document.getElementById('prompt-text').value.trim();
 
-
-
-function updateTotalStorageUsed() {
-    chrome.storage.local.getBytesInUse(null, function(bytesInUse) {
-        let sizeInKB = bytesInUse / 1024;
-        document.getElementById('storage-used').textContent = 'Total Storage: ' + sizeInKB.toFixed(2) + ' KB';
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    displayPrompts();
-    updateCurrentTextStats();
-    updateTotalStorageUsed();
-});
-
-
-// popup.js
-document.getElementById('paste-prompt-button').addEventListener('click', function() {
-    let text = document.getElementById('prompt-text').value;
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        // Check if the tab's URL is not a chrome:// URL
-        if (!tabs[0].url.startsWith('chrome://')) {
-            // First, inject the content script into the active tab
-            chrome.scripting.executeScript({
-                target: {tabId: tabs[0].id},
-                files: ['contentScript.js']
-            }, () => {
-                // Now that the content script is injected, send the message
-                if (chrome.runtime.lastError) {
-                    console.error(`Error injecting script: ${chrome.runtime.lastError.message}`);
-                } else {
-                    chrome.tabs.sendMessage(tabs[0].id, {action: "pastePrompt", text: text}, response => {
-                        if (chrome.runtime.lastError) {
-                            console.error(`Error sending message: ${chrome.runtime.lastError.message}`);
-                        } else if (response) {
-                            console.log('Paste prompt success:', response.status);
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        if (tabs[0] && !tabs[0].url.startsWith('chrome://')) {
+            chrome.scripting.executeScript(
+                {
+                    target: { tabId: tabs[0].id },
+                    files: ['contentScript.js'],
+                },
+                () => {
+                    chrome.tabs.sendMessage(tabs[0].id, { action: "pastePrompt", text: text }, function(response) {
+                        if (chrome.runtime.lastError || (response && response.status !== 'success')) {
+                            console.error(chrome.runtime.lastError);
+                            alert('Error: Unable to paste the prompt. Please make sure the content script is properly loaded and an input field is focused.');
+                        } else {
+                            console.log('Text pasted successfully.');
                         }
                     });
                 }
-            });
+            );
         } else {
             alert('Cannot paste into a chrome:// page.');
         }
     });
 });
 
-
-function pasteText(text) {
-    // This function gets injected into the tab's page context
-    const activeElement = document.activeElement;
-    if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
-        activeElement.value = text;
-        activeElement.dispatchEvent(new Event('input', { bubbles: true }));
-        activeElement.dispatchEvent(new Event('change', { bubbles: true }));
-    } else if (activeElement.isContentEditable) {
-        document.execCommand('insertText', false, text);
+// Delete a prompt
+document.getElementById('delete-prompt-button').addEventListener('click', function () {
+    if (currentPromptIndex === null) {
+        alert('No prompt selected to delete.');
+        return;
     }
-}
 
-document.getElementById('toggle-tunables').addEventListener('click', function() {
-    let tunablesDiv = document.getElementById('tunables');
-    let toggleButton = document.getElementById('toggle-tunables');
-    
-    if (tunablesDiv.style.display === "none") {
-        tunablesDiv.style.display = "block";
-        toggleButton.textContent = "Less";  // Change the button text to "Less"
-    } else {
-        tunablesDiv.style.display = "none";
-        toggleButton.textContent = "More";  // Change back the button text to "More"
-    }
-});
+    chrome.storage.local.get({ prompts: [] }, function (data) {
+        const prompts = data.prompts;
 
+        // Remove the prompt at currentPromptIndex
+        prompts.splice(currentPromptIndex, 1);
 
-document.getElementById('import-prompts').addEventListener('click', function() {
-    document.getElementById('import-file').click(); // Triggers the file selection
-});
-
-
-document.getElementById('import-file').addEventListener('change', function(event) {
-    let file = event.target.files[0];
-    if (file) {
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                let importedData = JSON.parse(e.target.result);
-
-                // Validate the structure of the data
-                if (!Array.isArray(importedData)) {
-                    throw new Error('Invalid format: Expected an array of prompts.');
-                }
-                // Additional validation can be done here
-
-                chrome.storage.local.set({prompts: importedData}, function() {
-                    if (chrome.runtime.lastError) {
-                        throw new Error(`Error setting prompts: ${chrome.runtime.lastError.message}`);
-                    }
-                    displayPrompts();
-                    updateTotalStorageUsed();
-                    alert('Prompts imported successfully.');
-                });
-            } catch (error) {
-                alert(`Failed to import prompts: ${error.message}`);
-                console.error('Import Error:', error);
-            }
-        };
-        reader.onerror = function() {
-            alert('Failed to read the file.');
-        };
-        reader.readAsText(file);
-    }
-    event.target.value = ''; // Reset the input
-});
-
-
-document.getElementById('export-prompts').addEventListener('click', function() {
-    const version = chrome.runtime.getManifest().version;
-    const dateStamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 12); // YYMMDDHHMMSS
-    const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
-    const filename = `PromptKeeper_backup_${version}_${dateStamp}_${randomAnimal}.json`;
-
-    chrome.storage.local.get({prompts: []}, function(data) {
-        const json = JSON.stringify(data.prompts, null, 2);
-        const blob = new Blob([json], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-
-        // Create a temporary anchor element and trigger a download
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        URL.revokeObjectURL(url);
-        alert(`Export: Your Prompt Exporting will start shortly. If it does not, please check your browser settings.`);
+        chrome.storage.local.set({ prompts }, function () {
+            document.getElementById('prompt-title').value = '';
+            document.getElementById('prompt-text').value = '';
+            currentPromptIndex = null;
+            displayPrompts();
+            clearStats();
+        });
     });
 });
 
-document.getElementById('new-prompt-button').addEventListener('click', function() {
-    document.getElementById('prompt-title').value = ''; // Clear the title input
-    document.getElementById('prompt-text').value = '';  // Clear the text area
-    currentPromptIndex = null; // Reset the current prompt index
-    // Optionally, you can also clear the stats if you have functionality to display stats for the current prompt
-    updateCurrentTextStats();
+// AI-Improve Button (Placeholder)
+document.getElementById('ai-improve-button').addEventListener('click', function () {
+    alert('AI-Improve functionality is not yet implemented.');
+});
+
+// Export Prompts Button
+document.getElementById('export-prompts').addEventListener('click', function () {
+    chrome.storage.local.get({ prompts: [] }, function (data) {
+        const prompts = data.prompts;
+        const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary link to trigger download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'prompts.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+});
+
+// Import Prompts Button
+document.getElementById('import-prompts').addEventListener('click', function () {
+    document.getElementById('import-file').click();
+});
+
+// Handle File Selection
+document.getElementById('import-file').addEventListener('change', function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const importedPrompts = JSON.parse(e.target.result);
+            chrome.storage.local.get({ prompts: [] }, function (data) {
+                const existingPrompts = data.prompts;
+                const combinedPrompts = importedPrompts.concat(existingPrompts);
+                chrome.storage.local.set({ prompts: combinedPrompts }, function () {
+                    displayPrompts();
+                    alert('Prompts imported successfully.');
+                });
+            });
+        } catch (error) {
+            alert('Error importing prompts. Please ensure the file is a valid JSON.');
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Initialize the extension when the popup is opened
+document.addEventListener('DOMContentLoaded', function () {
+    displayPrompts(); // Display the list of saved prompts
+    updateStats();
+    updateStorageStats();
 });
