@@ -6,9 +6,13 @@ PromptKeeper is designed to help improve how we interact with generative AI LLMs
 ## Proposed Solution
 This Google Chrome extension allows users to easily write, save, and reuse prompts across various LLMs. It brings a convenient tool right into the browser, enhancing the workflow of AI enthusiasts, researchers, and professionals.
 
-<!-- ![Test Prompt Demo used with ChatGPT](images/test-prompt-demo.png) -->
-<img src="images/test-prompt-demo.png" alt="Test Prompt Demo used with ChatGPT" width="500px"/>
+### Update: This is Release v1.0.8
 
+<img src="images/v108-promptkeeper-gemini-use.png" alt="Test Prompt Demo used with Gemini" width="500px"/>
+
+<img src="images/v108-promptkeeper.png" alt="" width="500px"/>
+
+### Video Demo of v1.0.7
 [![PromptKeeper Chrome Extension Demo](https://img.youtube.com/vi/agapac9Mg04/0.jpg)](https://youtu.be/agapac9Mg04 "PromptKeeper Chrome Extension Demo - Streamline Your Creative Writing Process")
 
 
