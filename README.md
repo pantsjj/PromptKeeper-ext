@@ -17,6 +17,10 @@ This Google Chrome extension allows users to easily write, save, and reuse promp
 
 In this release preview, we've integrated Chrome's built-in AI capabilities to enhance the functionality of PromptKeeper. Note that these features are currently in alpha and are expected to be officially available in **Summer 2025**.
 
+
+[![PromptKeeper v1.0.9 preview Demo](https://img.youtube.com/vi/SiUABQdi5sg/0.jpg)](https://youtu.be/SiUABQdi5sg "pre-release v1.0.9 demo")
+
+
 I have registered as  Chrome Developer to get access to Alpha release with Gemini Nano Model access, and the latest [Chrome documentation can be found here with upcoming release and capability maturity dates](https://developer.chrome.com/docs/ai?authuser=1)
 
 **New Features:**
