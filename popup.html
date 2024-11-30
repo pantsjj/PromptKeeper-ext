@@ -24,6 +24,18 @@
                 <label for="prompt-text">Prompt Text</label>
                 <textarea id="prompt-text" placeholder="Write your prompt here..." rows="9"></textarea>
 
+                <!-- AI Capability Area -->
+                <div id="ai-capability">
+                    <select id="rewrite-options">
+                        <option value="retry">Retry</option>
+                        <option value="more-descriptive">More Descriptive</option>
+                        <option value="more-creative">More Creative</option>
+                        <option value="more-succint">More Succint</option>
+                        <option value="shorter">Shorter</option>
+                    </select>
+                    <button id="ai-optimize-button" class="ai-button">AI-Optimize</button>
+                </div>
+
                 <!-- Bias and Toxicity Scores -->
                 <div id="analysis-scores">
                     <p id="bias-score">Bias: --</p>
@@ -36,7 +48,7 @@
                     <button id="save-button">Save</button>
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button" class="paste-button">Paste</button>
-                    <button id="ai-improve-button" class="ai-button">AI-Improve</button>
+
                 </div>
 
                 <!-- Tunables Section -->
