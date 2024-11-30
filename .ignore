@@ -1,3 +1,4 @@
 ignore-content
 PromptKeeper-ext.code-workspace
 .vscode
+manifest.json
