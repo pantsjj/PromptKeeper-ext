@@ -24,8 +24,21 @@ const supportedLanguages = [
     });
   }
   
-  // Translate-Paste Button Event Listener
-  document.getElementById('translate-paste-button').addEventListener('click', async function () {
+  // Check if the Translation API is supported
+  if (!('translation' in self) || !('createTranslator' in self.translation)) {
+    alert('Translation API is not supported in this browser.');
+    // Optionally, disable the Translate-Paste button
+    document.getElementById('translate-paste-button').disabled = true;
+  } else {
+    // Call populateLanguageOptions when the script loads
+    populateLanguageOptions();
+  
+    // Translate-Paste Button Event Listener
+    document.getElementById('translate-paste-button').addEventListener('click', translatePasteHandler);
+  }
+  
+  // Function to handle the Translate-Paste button click
+  function translatePasteHandler() {
     const text = document.getElementById('prompt-text').value.trim();
     const targetLanguage = document.getElementById('language-options').value;
   
@@ -34,20 +47,15 @@ const supportedLanguages = [
       return;
     }
   
-    const translatedText = await translateText(text, targetLanguage);
-  
-    if (translatedText) {
-      pasteTranslatedText(translatedText);
-    }
-  });
+    translateText(text, targetLanguage).then(translatedText => {
+      if (translatedText) {
+        pasteTranslatedText(translatedText);
+      }
+    });
+  }
   
   // Function to translate text using the Translator API
   async function translateText(text, targetLanguage) {
-    if (!('translation' in self) || !('createTranslator' in self.translation)) {
-      alert('Translation API is not supported in this browser.');
-      return null;
-    }
-  
     const sourceLanguage = await detectLanguage(text);
     if (!sourceLanguage) {
       alert('Could not detect the source language.');
@@ -55,7 +63,7 @@ const supportedLanguages = [
     }
   
     // Check if translation is possible
-    const canTranslateResult = await translation.canTranslate({
+    const canTranslateResult = await self.translation.canTranslate({
       sourceLanguage: sourceLanguage,
       targetLanguage: targetLanguage,
     });
@@ -63,10 +71,12 @@ const supportedLanguages = [
     if (canTranslateResult === 'no') {
       alert(`Cannot translate from ${sourceLanguage} to ${targetLanguage}.`);
       return null;
+    } else if (canTranslateResult === 'after-download') {
+      alert('Translation model needs to be downloaded. This may take some time.');
     }
   
     // Create a translator instance
-    const translator = await translation.createTranslator({
+    const translator = await self.translation.createTranslator({
       sourceLanguage: sourceLanguage,
       targetLanguage: targetLanguage,
     });
@@ -79,7 +89,7 @@ const supportedLanguages = [
   
     try {
       // Perform the translation
-      const translatedText = await translator.translate(text);
+      const translatedText = await translator.translate(text.trim());
       return translatedText;
     } catch (error) {
       console.error('Translation error:', error);
@@ -88,16 +98,18 @@ const supportedLanguages = [
     }
   }
   
-  // Function to detect the language of the text (assuming Language Detector API is available)
+  // Function to detect the language of the text
   async function detectLanguage(text) {
-    if (!('languageDetector' in self) || !('detect' in self.languageDetector)) {
+    if (!('translation' in self) || !('createDetector' in self.translation)) {
       // If Language Detector API is not available, default to English
       return 'en';
     }
   
     try {
-      const result = await self.languageDetector.detect(text);
-      return result.language || 'en';
+      const detector = await self.translation.createDetector();
+      const detections = await detector.detect(text.trim());
+      const result = detections[0]; // Get the most probable detection
+      return result.detectedLanguage || 'en';
     } catch (error) {
       console.error('Language detection error:', error);
       return 'en';
@@ -137,6 +149,3 @@ const supportedLanguages = [
       }
     });
   }
-  
-  // Call populateLanguageOptions when the script loads
-  populateLanguageOptions();
