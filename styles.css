@@ -266,7 +266,6 @@ body::-webkit-scrollbar {
     display: none;
 }
 
-/* Existing styles remain unchanged */
 
 /* AI Capability Area */
 #ai-capability {
@@ -329,3 +328,35 @@ body::-webkit-scrollbar {
 .editor-buttons select {
     margin: 5px 0;
 }
+
+/* Translation Capability Area */
+#translation-capability {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  #translation-capability select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    background-color: #ffffff;
+    font-size: 0.9em;
+  }
+  
+  #translation-capability button {
+    background-color: #ffc107; /* Amber color */
+    color: black;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  #translation-capability button:hover {
+    background-color: #e0a800;
+  }
+  

@@ -12,7 +12,12 @@
             "128": "images/icon128.png"
         }
     },
-    "trial_tokens": ["AuFmwLpiNQCdlao8QnIcJFxjGiEYAPoKHvAeb+o0XowFuMO3wu4FD6evJPHdL34zQtx3xtrN6PhGtLmiQcE79QMAAAB4eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElGb3JFeHRlbnNpb24iLCJleHBpcnkiOjE3NjA0ODYzOTl9"],
+    "trial_tokens": [
+        "AuFmwNULLNULLYAPoKHvAeb+o0XowFuMO3wu4FD6evJPHdL34zQtx3xtrN6PhGtLmiQcE79QMAAAB4eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElGb3JFeHRlbnNpb24iLCJleHBpcnkiOjE3NjA0ODYzOTl9",
+        "At/AuFmwNULLNULLYAPoKHvAeb+M9UjdDi5tlJnVPxhXo6+DEFSPKkRwgizYY1se70bE1KL7n65FzimYNcEtzlFFo3C/uQwAAABveyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiVHJhbnNsYXRpb25BUEkiLCJleHBpcnkiOjE3NTMxNDI0MDB9",
+        "AjPvSO6ki25/AuFmwNULLNULLYAPoKHvAeb+QgIgES7yCn/H+cxTV7pAE0nSzeHauwbOIKoexcM47VswwAAABzeyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiQUlTdW1tYXJpemF0aW9uQVBJIiwiZXhwaXJ5IjoxNzUzMTQyNDAwfQ==",
+        "Ak5fCRjb2B+AuFmwNULLNULLYAPoKHvAeb/Zv3XXP7oJ1XkyBPGfR0HSewUyWhC4uEQ1CzpKw8Ob7lsp8sYELyeG4dF9L8qhE0CkGgEAAAB1eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiTGFuZ3VhZ2VEZXRlY3Rpb25BUEkiLCJleHBpcnkiOjE3NDk1OTk5OTl9"
+    ],
     "permissions": [
         "activeTab",
         "storage",
