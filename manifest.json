@@ -3,7 +3,7 @@
     "name": "PromptKeeper",
     "description": "Keep track of your fine GenAI prompts in one place. Paste directly from Extension. Export prompts to share.",
     "author": "Jaroslav Pantsjoha",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "action": {
         "default_title": "PromptKeeper",
         "default_popup": "popup.html",

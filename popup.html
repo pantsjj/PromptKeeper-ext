@@ -24,22 +24,23 @@
                 <label for="prompt-text">Prompt Text</label>
                 <textarea id="prompt-text" placeholder="Write your prompt here..." rows="9"></textarea>
 
-<!-- AI Capability Area -->
-<div id="ai-capability">
-    <select id="rewrite-options">
-      <option value="retry">Retry</option>
-      <option value="more-creative">More Creative</option>
-      <option value="more-concise">More Concise</option>
-      <option value="shorter">Shorter</option>
-      <option value="longer">Longer</option>
-    </select>
-    <button id="ai-optimize-button" class="ai-button">AI-Optimize</button>
-  </div>
 
                 <!-- Bias and Toxicity Scores -->
                 <div id="analysis-scores">
                     <p id="bias-score">Bias: --</p>
                     <p id="toxicity-score">Toxicity: --</p>
+                </div>
+
+                <!-- AI Capability Area -->
+                <div id="ai-capability">
+                    <select id="rewrite-options">
+                    <option value="retry">Retry</option>
+                    <option value="more-creative">More Creative</option>
+                    <option value="more-concise">More Concise</option>
+                    <option value="shorter">Shorter</option>
+                    <option value="longer">Longer</option>
+                    </select>
+                    <button id="ai-optimize-button" class="ai-button">AI-Optimize</button>
                 </div>
 
                 <!-- Action Buttons -->
@@ -48,15 +49,15 @@
                     <button id="save-button">Save</button>
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button" class="paste-button">Paste</button>
-
+                    
                 </div>
                   <!-- Language Translation Area -->
-                <div id="translation-capability">
-                    <select id="language-options">
-                    <!-- We'll populate this dynamically -->
-                    </select>
-                    <button id="translate-paste-button" class="translate-button">Translate-Paste</button>
-                </div>
+               <!--  <div id="translation-capability"> -->
+                <!--     <select id="language-options"> -->
+                <!--     </select> -->
+                <!--     <button id="translate-paste-button" class="translate-button">Translate-Paste</button> -->
+              <!--   </div> -->
+                
                 </div>
 
                 <!-- Tunables Section -->
@@ -103,7 +104,7 @@
     </footer>
 
     <script src="popup.js"></script>
-    <script src="translation.js"></script>
+    <!-- <script src="translation.js"></script> DISABLE for 1.0.9 tag-->
     <script src="rewrite.js"></script>
 
 </body>
