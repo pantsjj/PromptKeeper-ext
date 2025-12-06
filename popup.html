@@ -45,10 +45,6 @@
                     <button id="save-button">Save</button>
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button" class="paste-button">Paste</button>
-                    <!-- Utilities -->
-                    <button id="export-prompts" style="background-color:#6c757d;">Export</button>
-                    <button id="import-prompts" style="background-color:#6c757d;">Import</button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
                   <!-- Language Translation Area -->
                <!--  <div id="translation-capability"> -->
@@ -67,17 +63,23 @@
 
     <footer id="stats">
         <div style="display:flex; align-items:center; gap:15px; flex:1;">
-            <strong style="color:#5f6368;">Prompt Collection Stats:</strong>
+            <strong style="color:#5f6368;">Stats:</strong>
             <span id="word-count">Words: 0</span>
-            <span id="version-count">Versions: 0</span>
-            <span id="storage-used">Total Storage: 0 KB</span>
+            <span id="version-count">Ver: 0</span>
+            <span id="storage-used">Size: 0 KB</span>
         </div>
-        <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank" style="color:#999; text-decoration:none; font-size:11px;">Author: Jaroslav</a>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="#" id="export-link" style="color:#666; text-decoration:none; font-size:11px;">Export</a>
+            <a href="#" id="import-link" style="color:#666; text-decoration:none; font-size:11px;">Import</a>
+            <span style="color:#ddd;">|</span>
+            <a href="#" id="open-full-editor-link" style="color:#0071e3; text-decoration:none; font-size:11px; font-weight:500;">Manage Prompts ↗</a>
+            <span style="color:#ddd;">|</span>
+            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank" style="color:#999; text-decoration:none; font-size:11px;">@Jaroslav</a>
+        </div>
+        <!-- Hidden file input for import -->
+        <input type="file" id="import-file" accept=".json" style="display: none;">
     </footer>
 
     <script src="popup.js" type="module"></script>
-    <div id="full-editor-container">
-        <button id="open-full-editor">✨ Open Full Screen IDE ↗</button>
-    </div>
 </body>
 </html>
