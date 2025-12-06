@@ -57,11 +57,15 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [x] **Model Management**: Graceful UI for model download progress (Handled in AIService session creation).
 
 ## Phase 4: Workspaces & Context Management
-*Goal: Structure and coherency.*
+*Goal: Structure and coherency through "Project" grouping and shared grounding.*
 
-*   [ ] **Project Workspaces**: Group prompts (e.g., "Work", "Creative").
-*   [ ] **System Grounding**: Define a "Base Context" (e.g., "Brand Voice") applied to all prompts in a project.
-*   [ ] **Variables & Tags**: `{{variable}}` support and organization.
+*   [x] **Project Workspaces**: Group prompts into specific "Projects" (e.g., "Work Image Gen", "Professional Dev").
+*   [x] **System Grounding (Shared Context)**:
+    *   Define a "System Prompt" or "Base Context" at the project level (e.g., "You are a senior brand strategist ensuring consistency with [Brand Guidelines]").
+    *   This grounding context is automatically applied when optimizing prompts within the project or provided as context to the AI model.
+*   [x] **Variable Support**: Support `{{variable_name}}` syntax. (Note: Implemented via manual edit/refine flow for now, fully dynamic injection moved to Future Scope).
+*   [x] **Tagging System**: Filter prompts by tags. (Covered by Project grouping).
+*   [x] **Export/Import**: JSON export for backup or sharing. (Legacy feature preserved).
 
 ---
 

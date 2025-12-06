@@ -7,9 +7,9 @@
 Users need to organize prompts into "Projects".
 
 **Acceptance Criteria**:
-- [ ] Update StorageService to handle `Projects`.
-- [ ] Add "Create Project" modal in the UI.
-- [ ] Add Sidebar navigation to filter prompts by Project.
+- [x] Update StorageService to handle `Projects`.
+- [x] Add "Create Project" modal in the UI.
+- [x] Add Sidebar navigation to filter prompts by Project.
 
 ## Task 4.2: System Grounding (Context)
 **Issue Title**: Feat: Implement System Grounding for Projects
@@ -17,9 +17,9 @@ Users need to organize prompts into "Projects".
 Projects should have a "Base Context" that applies to all prompts within them.
 
 **Acceptance Criteria**:
-- [ ] Add `systemPrompt` field to Project creation.
-- [ ] When using AI (Optimization/Scoring) for a prompt in a Project, prepend the `systemPrompt` to the context window.
-- [ ] UI visual indicator: "Using Context: [Project Name]".
+- [x] Add `systemPrompt` field to Project creation.
+- [x] When using AI (Optimization/Scoring) for a prompt in a Project, prepend the `systemPrompt` to the context window.
+- [x] UI visual indicator: "Using Context: [Project Name]".
 
 ## Task 4.3: Variables & Tags
 **Issue Title**: Feat: Support Variables and Tags
