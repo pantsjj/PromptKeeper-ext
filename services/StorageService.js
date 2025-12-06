@@ -174,6 +174,29 @@ class StorageService {
     }
 
     /**
+     * Updates the title of a prompt.
+     * @param {string} id 
+     * @param {string} newTitle 
+     * @returns {Promise<Prompt>}
+     */
+    async renamePrompt(id, newTitle) {
+        const prompts = await this.getPrompts();
+        const index = prompts.findIndex(p => p.id === id);
+
+        if (index === -1) {
+            throw new Error(`Prompt with ID ${id} not found`);
+        }
+
+        const prompt = prompts[index];
+        prompt.title = newTitle;
+        prompt.updatedAt = Date.now();
+        
+        prompts[index] = prompt;
+        await this.saveAllPrompts(prompts);
+        return prompt;
+    }
+
+    /**
      * Deletes a prompt by ID.
      * @param {string} id 
      * @returns {Promise<void>}

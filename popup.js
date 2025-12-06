@@ -128,15 +128,13 @@ document.getElementById('save-button').addEventListener('click', async () => {
         if (currentPromptId) {
             // Update existing
             await StorageService.updatePrompt(currentPromptId, text);
-            // Optional: Update title if changed (requires extending StorageService to support renaming)
+            await StorageService.renamePrompt(currentPromptId, title);
         } else {
             // Create new
             const newPrompt = await StorageService.addPrompt(text);
-            // If the user provided a custom title, we might need a rename method in Service,
-            // but for now `addPrompt` generates one based on content or we can assume `title` input usage.
-            // *Correction*: StorageService.addPrompt currently auto-generates title from content. 
-            // We should ideally update the service to accept a title, or rename it after creation.
-            // For this phase, we'll re-load and rely on the auto-generated one or update it if we add that method.
+            if (title && title !== newPrompt.title) {
+                 await StorageService.renamePrompt(newPrompt.id, title);
+            }
             currentPromptId = newPrompt.id;
         }
         

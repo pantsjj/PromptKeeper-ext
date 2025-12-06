@@ -134,12 +134,17 @@ async function savePrompt() {
     
     try {
         if (currentPromptId) {
-            await StorageService.updatePrompt(currentPromptId, text);
-            // Note: Title update support isn't explicitly in StorageService yet
-            // We'll rely on updatePrompt for content. 
-            // TODO: Add renamePrompt to StorageService in Phase 1 Refinements
+            // Parallel update for performance
+            await Promise.all([
+                StorageService.updatePrompt(currentPromptId, text),
+                StorageService.renamePrompt(currentPromptId, title)
+            ]);
         } else {
             const newPrompt = await StorageService.addPrompt(text);
+            // If user typed a custom title for a new prompt, rename it immediately
+            if (title !== 'Untitled Prompt') {
+                await StorageService.renamePrompt(newPrompt.id, title);
+            }
             currentPromptId = newPrompt.id;
         }
         await loadPrompts(); // Refresh list
