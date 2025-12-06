@@ -141,8 +141,6 @@ async function loadPrompts() {
     console.log(`Loaded ${prompts.length} prompts. Current Project: ${currentProjectId}`);
     
     // Filter by Project
-    // If currentProjectId is null, show all.
-    // If currentProjectId is set, match p.projectId
     const filteredPrompts = currentProjectId 
         ? prompts.filter(p => p.projectId === currentProjectId)
         : prompts;
@@ -159,7 +157,151 @@ async function loadPrompts() {
     }
 }
 
-// ... (renderPromptList, selectPrompt, renderHistory, previewVersion remain same) ...
+function renderPromptList(prompts) {
+    els.promptList.innerHTML = '';
+    
+    prompts.forEach(prompt => {
+        const li = document.createElement('li');
+        li.className = `prompt-item ${currentPromptId === prompt.id ? 'active' : ''}`;
+        
+        const dateStr = new Date(prompt.updatedAt).toLocaleDateString();
+        
+        li.innerHTML = `
+            <span class="prompt-item-title">${prompt.title}</span>
+            <span class="prompt-item-date">${dateStr}</span>
+        `;
+        
+        li.addEventListener('click', () => selectPrompt(prompt));
+        els.promptList.appendChild(li);
+    });
+}
+
+function selectPrompt(prompt) {
+    currentPromptId = prompt.id;
+    els.titleInput.value = prompt.title;
+    
+    // Get content from current version
+    const currentVersion = prompt.versions.find(v => v.id === prompt.currentVersionId);
+    els.textArea.value = currentVersion ? currentVersion.content : '';
+    
+    updateStats();
+    renderHistory(prompt);
+    
+    // Refresh list highlight logic without full re-render to avoid flicker
+    const items = els.promptList.querySelectorAll('.prompt-item');
+    items.forEach((item) => {
+        item.classList.remove('active');
+        if (item.querySelector('.prompt-item-title').textContent === prompt.title) {
+           item.classList.add('active');
+        }
+    });
+}
+
+function renderHistory(prompt) {
+    if (!els.historyList) return;
+    els.historyList.innerHTML = '';
+    
+    const sortedVersions = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp);
+    
+    sortedVersions.forEach(version => {
+        const isCurrent = version.id === prompt.currentVersionId;
+        const li = document.createElement('li');
+        li.style.padding = '8px 0';
+        li.style.borderBottom = '1px solid var(--border-color)';
+        li.style.fontSize = '12px';
+        li.style.cursor = 'pointer';
+        
+        const date = new Date(version.timestamp);
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = date.toLocaleDateString();
+        
+        li.innerHTML = `
+            <div style="flex: 1;">
+                <div style="font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? 'var(--primary-color)' : 'inherit'}">
+                    ${isCurrent ? 'Current Version' : 'Previous Version'}
+                </div>
+                <div style="color: #888;">${dateStr} ${timeStr}</div>
+            </div>
+        `;
+
+        if (!isCurrent) {
+            const restoreBtn = document.createElement('button');
+            restoreBtn.textContent = 'Restore';
+            restoreBtn.style.marginLeft = '10px';
+            restoreBtn.style.padding = '4px 8px';
+            restoreBtn.style.fontSize = '11px';
+            restoreBtn.style.cursor = 'pointer';
+            restoreBtn.style.border = '1px solid var(--border-color)';
+            restoreBtn.style.backgroundColor = 'var(--bg-color)';
+            restoreBtn.style.color = 'var(--text-color)';
+            restoreBtn.style.borderRadius = '3px';
+            
+            restoreBtn.onclick = (e) => {
+                e.stopPropagation();
+                restoreVersion(version);
+            };
+            
+            li.style.display = 'flex';
+            li.style.alignItems = 'center';
+            li.style.justifyContent = 'space-between';
+            li.appendChild(restoreBtn);
+        }
+        
+        li.addEventListener('click', () => previewVersion(version));
+        els.historyList.appendChild(li);
+    });
+}
+
+function previewVersion(version) {
+    els.textArea.value = version.content;
+    updateStats();
+}
+
+async function restoreVersion(version) {
+    if (confirm('Restore this version? This will save it as the new current version.')) {
+        els.textArea.value = version.content;
+        await savePrompt();
+    }
+}
+
+function createNewPrompt() {
+    currentPromptId = null;
+    els.titleInput.value = '';
+    els.textArea.value = '';
+    if (els.historyList) els.historyList.innerHTML = '<div style="color:#888; padding:10px;">No history</div>';
+    els.titleInput.focus();
+    updateStats();
+    
+    const items = els.promptList.querySelectorAll('.prompt-item');
+    items.forEach(item => item.classList.remove('active'));
+}
+
+function updateStats() {
+    const text = els.textArea.value || '';
+    const words = text.trim().split(/\s+/).filter(Boolean).length;
+    els.wordCount.textContent = `Words: ${words}`;
+    els.charCount.textContent = `Chars: ${text.length}`;
+    
+    if (currentPromptId) {
+         StorageService.getPrompts().then(prompts => {
+             const p = prompts.find(x => x.id === currentPromptId);
+             if (p) {
+                 els.versionLabel.textContent = `Ver: ${p.versions.length}`;
+             }
+         });
+    } else {
+        els.versionLabel.textContent = 'Ver: 0';
+    }
+}
+
+async function deletePrompt() {
+    if (!currentPromptId) return;
+    if (confirm('Delete this prompt permanently?')) {
+        await StorageService.deletePrompt(currentPromptId);
+        currentPromptId = null;
+        await loadPrompts();
+    }
+}
 
 /**
  * Saves the current prompt
