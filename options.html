@@ -199,6 +199,18 @@
 </head>
 <body>
     <div id="sidebar-left">
+        <!-- Projects Section -->
+        <div style="padding: 15px; border-bottom: 1px solid var(--border-color); background: var(--sidebar-bg);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h2 style="margin:0; font-size:12px; color:#888;">WORKSPACES</h2>
+                <button id="add-project-btn" title="Add Project" style="border:none; background:none; cursor:pointer; color:var(--primary-color);">+</button>
+            </div>
+            <select id="project-select" style="width:100%; padding:5px; border:1px solid var(--border-color); border-radius:4px;">
+                <option value="">All Prompts</option>
+                <!-- Projects injected here -->
+            </select>
+        </div>
+
         <div class="sidebar-header">
             <h2>Prompts</h2>
             <button id="new-prompt-btn" title="New Prompt">+</button>

@@ -4,26 +4,20 @@
  * Enforces data consistency and handles migration legacy data.
  */
 
-const STORAGE_KEY = 'prompts';
+const STORAGE_KEY_PROMPTS = 'prompts';
+const STORAGE_KEY_PROJECTS = 'projects';
 
 /**
- * @typedef {Object} Version
+ * @typedef {Object} Project
  * @property {string} id - UUIDv4
- * @property {string} content - The prompt text
- * @property {number} timestamp - Unix timestamp
- * @property {string} [author] - Optional author name
+ * @property {string} name - Display name
+ * @property {string} systemPrompt - Base grounding context
+ * @property {number} createdAt
  */
 
 /**
- * @typedef {Object} Prompt
- * @property {string} id - UUIDv4
- * @property {string} title - Display title
- * @property {string} currentVersionId - ID of the active version
- * @property {Version[]} versions - History of changes
- * @property {string[]} tags - Organization tags
- * @property {number} createdAt - Unix timestamp
- * @property {number} updatedAt - Unix timestamp
- * @property {string} [projectId] - Optional link to a Project
+ * @typedef {Object} Version
+ * ... (existing types)
  */
 
 class StorageService {
@@ -31,56 +25,67 @@ class StorageService {
         this.storage = chrome.storage.local;
     }
 
-    /**
-     * Generates a UUID v4
-     * @returns {string}
-     */
     _generateUUID() {
         return crypto.randomUUID();
     }
 
+    // --- Projects ---
+
     /**
-     * Migrates legacy array-of-strings data to the new object format.
-     * @param {string[]|Object[]} data - The raw data from storage
-     * @returns {Prompt[]} - The normalized Prompt objects
+     * Retrieves all projects.
+     * @returns {Promise<Project[]>}
      */
-    _normalizeData(data) {
-        if (!Array.isArray(data)) return [];
-
-        // Check if it's the old format (array of strings)
-        if (data.length > 0 && typeof data[0] === 'string') {
-            console.log('StorageService: Detected legacy data. Migrating...');
-            return data.map(content => this._createPromptObject(content));
-        }
-
-        return data;
+    async getProjects() {
+        return new Promise((resolve, reject) => {
+            this.storage.get([STORAGE_KEY_PROJECTS], (result) => {
+                if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+                resolve(result[STORAGE_KEY_PROJECTS] || []);
+            });
+        });
     }
 
     /**
-     * Helper to create a new Prompt object from raw content
-     * @param {string} content 
-     * @returns {Prompt}
+     * Adds a new project.
+     * @param {string} name 
+     * @param {string} systemPrompt 
+     * @returns {Promise<Project>}
      */
-    _createPromptObject(content) {
-        const promptId = this._generateUUID();
-        const versionId = this._generateUUID();
-        const timestamp = Date.now();
-        const title = content.length > 30 ? content.substring(0, 30) + '...' : content;
-
-        return {
-            id: promptId,
-            title: title || 'Untitled Prompt',
-            currentVersionId: versionId,
-            versions: [{
-                id: versionId,
-                content: content || '',
-                timestamp: timestamp
-            }],
-            tags: [],
-            createdAt: timestamp,
-            updatedAt: timestamp
+    async addProject(name, systemPrompt = "") {
+        const projects = await this.getProjects();
+        const newProject = {
+            id: this._generateUUID(),
+            name,
+            systemPrompt,
+            createdAt: Date.now()
         };
+        projects.push(newProject);
+        
+        await new Promise((resolve, reject) => {
+            this.storage.set({ [STORAGE_KEY_PROJECTS]: projects }, () => {
+                if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+                resolve();
+            });
+        });
+        return newProject;
     }
+
+    /**
+     * Deletes a project. 
+     * Note: Does NOT delete associated prompts (they become orphaned/default).
+     * @param {string} id 
+     */
+    async deleteProject(id) {
+        const projects = await this.getProjects();
+        const filtered = projects.filter(p => p.id !== id);
+        await new Promise((resolve, reject) => {
+            this.storage.set({ [STORAGE_KEY_PROJECTS]: filtered }, () => {
+                if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+                resolve();
+            });
+        });
+    }
+
+    // --- Prompts ---
 
     /**
      * Retrieves all prompts, handling migration transparently.
@@ -88,15 +93,14 @@ class StorageService {
      */
     async getPrompts() {
         return new Promise((resolve, reject) => {
-            this.storage.get([STORAGE_KEY], (result) => {
+            this.storage.get([STORAGE_KEY_PROMPTS], (result) => {
                 if (chrome.runtime.lastError) {
                     return reject(chrome.runtime.lastError);
                 }
 
-                const rawData = result[STORAGE_KEY] || [];
+                const rawData = result[STORAGE_KEY_PROMPTS] || [];
                 const prompts = this._normalizeData(rawData);
 
-                // If migration happened, save it back immediately
                 if (rawData.length > 0 && typeof rawData[0] === 'string') {
                     this.saveAllPrompts(prompts);
                 }
@@ -107,13 +111,29 @@ class StorageService {
     }
 
     /**
+     * Assigns a prompt to a project.
+     * @param {string} promptId 
+     * @param {string|null} projectId - Null to remove from project
+     */
+    async setPromptProject(promptId, projectId) {
+        const prompts = await this.getPrompts();
+        const index = prompts.findIndex(p => p.id === promptId);
+        if (index === -1) throw new Error("Prompt not found");
+        
+        prompts[index].projectId = projectId;
+        prompts[index].updatedAt = Date.now();
+        
+        await this.saveAllPrompts(prompts);
+    }
+
+    /**
      * Saves the entire list of prompts (internal use).
      * @param {Prompt[]} prompts 
      * @returns {Promise<void>}
      */
     async saveAllPrompts(prompts) {
         return new Promise((resolve, reject) => {
-            this.storage.set({ [STORAGE_KEY]: prompts }, () => {
+            this.storage.set({ [STORAGE_KEY_PROMPTS]: prompts }, () => {
                 if (chrome.runtime.lastError) {
                     return reject(chrome.runtime.lastError);
                 }
@@ -121,6 +141,7 @@ class StorageService {
             });
         });
     }
+
 
     /**
      * Adds a new prompt.
