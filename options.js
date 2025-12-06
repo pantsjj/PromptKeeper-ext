@@ -12,13 +12,28 @@ const els = {
     deleteBtn: document.getElementById('delete-btn'),
     wordCount: document.getElementById('word-count'),
     charCount: document.getElementById('char-count'),
-    versionLabel: document.getElementById('version-label')
+    versionLabel: document.getElementById('version-label'),
+    historyList: null // Will be initialized
 };
 
 /**
  * Initialize the Options Page
  */
 async function init() {
+    // History List Container setup
+    const historyPlaceholder = document.querySelector('.panel-section:nth-child(3) .ai-tools-placeholder');
+    if (historyPlaceholder) {
+        const listContainer = document.createElement('ul');
+        listContainer.id = 'history-list';
+        listContainer.style.listStyle = 'none';
+        listContainer.style.padding = '0';
+        listContainer.style.margin = '0';
+        historyPlaceholder.replaceWith(listContainer);
+        els.historyList = listContainer;
+    } else {
+        els.historyList = document.getElementById('history-list'); 
+    }
+
     await loadPrompts();
     setupEventListeners();
 }
@@ -74,16 +89,62 @@ function selectPrompt(prompt) {
     els.textArea.value = currentVersion ? currentVersion.content : '';
     
     updateStats();
+    renderHistory(prompt);
     
     // Refresh list highlight
     const items = els.promptList.querySelectorAll('.prompt-item');
-    items.forEach((item, index) => {
-        // Naive index matching, ideally use ID in dataset
-        // Re-rendering list to ensure correct active state
+    items.forEach((item) => {
+        item.classList.remove('active');
+        // Simple text matching for now, ideally use ID in dataset
+        if (item.querySelector('.prompt-item-title').textContent === prompt.title) {
+           item.classList.add('active');
+        }
     });
-    // For simplicity, just re-render list to highlight correct ID
-    // In production, optimized DOM manipulation is better.
-    StorageService.getPrompts().then(renderPromptList);
+}
+
+/**
+ * Renders the history list in the sidebar
+ * @param {Object} prompt 
+ */
+function renderHistory(prompt) {
+    if (!els.historyList) return;
+    els.historyList.innerHTML = '';
+    
+    // Sort versions new -> old
+    const sortedVersions = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp);
+    
+    sortedVersions.forEach(version => {
+        const isCurrent = version.id === prompt.currentVersionId;
+        const li = document.createElement('li');
+        li.style.padding = '8px 0';
+        li.style.borderBottom = '1px solid var(--border-color)';
+        li.style.fontSize = '12px';
+        li.style.cursor = 'pointer';
+        
+        const date = new Date(version.timestamp);
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = date.toLocaleDateString();
+        
+        li.innerHTML = `
+            <div style="font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? 'var(--primary-color)' : 'inherit'}">
+                ${isCurrent ? 'Current Version' : 'Previous Version'}
+            </div>
+            <div style="color: #888;">${dateStr} ${timeStr}</div>
+        `;
+        
+        li.addEventListener('click', () => previewVersion(version));
+        els.historyList.appendChild(li);
+    });
+}
+
+/**
+ * Previews a specific version in the editor
+ * @param {Object} version 
+ */
+function previewVersion(version) {
+    els.textArea.value = version.content;
+    updateStats();
+    // Visual feedback could be added here (e.g., "Previewing v1...")
 }
 
 /**
@@ -93,6 +154,7 @@ function createNewPrompt() {
     currentPromptId = null;
     els.titleInput.value = '';
     els.textArea.value = '';
+    if (els.historyList) els.historyList.innerHTML = '<div style="color:#888; padding:10px;">No history</div>';
     els.titleInput.focus();
     updateStats();
     
@@ -147,7 +209,12 @@ async function savePrompt() {
             }
             currentPromptId = newPrompt.id;
         }
-        await loadPrompts(); // Refresh list
+        
+        // Reload to update history list with the new version
+        const prompts = await StorageService.getPrompts();
+        const updatedPrompt = prompts.find(p => p.id === currentPromptId);
+        if (updatedPrompt) selectPrompt(updatedPrompt); 
+        
     } catch (err) {
         console.error('Save error:', err);
         alert('Failed to save.');
