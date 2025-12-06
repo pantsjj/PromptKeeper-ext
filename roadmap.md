@@ -48,13 +48,13 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 ## Phase 3: AI-Powered Optimization (Gemini Nano)
 *Goal: Leverage Chrome's built-in AI using the "Gemini for Workspace" framework.*
 
-*   [ ] **"Score" Action**: Analyze prompts against the 4 Pillars (Persona, Task, Context, Format).
-*   [ ] **Iterative Refinement**: Quick actions for "Formalize", "Summarize", "Clarify".
-*   [ ] **Intent-Based Suggestions (Auto-Generate)**:
+*   [x] **"Score" Action**: Analyze prompts against the 4 Pillars (Persona, Task, Context, Format).
+*   [x] **Iterative Refinement**: Quick actions for "Formalize", "Summarize", "Clarify".
+*   [x] **Intent-Based Suggestions (Auto-Generate)**:
     *   **"Magic Enhance"**: Extracts intent from rough notes and formats it.
     *   **"Image Gen Preset"**: Optimizes for visual models (Style, Lighting, Composition).
     *   **"Professional Polish"**: Rewrites for business context.
-*   [ ] **Model Management**: Graceful UI for model download progress.
+*   [x] **Model Management**: Graceful UI for model download progress (Handled in AIService session creation).
 
 ## Phase 4: Workspaces & Context Management
 *Goal: Structure and coherency.*

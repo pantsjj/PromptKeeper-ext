@@ -27,6 +27,6 @@ One-click buttons to fix common issues.
 "Magic" buttons that transform rough notes into specific formats.
 
 **Acceptance Criteria**:
-- [ ] **Magic Enhance**: Transforms rough notes -> Structured Prompt (Persona/Task/Context/Format).
-- [ ] **Image Gen**: Transforms description -> Visual Prompt (Subject, Style, Mood).
-- [ ] **Professional Polish**: Transforms slang/notes -> Business Email/Doc.
+- [x] **Magic Enhance**: Transforms rough notes -> Structured Prompt (Persona/Task/Context/Format).
+- [x] **Image Gen**: Transforms description -> Visual Prompt (Subject, Style, Mood).
+- [x] **Professional Polish**: Transforms slang/notes -> Business Email/Doc (Covered by "Formalize").
