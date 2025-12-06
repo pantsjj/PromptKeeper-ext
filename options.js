@@ -32,28 +32,43 @@ const els = {
  * Initialize the Options Page
  */
 async function init() {
+    console.log('Options Init: Starting...');
+    
+    // 1. Setup listeners first so UI is responsive
+    setupEventListeners();
+
+    // 2. AI Check
     try {
         await checkAIStatus();
-        await loadProjects();
-        await loadPrompts();
-        
-        // History List Container setup
-        const historyPlaceholder = document.querySelector('.panel-section:nth-child(3) .ai-tools-placeholder');
-        if (historyPlaceholder) {
-            const listContainer = document.createElement('ul');
-            listContainer.id = 'history-list';
-            listContainer.style.listStyle = 'none';
-            listContainer.style.padding = '0';
-            listContainer.style.margin = '0';
-            historyPlaceholder.replaceWith(listContainer);
-            els.historyList = listContainer;
-        } else {
-            els.historyList = document.getElementById('history-list'); 
-        }
-
-        setupEventListeners();
     } catch (err) {
-        console.error("Init failed:", err);
+        console.warn("AI Status Check failed:", err);
+    }
+
+    // 3. Load Data
+    try {
+        await loadProjects();
+    } catch (err) {
+        console.error("Failed to load projects:", err);
+    }
+
+    try {
+        await loadPrompts();
+    } catch (err) {
+        console.error("Failed to load prompts:", err);
+    }
+    
+    // 4. Setup History List Placeholder
+    const historyPlaceholder = document.querySelector('.panel-section:nth-child(3) .ai-tools-placeholder');
+    if (historyPlaceholder) {
+        const listContainer = document.createElement('ul');
+        listContainer.id = 'history-list';
+        listContainer.style.listStyle = 'none';
+        listContainer.style.padding = '0';
+        listContainer.style.margin = '0';
+        historyPlaceholder.replaceWith(listContainer);
+        els.historyList = listContainer;
+    } else {
+        els.historyList = document.getElementById('history-list'); 
     }
 }
 
@@ -113,7 +128,8 @@ async function handleAddProject() {
 }
 
 async function handleProjectChange() {
-    currentProjectId = els.projectSelect.value || null;
+    const val = els.projectSelect.value;
+    currentProjectId = val === "" ? null : val; // Ensure empty string becomes null
     await loadPrompts();
 }
 
@@ -122,8 +138,11 @@ async function handleProjectChange() {
  */
 async function loadPrompts() {
     const prompts = await StorageService.getPrompts();
+    console.log(`Loaded ${prompts.length} prompts. Current Project: ${currentProjectId}`);
     
     // Filter by Project
+    // If currentProjectId is null, show all.
+    // If currentProjectId is set, match p.projectId
     const filteredPrompts = currentProjectId 
         ? prompts.filter(p => p.projectId === currentProjectId)
         : prompts;
