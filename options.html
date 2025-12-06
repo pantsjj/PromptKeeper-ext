@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptKeeper - Editor</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --sidebar-bg: #f5f5f5;
+            --border-color: #e0e0e0;
+            --primary-color: #4285f4;
+            --accent-color: #e8f0fe;
+            --editor-bg: #ffffff;
+            --code-font: 'Menlo', 'Monaco', 'Courier New', monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --text-color: #e0e0e0;
+                --sidebar-bg: #252526;
+                --border-color: #333333;
+                --primary-color: #4285f4;
+                --accent-color: #3a3d41;
+                --editor-bg: #1e1e1e;
+            }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar - Prompt List */
+        #sidebar-left {
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        #new-prompt-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        #prompt-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .prompt-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .prompt-item:hover {
+            background-color: var(--accent-color);
+        }
+
+        .prompt-item.active {
+            background-color: var(--accent-color);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .prompt-item-title {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .prompt-item-date {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Main Editor Area */
+        #main-editor {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--editor-bg);
+        }
+
+        #editor-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+
+        #prompt-title-input {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            outline: none;
+        }
+
+        #save-btn {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        #editor-content {
+            flex: 1;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        #prompt-text-area {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            background: transparent;
+            color: var(--text-color);
+            font-family: var(--code-font);
+            font-size: 14px;
+            line-height: 1.6;
+            outline: none;
+        }
+
+        /* Right Sidebar - Tools/History */
+        #sidebar-right {
+            background-color: var(--sidebar-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-panel div {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        /* Placeholder for AI Tools */
+        .ai-tools-placeholder {
+            border: 1px dashed var(--border-color);
+            padding: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            border-radius: 4px;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="sidebar-left">
+        <div class="sidebar-header">
+            <h2>Prompts</h2>
+            <button id="new-prompt-btn" title="New Prompt">+</button>
+        </div>
+        <ul id="prompt-list">
+            <!-- Prompts injected here -->
+        </ul>
+    </div>
+
+    <div id="main-editor">
+        <div id="editor-header">
+            <input type="text" id="prompt-title-input" placeholder="Untitled Prompt">
+            <button id="save-btn">Save</button>
+            <button id="delete-btn" style="background:none; border:none; color: #d93025; cursor:pointer;">Delete</button>
+        </div>
+        <div id="editor-content">
+            <textarea id="prompt-text-area" placeholder="Write your prompt here..."></textarea>
+        </div>
+    </div>
+
+    <div id="sidebar-right">
+        <div class="panel-section stats-panel">
+            <h3>Statistics</h3>
+            <div id="word-count">Words: 0</div>
+            <div id="char-count">Chars: 0</div>
+            <div id="version-label">Current Version: v1</div>
+        </div>
+
+        <div class="panel-section">
+            <h3>AI Optimization</h3>
+            <div class="ai-tools-placeholder">
+                AI Tools & Scoring coming in Phase 3
+            </div>
+        </div>
+        
+        <div class="panel-section">
+            <h3>History</h3>
+            <div class="ai-tools-placeholder">
+                Version History coming in Phase 2
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="options.js"></script>
+</body>
+</html>
