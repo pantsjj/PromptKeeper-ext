@@ -1,4 +1,5 @@
 import StorageService from './services/StorageService.js';
+import AIService from './services/AIService.js';
 
 let currentPromptId = null;
 
@@ -13,7 +14,12 @@ const els = {
     wordCount: document.getElementById('word-count'),
     charCount: document.getElementById('char-count'),
     versionLabel: document.getElementById('version-label'),
-    historyList: null // Will be initialized
+    historyList: null, // Will be initialized
+    scoreBtn: document.getElementById('score-btn'),
+    scoreResult: document.getElementById('score-result'),
+    scoreValue: document.getElementById('score-value'),
+    scoreFeedback: document.getElementById('score-feedback'),
+    refineBtns: document.querySelectorAll('.refine-btn')
 };
 
 /**
@@ -281,6 +287,78 @@ function setupEventListeners() {
             savePrompt();
         }
     });
+
+    // AI Features
+    if (els.scoreBtn) {
+        els.scoreBtn.addEventListener('click', handleScore);
+    }
+    
+    if (els.refineBtns) {
+        els.refineBtns.forEach(btn => {
+            btn.addEventListener('click', () => handleRefine(btn.dataset.type));
+        });
+    }
+}
+
+/**
+ * AI: Score the current prompt
+ */
+async function handleScore() {
+    const text = els.textArea.value.trim();
+    if (!text) return alert("Enter a prompt to score.");
+
+    els.scoreBtn.textContent = "Analyzing...";
+    els.scoreBtn.disabled = true;
+    els.scoreResult.classList.add('hidden');
+
+    try {
+        const result = await AIService.scorePrompt(text);
+        
+        els.scoreValue.textContent = `${result.score}/10`;
+        els.scoreFeedback.textContent = result.feedback;
+        els.scoreResult.classList.remove('hidden');
+        
+        // Color coding
+        if (result.score >= 8) els.scoreValue.style.color = '#188038'; // Green
+        else if (result.score >= 5) els.scoreValue.style.color = '#f9ab00'; // Orange
+        else els.scoreValue.style.color = '#d93025'; // Red
+
+    } catch (err) {
+        alert("AI Scoring failed. Make sure Gemini Nano is available.");
+        console.error(err);
+    } finally {
+        els.scoreBtn.textContent = "✨ Score Prompt";
+        els.scoreBtn.disabled = false;
+    }
+}
+
+/**
+ * AI: Refine the prompt (Magic Enhance, Formalize, etc)
+ */
+async function handleRefine(type) {
+    const text = els.textArea.value.trim();
+    if (!text) return alert("Enter a prompt to refine.");
+
+    const originalText = els.saveBtn.textContent;
+    els.saveBtn.textContent = "Refining...";
+    document.body.style.cursor = 'wait';
+
+    try {
+        const refinedText = await AIService.refinePrompt(text, type);
+        
+        if (refinedText) {
+            els.textArea.value = refinedText;
+            // Automatically save as new version to allow easy revert
+            await savePrompt();
+            alert(`Prompt refined (${type}) and saved as new version!`);
+        }
+    } catch (err) {
+        alert("Refinement failed. " + err.message);
+    } finally {
+        els.saveBtn.textContent = "Save";
+        document.body.style.cursor = 'default';
+        updateStats();
+    }
 }
 
 // Start

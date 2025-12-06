@@ -229,8 +229,26 @@
 
         <div class="panel-section">
             <h3>AI Optimization</h3>
-            <div class="ai-tools-placeholder">
-                AI Tools & Scoring coming in Phase 3
+            <div id="ai-tools-container">
+                <button id="score-btn" class="secondary-button" style="width:100%; margin-bottom: 10px;">✨ Score Prompt</button>
+                
+                <div id="score-result" class="hidden" style="background: var(--accent-color); padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                        <span id="score-value" style="font-size: 24px; font-weight: bold; color: var(--primary-color);">0/10</span>
+                        <span style="font-size: 12px; font-weight: 600; color: #666;">PROMPT SCORE</span>
+                    </div>
+                    <p id="score-feedback" style="font-size: 12px; margin: 0; line-height: 1.4;"></p>
+                </div>
+
+                <div class="refine-actions">
+                    <h4 style="margin: 0 0 8px 0; font-size: 11px; color: #888;">QUICK ACTIONS</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button class="refine-btn" data-type="magic_enhance">🪄 Magic Enhance</button>
+                        <button class="refine-btn" data-type="formalize">👔 Formalize</button>
+                        <button class="refine-btn" data-type="clarify">🔍 Clarify Task</button>
+                        <button class="refine-btn" data-type="summarize">✂️ Shorten</button>
+                    </div>
+                </div>
             </div>
         </div>
         

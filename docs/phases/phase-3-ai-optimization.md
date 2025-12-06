@@ -7,9 +7,9 @@
 Evaluate the user's prompt against the 4 Pillars: Persona, Task, Context, Format.
 
 **Acceptance Criteria**:
-- [ ] Update `AIService` to support a "Scoring" session.
-- [ ] System Prompt: "Evaluate based on Persona, Task, Context, Format. Return JSON { score: 1-10, feedback: '...' }."
-- [ ] Display the Score and Feedback in the Right Sidebar.
+- [x] Update `AIService` to support a "Scoring" session.
+- [x] System Prompt: "Evaluate based on Persona, Task, Context, Format. Return JSON { score: 1-10, feedback: '...' }."
+- [x] Display the Score and Feedback in the Right Sidebar.
 
 ## Task 3.2: Refinement Actions
 **Issue Title**: Feat: Add Quick Refinement Actions
@@ -17,9 +17,9 @@ Evaluate the user's prompt against the 4 Pillars: Persona, Task, Context, Format
 One-click buttons to fix common issues.
 
 **Acceptance Criteria**:
-- [ ] Add buttons: "Formalize", "Clarify", "Summarize".
-- [ ] Each button triggers a specific Gemini transformation prompt.
-- [ ] Result replaces (or appends to) the current editor content.
+- [x] Add buttons: "Formalize", "Clarify", "Summarize".
+- [x] Each button triggers a specific Gemini transformation prompt.
+- [x] Result replaces (or appends to) the current editor content.
 
 ## Task 3.3: Intent-Based Presets
 **Issue Title**: Feat: Implement Intent-Based Transformation Presets
