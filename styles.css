@@ -95,71 +95,43 @@ aside h2 {
 
 #editor-content {
     flex: 1;
-    padding: 20px;
+    padding: 10px 15px; /* Reduced padding */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 8px; /* Reduced gap from 15px */
 }
 
 label {
-    font-size: 12px;
+    font-size: 11px; /* Slightly smaller */
     font-weight: 600;
     color: #1d1d1f;
-    margin-bottom: 4px;
+    margin-bottom: 2px; /* Tighter label spacing */
     display: block;
 }
 
 input[type="text"], textarea, select {
     width: 100%;
-    padding: 8px;
+    padding: 6px; /* Compact padding */
     border: 1px solid #d2d2d7;
     border-radius: 6px;
     font-family: inherit;
     font-size: 13px;
     box-sizing: border-box;
+    margin-bottom: 0; /* Remove default margins, rely on flex gap */
 }
 
 textarea {
     resize: vertical;
-    min-height: 150px;
+    min-height: 120px; /* Slightly shorter min height */
     font-family: 'Menlo', monospace;
-    line-height: 1.5;
-}
-
-/* Buttons */
-button {
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-}
-
-button:hover { opacity: 0.9; }
-
-#save-button, .ai-button {
-    background-color: #0071e3;
-    color: white;
-}
-
-#new-button { background-color: #f5f5f7; color: #1d1d1f; border: 1px solid #d2d2d7; }
-#delete-button { background-color: transparent; color: #ff3b30; }
-.paste-button { background-color: #34c759; color: white; }
-
-.editor-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    align-items: center;
+    line-height: 1.4;
 }
 
 /* AI Capability & Tunables (Legacy Support) */
 #ai-capability, #tunables {
-    margin-top: 15px;
-    padding: 15px;
+    margin-top: 5px; /* Reduced top margin */
+    padding: 10px; /* Reduced padding */
     background-color: #f5f5f7;
     border-radius: 8px;
 }
