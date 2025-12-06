@@ -34,13 +34,16 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [ ] **Diff View (Optional)**: Simple visual indicator of added/removed text between versions (Stretch goal).
 
 ## Phase 3: AI-Powered Optimization (Gemini Nano Integration)
-*Goal: Leverage Chrome's built-in AI to improve prompt quality.*
+*Goal: Leverage Chrome's built-in AI to improve prompt quality using the "Gemini for Google Workspace: Prompting 101" framework.*
 
 *   [ ] **"Optimize" Action**: A button that sends the current prompt to Gemini Nano with a meta-prompt: *"Rewrite this prompt to be more clear, specific, and effective using the Persona-Task-Context-Format framework."*
-*   [ ] **"Score" Action**: Analyze the prompt and return a score (1-10) with specific feedback.
-    *   *Check*: Does it have a persona?
-    *   *Check*: Is the task clear?
-    *   *Check*: Are there examples (Few-Shot)?
+*   [ ] **"Score" Action**: Analyze the prompt and return a score (1-10) based on the 4 pillars defined in the best practice guide:
+    *   **Persona**: Does it assign a role? (e.g., "You are a Product Manager")
+    *   **Task**: Is the objective clear and active? (e.g., "Draft an email")
+    *   **Context**: Is there sufficient background info?
+    *   **Format**: Is the output format specified? (e.g., "Table", "Bullet points")
+*   [ ] **Iterative Refinement UI**:
+    *   Based on the guide's "Refine" and "Elaborate" workflows, add quick-action buttons for common refinements: "Formalize Tone", "Summarize", "Make it clearer".
 *   [ ] **Model Management UI**: Handle the "Download" state of Gemini Nano gracefully (progress bars, status indicators) as per Chrome 143 guidelines.
 
 ## Phase 4: Advanced Management & Templating
