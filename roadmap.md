@@ -5,18 +5,18 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 ## Phase 0: Architecture & UX Foundation (High Impact / Min Effort)
 *Goal: Decouple logic from UI and provide enough screen real estate for "Engineering" prompts.*
 
-*   [ ] **Service Layer Extraction**: Move logic out of `popup.js` into dedicated ES modules:
+*   [x] **Service Layer Extraction**: Move logic out of `popup.js` into dedicated ES modules:
     *   `StorageService.js`: Handles CRUD, Data Migration, and Versioning logic.
     *   `AIService.js`: Wrapper for `window.ai` interactions, handling sessions and fallbacks.
-*   [ ] **Full-Page Editor (Options Page)**:
+*   [x] **Full-Page Editor (Options Page)**:
     *   *Problem*: A 600px popup is too small for serious prompt engineering.
     *   *Solution*: Build `options.html` as a full-screen "IDE" for deep work, keeping `popup.html` for quick access/injection.
-*   [ ] **Visual Polish**: Implement a clean, card-based UI with "Dark Mode" support to feel like a professional developer tool.
+*   [x] **Visual Polish**: Implement a clean, card-based UI with "Dark Mode" support to feel like a professional developer tool.
 
 ## Phase 1: Data Model Refactor (Critical)
 *Current Limitation: Prompts are stored as a simple array of strings. This prevents metadata, titles, or history.*
 
-*   [ ] **Refactor Data Structure**: Migrate `chrome.storage.local` from `['text']` to:
+*   [x] **Refactor Data Structure**: Migrate `chrome.storage.local` from `['text']` to:
     ```json
     {
       "prompts": [
@@ -35,13 +35,13 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
       ]
     }
     ```
-*   [ ] **Migration Script**: Create a "onUpdate" handler in `background.js` to migrate existing user data.
-*   [ ] **UI Update**: Update `popup.js` (and new `options.js`) to render lists based on `title`.
+*   [x] **Migration Script**: Create a "onUpdate" handler in `background.js` to migrate existing user data.
+*   [x] **UI Update**: Update `popup.js` (and new `options.js`) to render lists based on `title`.
 
 ## Phase 2: Version Control System
 *Goal: Allow users to experiment fearlessly.*
 
-*   [ ] **Version History UI**: Add a "History" view to see previous iterations.
+*   [x] **Version History UI**: Add a "History" view to see previous iterations.
 *   [ ] **Revert Functionality**: Ability to restore an older version.
 *   [ ] **Diff View (Optional)**: Visual indicator of text changes.
 

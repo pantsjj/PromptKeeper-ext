@@ -7,7 +7,7 @@
 Saving a prompt should no longer overwrite the data. It should append a new version.
 
 **Acceptance Criteria**:
-- [ ] Update `StorageService.savePrompt()`:
+- [x] Update `StorageService.savePrompt()`:
     - Check if prompt exists.
     - If yes: Create new `Version` object, push to `versions` array, update `currentVersionId`, update `updatedAt`.
     - If no: Create new `Prompt` with initial version.
@@ -18,9 +18,9 @@ Saving a prompt should no longer overwrite the data. It should append a new vers
 Users need to see and select past versions.
 
 **Acceptance Criteria**:
-- [ ] Add "History" panel to the Right Sidebar in `options.html`.
-- [ ] List versions by timestamp (e.g., "Today, 10:30 AM").
-- [ ] Clicking a version loads its content into the Main Editor.
+- [x] Add "History" panel to the Right Sidebar in `options.html`.
+- [x] List versions by timestamp (e.g., "Today, 10:30 AM").
+- [x] Clicking a version loads its content into the Main Editor.
 
 ## Task 2.3: Revert Functionality
 **Issue Title**: Feat: Add "Revert" or "Restore" Action
