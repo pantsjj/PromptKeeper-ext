@@ -44,6 +44,11 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
     *   **Format**: Is the output format specified? (e.g., "Table", "Bullet points")
 *   [ ] **Iterative Refinement UI**:
     *   Based on the guide's "Refine" and "Elaborate" workflows, add quick-action buttons for common refinements: "Formalize Tone", "Summarize", "Make it clearer".
+*   [ ] **Intent-Based Suggestions (Auto-Generate)**:
+    *   **"Magic Enhance"**: Analyzes rough user input to extract core intent and rewrites it into a structured prompt.
+    *   **Specialized Presets**:
+        *   *"Optimize for Image Generation"*: Restructures prompt for visual models (focusing on subject, style, lighting, composition).
+        *   *"Professional Polish"*: Elevates tone for business contexts.
 *   [ ] **Model Management UI**: Handle the "Download" state of Gemini Nano gracefully (progress bars, status indicators) as per Chrome 143 guidelines.
 
 ## Phase 4: Advanced Management & Templating
