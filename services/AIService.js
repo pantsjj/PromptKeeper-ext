@@ -72,6 +72,71 @@ class AIService {
     }
 
     /**
+     * Scores a prompt based on the 4 Pillars of effective prompting.
+     * @param {string} promptText 
+     * @returns {Promise<Object>} { score: number, feedback: string }
+     */
+    async scorePrompt(promptText) {
+        const systemInstruction = `
+You are an expert Prompt Engineer. Evaluate the user's prompt based on these 4 Pillars:
+1. Persona (Who)
+2. Task (What)
+3. Context (Why/Background)
+4. Format (How output should look)
+
+Return a response in this exact format:
+SCORE: [1-10]
+FEEDBACK: [Brief specific advice to improve missing pillars]
+`;
+        
+        const fullPrompt = `${systemInstruction}\n\nUser Prompt: "${promptText}"`;
+        
+        try {
+            const response = await this.prompt(fullPrompt);
+            
+            // Simple parsing of the response
+            const scoreMatch = response.match(/SCORE:\s*(\d+)/i);
+            const feedbackMatch = response.match(/FEEDBACK:\s*(.+)/is);
+            
+            return {
+                score: scoreMatch ? parseInt(scoreMatch[1], 10) : 0,
+                feedback: feedbackMatch ? feedbackMatch[1].trim() : "Could not parse feedback."
+            };
+        } catch (err) {
+            console.error('Scoring failed:', err);
+            return { score: 0, feedback: "AI service unavailable or error occurred." };
+        }
+    }
+
+    /**
+     * Refines a prompt based on a specific goal.
+     * @param {string} promptText 
+     * @param {string} refinementType - e.g., 'formalize', 'clarify', 'expand'
+     * @returns {Promise<string>}
+     */
+    async refinePrompt(promptText, refinementType) {
+        let instruction = "";
+        switch (refinementType) {
+            case 'formalize':
+                instruction = "Rewrite this prompt to be more professional and corporate. Remove slang.";
+                break;
+            case 'clarify':
+                instruction = "Make the 'Task' in this prompt clearer and more active. Use strong verbs.";
+                break;
+            case 'summarize':
+                instruction = "Shorten this prompt while keeping the core intent. Aim for ~21 words.";
+                break;
+            case 'magic_enhance':
+                instruction = "Rewrite this prompt to include a defined Persona, Task, Context, and Format. Extrapolate missing details reasonably.";
+                break;
+            default:
+                instruction = "Improve this prompt.";
+        }
+
+        return this.rewrite(promptText, instruction);
+    }
+
+    /**
      * Generates text based on a prompt.
      * @param {string} promptText 
      * @param {Object} [options] - Options like systemPrompt (if supported)
