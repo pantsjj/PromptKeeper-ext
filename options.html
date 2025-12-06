@@ -307,7 +307,8 @@
     <div id="main-editor">
         <div id="editor-header">
             <input type="text" id="prompt-title-input" placeholder="Untitled Prompt">
-            <div style="display:flex; gap:8px;">
+            <div style="display:flex; gap:8px; align-items: center;">
+                <select id="version-history-select" style="width: auto; max-width: 160px;"></select>
                 <button id="delete-btn" class="secondary-btn" style="color: #ff3b30; border-color: #ff3b3030;">Delete</button>
                 <button id="save-btn" class="primary-btn">Save</button>
             </div>
@@ -324,7 +325,7 @@
             <div class="stats-grid">
                 <div id="word-count">Words: 0</div>
                 <div id="char-count">Chars: 0</div>
-                <div id="version-label">Ver: 1</div>
+                <div id="version-label">Rev: 1</div>
                 <div>Status: Local</div>
             </div>
         </div>
@@ -362,14 +363,7 @@
             </div>
         </div>
         
-        <!-- History -->
-        <div class="panel-section">
-            <h3>History</h3>
-            <div class="ai-tools-placeholder">
-                <!-- Replaced by JS -->
-                No history
-            </div>
-        </div>
+        <!-- History (Moved to Top Bar) -->
     </div>
 
     <script type="module" src="options.js"></script>

@@ -270,6 +270,32 @@ class StorageService {
         const filtered = prompts.filter(p => p.id !== id);
         await this.saveAllPrompts(filtered);
     }
+
+    /**
+     * Imports prompts from a JSON array.
+     * Handles legacy string arrays by normalizing them.
+     * Merges with existing prompts (appends imported to the top).
+     * @param {any[]} data 
+     * @returns {Promise<number>} Count of imported prompts
+     */
+    async importPrompts(data) {
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid import data: Must be an array.");
+        }
+
+        const importedPrompts = this._normalizeData(data);
+        const existingPrompts = await this.getPrompts();
+
+        // deduplicate by ID if possible, otherwise just concat
+        // (If importing a backup of the same library, we might get duplicates if we don't check IDs)
+        const existingIds = new Set(existingPrompts.map(p => p.id));
+        const uniqueImported = importedPrompts.filter(p => !existingIds.has(p.id));
+
+        const merged = [...uniqueImported, ...existingPrompts];
+        await this.saveAllPrompts(merged);
+        
+        return uniqueImported.length;
+    }
 }
 
 export default new StorageService();

@@ -1,0 +1,37 @@
+{
+  "name": "promptkeeper-ext",
+  "version": "2.0.0",
+  "description": "PromptKeeper is designed to help optimise how we interact with generative AI LLMs. It addresses the challenge of managing, fine-tuning, and reusing engineered prompts in a user-friendly and efficient way. It's all about the conversation - The Context and Intent. PromptKeeper helps you create your own library of Intentional and Bespoke assistants in the form of polished and refined Prompts in your library. You can chose to Export and share these with your friends and family.",
+  "main": "background.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pantsjj/PromptKeeper-ext.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/pantsjj/PromptKeeper-ext/issues"
+  },
+  "homepage": "https://github.com/pantsjj/PromptKeeper-ext#readme",
+  "devDependencies": {
+    "@babel/preset-env": "^7.28.5",
+    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
+    "@types/chrome": "^0.1.32",
+    "babel-jest": "^30.2.0",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "jsdom": "^27.2.0"
+  }
+}

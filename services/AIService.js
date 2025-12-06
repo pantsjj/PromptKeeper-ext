@@ -145,7 +145,7 @@ FEEDBACK: [Brief specific advice to improve missing pillars]
      * @param {Object} [options] - Options like systemPrompt (if supported)
      * @returns {Promise<string>}
      */
-    async prompt(promptText, options = {}) {
+    async prompt(promptText, _options = {}) {
         const session = await this.getSession();
         
         // Note: As of Chrome 130+, streaming is preferred, but simple `prompt` works.

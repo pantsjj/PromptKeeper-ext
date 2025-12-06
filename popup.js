@@ -74,25 +74,64 @@ function selectPrompt(prompt) {
     document.getElementById('prompt-text').value = currentVersion ? currentVersion.content : '';
     
     updateStats();
+    renderVersionSelector(prompt);
+}
+
+function renderVersionSelector(prompt) {
+    const selector = document.getElementById('version-selector');
+    selector.innerHTML = '';
+    
+    // Sort versions desc (newest first)
+    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+    
+    // Create "Header" option that looks like "Revisions #N"
+    // Actually, we want the *selected* option to show the detail, OR we want the "Label" behavior.
+    // To satisfy "Revisions #N" appearing as the label, we can try to format the selected option.
+    
+    sorted.forEach((v, idx) => {
+        const option = document.createElement('option');
+        option.value = v.id;
+        const verNum = prompt.versions.length - idx;
+        const isCurrent = v.id === prompt.currentVersionId;
+        const dateStr = new Date(v.timestamp).toLocaleString();
+        
+        option.textContent = `Revision ${verNum}: ${dateStr} ${isCurrent ? '(Current)' : ''}`;
+        if (isCurrent) option.selected = true;
+        selector.appendChild(option);
+    });
+    
+    // Add "Revisions #N" as a pseudo-label if needed? 
+    // No, standard dropdown behavior is safer. The user will see "v5: Date (Current)" in blue.
+    // If we want strictly "Revisions #N" as the visible text, we'd need a custom UI.
+    // Let's stick to standard <select> styled blue.
+    
+    selector.onchange = (e) => {
+        const vId = e.target.value;
+        const version = prompt.versions.find(v => v.id === vId);
+        if (version) {
+            document.getElementById('prompt-text').value = version.content;
+            updateStats(false); // don't re-render selector to avoid losing focus
+        }
+    };
 }
 
 /**
  * Updates the stats display (Word count, versions, etc)
  */
-function updateStats() {
+function updateStats(renderSelector = true) {
     const text = document.getElementById('prompt-text').value.trim();
     const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
     document.getElementById('word-count').textContent = `Words: ${wordCount}`;
 
-    if (currentPromptId) {
+    if (currentPromptId && renderSelector) {
         StorageService.getPrompts().then(prompts => {
             const p = prompts.find(x => x.id === currentPromptId);
             if (p) {
-                document.getElementById('version-count').textContent = `Versions: ${p.versions.length}`;
+                renderVersionSelector(p);
             }
         });
-    } else {
-        document.getElementById('version-count').textContent = `Versions: 0`;
+    } else if (!currentPromptId) {
+         document.getElementById('version-selector').innerHTML = '<option>New</option>';
     }
     
     updateStorageStats();
@@ -139,7 +178,10 @@ document.getElementById('save-button').addEventListener('click', async () => {
         }
         
         loadPrompts();
-        alert('Saved!'); // Optional feedback
+        // UX Feedback: Pulse Glow
+        const textArea = document.getElementById('prompt-text');
+        textArea.classList.add('pulse-green');
+        setTimeout(() => textArea.classList.remove('pulse-green'), 1000);
     } catch (err) {
         console.error('Save failed:', err);
         alert('Failed to save prompt.');
@@ -219,7 +261,27 @@ document.getElementById('import-link').addEventListener('click', (e) => {
     document.getElementById('import-file').click();
 });
 
-// ... import file change listener remains same ...
+document.getElementById('import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        try {
+            const json = JSON.parse(event.target.result);
+            const count = await StorageService.importPrompts(json);
+            alert(`Successfully imported ${count} prompts.`);
+            loadPrompts();
+        } catch (err) {
+            console.error('Import failed:', err);
+            alert('Failed to import prompts. Invalid JSON file.');
+        } finally {
+             // Reset input so same file can be selected again if needed
+             e.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+});
 
 // Full Editor Link
 document.getElementById('open-full-editor-link').addEventListener('click', (e) => {
