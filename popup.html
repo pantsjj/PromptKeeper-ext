@@ -52,7 +52,10 @@
                     <button id="save-button">Save</button>
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button" class="paste-button">Paste</button>
-                    
+                    <!-- Utilities -->
+                    <button id="export-prompts" style="background-color:#6c757d;">Export</button>
+                    <button id="import-prompts" style="background-color:#6c757d;">Import</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
                 </div>
                   <!-- Language Translation Area -->
                <!--  <div id="translation-capability"> -->
@@ -62,36 +65,6 @@
               <!--   </div> -->
                 
                 </div>
-
-                <!-- Tunables Section -->
-                <section id="tunables">
-                    <h3>About PromptKeeper</h3>
-                    <div class="tunables-content">
-                        <div class="tunables-column">
-                            <h4>Upcoming Features</h4>
-                            <ul>
-                                <li>AI services integration</li>
-                                <li>Prompt quality scoring</li>
-                                <li>Cloud sync</li>
-                                <li>Reusable templates</li>
-                            </ul>
-                        </div>
-                        <div class="tunables-column">
-                            <h4>About the Author</h4>
-                            <li>Author: <a href="https://jaroslav-pantsjoha.medium.com/" target="_blank">Jaroslav</a></li>
-                                <li>Get involved: <a href="https://github.com/jpantsjoha/PromptKeeper-GenAI-Prompts" target="_blank">GitHub Project</a></li>
-                                    <li><b>Version:</b> 1.0.8</li>
-                                    <li>Open Source Under MIT License. No Guarantees or Warranty Howsoever Implied</li>
-                                    
-                        </div>
-                    </div>
-                    <div class="tunables-buttons">
-                        <button id="export-prompts">Export Prompts</button>
-                        <button id="import-prompts">Import Prompts</button>
-                        <input type="file" id="import-file" accept=".json" style="display: none;">
-                    </div>
-                    
-                </section>
                 
             </div>
             
@@ -100,12 +73,18 @@
     </div>
 
     <footer id="stats">
-        <h4>Stats:</h4>
-        <span id="word-count">Words: 0</span>
-        <span id="version-count">Versions: 0</span>
-        <span id="storage-used">Total Storage: 0 KB</span>
+        <div style="display:flex; align-items:center; gap:15px; flex:1;">
+            <strong style="color:#5f6368;">Prompt Collection Stats:</strong>
+            <span id="word-count">Words: 0</span>
+            <span id="version-count">Versions: 0</span>
+            <span id="storage-used">Total Storage: 0 KB</span>
+        </div>
+        <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank" style="color:#999; text-decoration:none; font-size:11px;">Author: Jaroslav</a>
     </footer>
 
     <script src="popup.js" type="module"></script>
+    <div id="full-editor-container">
+        <button id="open-full-editor">✨ Open Full Screen IDE ↗</button>
+    </div>
 </body>
 </html>
