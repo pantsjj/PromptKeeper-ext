@@ -28,5 +28,5 @@ Users need to see and select past versions.
 Users should be able to promote an old version to be the "current" one.
 
 **Acceptance Criteria**:
-- [ ] Add "Restore this Version" button to the History item.
-- [ ] Action: Creates a *new* version (copy of the old one) as the head (preserving linear history, git-like).
+- [x] Add "Restore this Version" button to the History item.
+- [x] Action: Creates a *new* version (copy of the old one) as the head (preserving linear history, git-like).
