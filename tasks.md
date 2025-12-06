@@ -2,96 +2,72 @@
 
 This document tracks the granular tasks required to implement the Roadmap. Use these items to create GitHub Issues.
 
-## Phase 1: Foundation & Data Model Refactor (Priority: High)
-*Objective: Migrate from a simple string array to a robust object-based storage model to support versioning and metadata.*
+## Phase 0: Architecture & UX Foundation (Priority: Critical)
+*Objective: Prepare the codebase for complexity by decoupling logic and improving the workspace.*
+
+### Task 0.1: Service Layer Extraction
+*   **Type**: Refactor
+*   **Description**: Create `services/` directory and abstract logic.
+*   **Sub-tasks**:
+    *   `StorageService.js`: Encapsulate `chrome.storage.local` calls. Add methods: `getPrompts()`, `savePrompt(prompt)`, `deletePrompt(id)`.
+    *   `AIService.js`: Encapsulate `window.ai` calls. Handle session creation and error states.
+*   **Acceptance Criteria**: `popup.js` should not call `chrome.storage` directly.
+
+### Task 0.2: Full-Page Editor (Options Page)
+*   **Type**: Feature
+*   **Description**: Create `options.html` and `options.js`.
+*   **Features**:
+    *   Two-pane layout: Sidebar (Prompt List/Folders), Main (Editor).
+    *   Dark Mode styling foundation.
+    *   "Open in Full Screen" button from the Popup.
+
+## Phase 1: Data Model Refactor (Priority: High)
+*Objective: Migrate from a simple string array to a robust object-based storage model.*
 
 ### Task 1.1: Define Data Interfaces
 *   **Type**: Refactor
-*   **Description**: Create a shared definition (JSDoc or separate file) for the new Prompt object structure.
-*   **Acceptance Criteria**:
-    *   `Prompt` object defined with: `id` (UUID), `title`, `currentVersionId`, `versions` (array), `tags`, `createdAt`, `updatedAt`.
-    *   `Version` object defined with: `id`, `content`, `timestamp`, `author` (optional).
+*   **Description**: Define JSDoc types for `Prompt`, `Version`, and `Project`.
+*   **Structure**:
+    *   `Prompt`: `{ id, projectId, title, currentVersionId, versions[], tags[], ... }`
+    *   `Project`: `{ id, name, systemPrompt, ... }`
 
-### Task 1.2: Implement Storage Migration Service
+### Task 1.2: Implement Storage Migration
 *   **Type**: Feature
-*   **Description**: Implement a one-time migration script in `background.js` (or a dedicated utility) that runs on extension update.
-*   **Logic**:
-    *   Read `chrome.storage.local.get('prompts')`.
-    *   Detect if format is `Array<string>` (old) or `Array<object>` (new).
-    *   If old, map each string to a new `Prompt` object:
-        *   `id`: Generate UUID.
-        *   `title`: Truncate content to 20 chars or use "Untitled".
-        *   `versions`: Create single version with content.
-    *   Save back to storage.
-*   **Acceptance Criteria**:
-    *   Existing user data is preserved and converted to new format on reload.
-    *   New installs initialize with empty object structure.
-
-### Task 1.3: Update Popup UI for Object Support
-*   **Type**: Refactor
-*   **Description**: Update `popup.js` to render the list of prompts from the new object structure.
-*   **Changes**:
-    *   `displayPrompts()`: Iterate over objects. Display `title` instead of raw text.
-    *   Add "Edit" view or modal to view full content/versions (precursor to Phase 2).
-    *   Update "Add" and "Delete" functions to handle objects.
+*   **Description**: `StorageService` must handle legacy data (`string[]`) -> new format (`Prompt[]`) on initialization.
 
 ## Phase 2: Version Control System (Priority: Medium)
-*Objective: Enable history tracking for prompts.*
+*Objective: Enable history tracking.*
 
-### Task 2.1: Version Capture Logic
-*   **Type**: Feature
-*   **Description**: Modify the "Save" function. Instead of overwriting, push a new entry to the `versions` array and update `currentVersionId`.
+### Task 2.1: Version Capture
+*   **Type**: Logic
+*   **Description**: `StorageService.updatePrompt()` should push to `versions` array instead of overwriting.
 
 ### Task 2.2: History UI
-*   **Type**: Feature
-*   **Description**: Add a "History" tab or dropdown in the prompt detail view.
-*   **Acceptance Criteria**:
-    *   User can see list of past versions with timestamps.
-    *   Clicking a past version displays its content.
+*   **Type**: UI
+*   **Description**: Add History list in the Right Sidebar of the Editor.
 
 ## Phase 3: AI Optimization (Priority: Medium)
-*Objective: Integrate 'Prompting 101' best practices using Gemini Nano.*
+*Objective: Integrate 'Prompting 101' best practices.*
 
 ### Task 3.1: "Score My Prompt" Service
 *   **Type**: AI Feature
-*   **Description**: Implement a function in `injectedScript.js` that prompts the `window.ai` model to evaluate the user's text.
-*   **Prompt Strategy**:
-    *   System Prompt: "You are an expert prompt engineer. Evaluate the following prompt based on four criteria: Persona, Task, Context, Format. Output JSON with a score (1-10) and brief suggestions."
+*   **Description**: Prompt Gemini Nano to evaluate text based on Persona, Task, Context, Format.
 
-### Task 3.2: "Refine" Quick Actions
+### Task 3.2: Intent-Based Suggestions
 *   **Type**: AI Feature
-*   **Description**: Add UI buttons for standard refinements defined in the guide.
-*   **Actions**:
-    *   "Formalize" (Tone)
-    *   "Clarify Task" (Task)
-    *   "Add Persona" (Persona)
+*   **Description**: Implement transformation presets.
+*   **Presets**:
+    *   **Magic Enhance**: "Rewrite this using 4 Pillars..."
+    *   **Image Gen**: "Optimise for visual description..."
+    *   **Professional Polish**: "Rewrite for corporate tone..."
 
-### Task 3.3: Intent-Based Suggestions
-*   **Type**: AI Feature
-*   **Description**: Implement specialized transformation prompts in `injectedScript.js`.
-*   **Sub-tasks**:
-    *   **Magic Enhance**: Create a meta-prompt that extracts the "essence" of a rough input and reformats it.
-    *   **Image Gen Preset**: Create a meta-prompt optimized for visual descriptions (Subject, Style, Mood, Lighting).
-    *   **Professional Polish**: Create a meta-prompt that rewrites text for business communication.
+## Phase 4: Workspaces (Priority: Low)
+*Objective: Project grouping and system grounding.*
 
-## Phase 4: Workspaces & Context Management (Priority: Low)
-*Objective: Implement Project grouping and shared system context.*
-
-### Task 4.1: Project Data Model
+### Task 4.1: Project Logic
 *   **Type**: Data
-*   **Description**: Extend the data model to support `Projects`.
-*   **Structure**:
-    *   `Project` object: `id`, `name`, `systemPrompt` (the grounding context), `promptIds` (array of linked prompts).
-    *   Update `Prompt` object to include `projectId`.
+*   **Description**: Add CRUD for Projects. Link Prompts to Projects.
 
-### Task 4.2: Workspace UI
-*   **Type**: UI
-*   **Description**: Create a sidebar or dropdown to switch between "All Prompts" and specific Projects.
-*   **Features**:
-    *   "Create Project" modal (Name + Optional System Prompt).
-    *   Drag-and-drop or checkbox selection to move prompts into a project.
-
-### Task 4.3: System Grounding Logic
+### Task 4.2: System Grounding
 *   **Type**: Logic
-*   **Description**: Ensure that when a prompt is "Optimized" or "scored", the Project's `systemPrompt` is included in the context sent to Gemini Nano.
-*   **Logic**: `Context = Project.systemPrompt + CurrentPrompt`.
+*   **Description**: Prepend `Project.systemPrompt` to the User Prompt during AI optimization sessions.
