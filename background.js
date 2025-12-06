@@ -1,1 +1,9 @@
-// background.js - Handles requests from the UI, runs the model, then sends back a response for Transformer.js use case
+// background.js
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("PromptKeeper Installed");
+});
+
+// Keep alive?
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Dummy listener
+});
