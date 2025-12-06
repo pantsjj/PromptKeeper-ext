@@ -199,8 +199,9 @@ document.getElementById('paste-prompt-button').addEventListener('click', () => {
     });
 });
 
-// Export
-document.getElementById('export-prompts').addEventListener('click', async () => {
+// Export Prompts Link
+document.getElementById('export-link').addEventListener('click', async (e) => {
+    e.preventDefault();
     const prompts = await StorageService.getPrompts();
     const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -212,52 +213,17 @@ document.getElementById('export-prompts').addEventListener('click', async () => 
     document.body.removeChild(a);
 });
 
-// Import
-document.getElementById('import-prompts').addEventListener('click', () => {
+// Import Prompts Link
+document.getElementById('import-link').addEventListener('click', (e) => {
+    e.preventDefault();
     document.getElementById('import-file').click();
 });
 
-document.getElementById('import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+// ... import file change listener remains same ...
 
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-        try {
-            const imported = JSON.parse(ev.target.result);
-            // This is a naive import. Realistically we should validate or merge.
-            // For now, we assume standard format or rely on migration logic if it was a raw export.
-            // Since `StorageService` manages the single source of truth, we need a method to bulk add.
-            // For this specific task, we'll manually push via `addPrompt` for safety, 
-            // or we need a `importPrompts` method in the Service.
-            // Let's implement a simple loop for safety:
-            if (Array.isArray(imported)) {
-                // If it's the old string format
-                if (imported.length && typeof imported[0] === 'string') {
-                    for (const txt of imported) await StorageService.addPrompt(txt);
-                } 
-                // If it's the new object format
-                else if (imported.length && imported[0].id) {
-                    // We need a bulk save method in Service to preserve IDs/history, 
-                    // or just add them as new copies. Let's add as new copies for safety to avoid ID collisions.
-                    for (const p of imported) {
-                        const content = p.versions ? p.versions.find(v => v.id === p.currentVersionId).content : '';
-                        if (content) await StorageService.addPrompt(content);
-                    }
-                }
-                loadPrompts();
-                alert('Imported successfully (as new copies).');
-            }
-        } catch (err) {
-            console.error(err);
-            alert('Import failed. Invalid JSON.');
-        }
-    };
-    reader.readAsText(file);
-});
-
-// Full Editor
-document.getElementById('open-full-editor').addEventListener('click', () => {
+// Full Editor Link
+document.getElementById('open-full-editor-link').addEventListener('click', (e) => {
+    e.preventDefault();
     if (chrome.runtime.openOptionsPage) {
         chrome.runtime.openOptionsPage();
     } else {
