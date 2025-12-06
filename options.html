@@ -41,7 +41,7 @@
             color: var(--text-color);
             height: 100vh;
             display: grid;
-            grid-template-columns: 260px 1fr 300px;
+            grid-template-columns: 220px 1fr 260px; /* Compact Sidebars */
             overflow: hidden;
         }
 
@@ -56,8 +56,8 @@
             color: white;
             border: none;
             border-radius: var(--radius-md);
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 5px 10px; /* Smaller padding */
+            font-size: 12px;
             font-weight: 500;
             cursor: pointer;
         }
@@ -68,8 +68,8 @@
             border: 1px solid var(--border-color);
             color: var(--text-color);
             border-radius: var(--radius-md);
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 5px 10px;
+            font-size: 12px;
             cursor: pointer;
         }
         .secondary-btn:hover { background-color: var(--accent-color); }
@@ -96,7 +96,7 @@
         }
 
         .sidebar-section {
-            padding: 16px;
+            padding: 12px; /* Reduced padding */
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -104,11 +104,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .section-title {
-            font-size: 11px;
+            font-size: 10px; /* Smaller title */
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -118,12 +118,12 @@
 
         select {
             width: 100%;
-            padding: 6px;
-            border-radius: var(--radius-md);
+            padding: 4px 6px;
+            border-radius: 6px; /* Slightly smaller radius */
             border: 1px solid var(--border-color);
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-size: 13px;
+            font-size: 12px;
             outline: none;
         }
 
@@ -131,14 +131,14 @@
             flex: 1;
             overflow-y: auto;
             list-style: none;
-            padding: 8px;
+            padding: 6px;
             margin: 0;
         }
 
         .prompt-item {
-            padding: 10px 12px;
-            margin-bottom: 4px;
-            border-radius: var(--radius-md);
+            padding: 8px 10px; /* Compact item */
+            margin-bottom: 2px;
+            border-radius: 6px;
             cursor: pointer;
             transition: background 0.15s;
         }
@@ -154,7 +154,7 @@
         .prompt-item.active .prompt-item-date { color: rgba(255,255,255,0.8); }
 
         .prompt-item-title {
-            font-size: 13px;
+            font-size: 12px; /* Smaller font */
             font-weight: 500;
             display: block;
             white-space: nowrap;
@@ -164,7 +164,7 @@
         }
 
         .prompt-item-date {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-secondary);
         }
 
@@ -172,11 +172,11 @@
         #main-editor {
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-color); /* Main area slightly darker than sidebar in light mode */
+            background-color: var(--bg-color); 
         }
 
         #editor-header {
-            padding: 16px 24px;
+            padding: 12px 20px;
             background-color: var(--editor-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -186,7 +186,7 @@
 
         #prompt-title-input {
             flex: 1;
-            font-size: 18px;
+            font-size: 16px; /* Slightly smaller */
             font-weight: 600;
             border: none;
             background: transparent;
@@ -197,9 +197,9 @@
 
         #editor-content {
             flex: 1;
-            padding: 24px;
+            padding: 20px 40px; /* More horizontal padding for reading focus */
             overflow: hidden;
-            background-color: var(--editor-bg); /* Editor surface is white/dark */
+            background-color: var(--editor-bg);
         }
 
         #prompt-text-area {
@@ -210,8 +210,8 @@
             background: transparent;
             color: var(--text-color);
             font-family: var(--code-font);
-            font-size: 15px;
-            line-height: 1.6;
+            font-size: 13px; /* Compact code font */
+            line-height: 1.5;
             outline: none;
         }
 
@@ -219,10 +219,10 @@
         #sidebar-right {
             background-color: var(--sidebar-bg);
             border-left: 1px solid var(--border-color);
-            padding: 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
             overflow-y: auto;
         }
 
