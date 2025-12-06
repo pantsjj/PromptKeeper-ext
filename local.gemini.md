@@ -1,47 +1,49 @@
-# Project Context: PromptKeeper Extension
+# Gemini for Workspace: Prompting Best Practices
+*Source: Gemini for Google Workspace Prompting Guide 101 (Oct 2024)*
 
-## Overview
-PromptKeeper is a local-first Chrome Extension designed for managing, organizing, and injecting prompts into browser input fields. It leverages the experimental Chrome Prompt API (Gemini Nano) for on-device AI capabilities.
+This document serves as the "System Context" for the PromptKeeper agent. It defines the framework we use to score, optimize, and generate prompts.
 
-## Architecture
-The extension follows a standard Chrome Extension architecture with a specific pattern for handling the `window.ai` API, which is only available in the main window context (not content scripts or popup directly in some cases, though recent updates allow more flexibility).
+## The 4 Pillars of an Effective Prompt
+Every optimization request should evaluate or enhance the prompt based on these four components:
 
-1.  **`popup.html` / `popup.js`**:
-    *   **Role**: Main UI for the user. Lists prompts, handles CRUD operations, and initiates AI tasks.
-    *   **State**: Manages state using `chrome.storage.local`.
-    *   **Communication**: Sends messages to `contentScript.js` to trigger actions in the page context.
+1.  **Persona**: Who is the AI?
+    *   *Goal*: Assign a specific role to encourage creativity and relevant tone.
+    *   *Examples*: "You are a Product Manager", "You are a Senior Copywriter", "You are an empathetic Customer Service Rep".
+    *   *Check*: Does the prompt define "Who"?
 
-2.  **`contentScript.js`**:
-    *   **Role**: The bridge between the Extension UI (Popup) and the Web Page (DOM).
-    *   **Functionality**:
-        *   Listens for messages from `popup.js`.
-        *   Manipulates the DOM (injects text into active elements).
-        *   Communicates with `injectedScript.js` via `window.postMessage` to offload AI tasks that require the `window.ai` object.
+2.  **Task**: What must be done?
+    *   *Goal*: Use active verbs and clear instructions.
+    *   *Examples*: "Draft an email", "Summarize this report", "Generate 5 headlines".
+    *   *Check*: Is there a clear command verb?
 
-3.  **`injectedScript.js`**:
-    *   **Role**: Runs in the context of the web page itself.
-    *   **Purpose**: Accesses the `window.ai` API (Gemini Nano) which is exposed to the page.
-    *   **Flow**: Receives a prompt text, processes it (rewrites/optimizes) using the AI model, and returns the result to `contentScript.js`.
+3.  **Context**: What is the background?
+    *   *Goal*: Limit hallucinations and provide boundaries.
+    *   *Examples*: "The audience is senior leadership", "Use the attached project specs", "We are a startup in the X industry".
+    *   *Check*: Does the prompt explain *why* or *for whom*?
 
-4.  **`background.js`**:
-    *   **Role**: Service worker. Handles installation events (onInstalled) and context menu setup.
+4.  **Format**: What should the output look like?
+    *   *Goal*: Structure the response for immediate usability.
+    *   *Examples*: "Bullet points", "A table with columns A and B", "JSON format", "Under 280 characters".
+    *   *Check*: Is the output structure defined?
 
-## Data Model (Current)
-*   **Storage**: `chrome.storage.local`
-*   **Key**: `'prompts'`
-*   **Structure**: An array of strings.
-    ```json
-    ["Prompt 1 content", "Prompt 2 content"]
-    ```
-*   *Note*: The current model is simplistic and requires refactoring to support objects with metadata (Title, Body, Versions, Tags).
+## Optimization Strategies (Iterative Refinement)
+When the user asks to "Refine" or "Optimize", apply these strategies:
 
-## Key Technologies
-*   **Frontend**: Vanilla HTML/CSS/JS.
-*   **AI**: Chrome Built-in AI (Gemini Nano) via `window.ai.languageModel`.
-*   **Storage**: Chrome Storage API.
+*   **Break it up**: Split complex tasks into chained prompts.
+*   **Give Constraints**: Add word counts, specific exclusions, or style guides.
+*   **Say it another way**: If the output is wrong, rephrase the Task or add Context (don't just repeat).
+*   **Tone Adjustment**: Explicitly request "Formal", "Casual", "Technical", or "Empathetic".
 
-## Development Guidelines
-*   **Local First**: All data stays in the browser. No external database.
-*   **Privacy**: Prioritize user privacy. AI runs on-device.
-*   **Async/Await**: Use modern JS patterns for asynchronous Chrome API calls.
-*   **Error Handling**: Gracefully handle cases where `window.ai` is not supported or the model needs downloading.
+## Intent-Based Presets
+PromptKeeper supports these specialized "Magic" modes:
+
+*   **Magic Enhance**:
+    *   *Input*: Rough notes (e.g., "email boss about sick day").
+    *   *Action*: Apply 4 Pillars.
+    *   *Output*: "You are an employee. Draft a professional email to your manager [Persona/Task]. Explain you are unwell and cannot work today [Context]. Keep it brief and polite [Format/Tone]."
+
+*   **Image Generation**:
+    *   *Focus*: Subject, Medium (Photo, Oil Painting), Lighting (Golden hour), Composition (Wide shot), Style (Cyberpunk).
+
+*   **Professional Polish**:
+    *   *Focus*: Grammar correction, Conciseness, Corporate tone (removing slang), Action-oriented language.
