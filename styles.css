@@ -126,6 +126,7 @@ textarea {
     min-height: 120px; /* Slightly shorter min height */
     font-family: 'Menlo', monospace;
     line-height: 1.4;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 /* AI Capability & Tunables (Legacy Support) */
@@ -167,4 +168,33 @@ footer#stats {
     font-weight: 600;
     width: 100%;
     text-align: center;
+}
+
+/* Pulse Animation */
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); border-color: #28a745; }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); border-color: #28a745; }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); border-color: #d2d2d7; }
+}
+
+.pulse-green {
+    animation: pulse-green 1s ease-out;
+}
+
+/* Version Selector in Footer */
+#version-selector {
+    width: auto;
+    border: none;
+    background-color: transparent;
+    color: #0071e3; /* Blue */
+    font-weight: 500;
+    font-size: 11px;
+    padding: 0;
+    cursor: pointer;
+    outline: none;
+    max-width: 150px;
+    text-overflow: ellipsis;
+}
+#version-selector:hover {
+    text-decoration: underline;
 }

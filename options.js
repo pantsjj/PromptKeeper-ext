@@ -17,7 +17,7 @@ const els = {
     wordCount: document.getElementById('word-count'),
     charCount: document.getElementById('char-count'),
     versionLabel: document.getElementById('version-label'),
-    historyList: null,
+    versionSelect: document.getElementById('version-history-select'), // New Dropdown
     scoreBtn: document.getElementById('score-btn'),
     scoreResult: document.getElementById('score-result'),
     scoreValue: document.getElementById('score-value'),
@@ -55,20 +55,6 @@ async function init() {
         await loadPrompts();
     } catch (err) {
         console.error("Failed to load prompts:", err);
-    }
-    
-    // 4. Setup History List Placeholder
-    const historyPlaceholder = document.querySelector('.panel-section:nth-child(3) .ai-tools-placeholder');
-    if (historyPlaceholder) {
-        const listContainer = document.createElement('ul');
-        listContainer.id = 'history-list';
-        listContainer.style.listStyle = 'none';
-        listContainer.style.padding = '0';
-        listContainer.style.margin = '0';
-        historyPlaceholder.replaceWith(listContainer);
-        els.historyList = listContainer;
-    } else {
-        els.historyList = document.getElementById('history-list'); 
     }
 }
 
@@ -185,7 +171,7 @@ function selectPrompt(prompt) {
     els.textArea.value = currentVersion ? currentVersion.content : '';
     
     updateStats();
-    renderHistory(prompt);
+    renderHistoryDropdown(prompt);
     
     // Refresh list highlight logic without full re-render to avoid flicker
     const items = els.promptList.querySelectorAll('.prompt-item');
@@ -197,78 +183,54 @@ function selectPrompt(prompt) {
     });
 }
 
-function renderHistory(prompt) {
-    if (!els.historyList) return;
-    els.historyList.innerHTML = '';
+/**
+ * Populates the version dropdown with up to 20 items.
+ */
+function renderHistoryDropdown(prompt) {
+    if (!els.versionSelect) return;
+    els.versionSelect.innerHTML = '';
     
-    const sortedVersions = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp);
+    // Sort desc (newest first)
+    const sortedVersions = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
     
-    sortedVersions.forEach(version => {
+    sortedVersions.forEach((version, index) => {
         const isCurrent = version.id === prompt.currentVersionId;
-        const li = document.createElement('li');
-        li.style.padding = '8px 0';
-        li.style.borderBottom = '1px solid var(--border-color)';
-        li.style.fontSize = '12px';
-        li.style.cursor = 'pointer';
+        const option = document.createElement('option');
+        option.value = version.id;
         
         const date = new Date(version.timestamp);
-        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateStr = date.toLocaleDateString();
+        const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
-        li.innerHTML = `
-            <div style="flex: 1;">
-                <div style="font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? 'var(--primary-color)' : 'inherit'}">
-                    ${isCurrent ? 'Current Version' : 'Previous Version'}
-                </div>
-                <div style="color: #888;">${dateStr} ${timeStr}</div>
-            </div>
-        `;
-
-        if (!isCurrent) {
-            const restoreBtn = document.createElement('button');
-            restoreBtn.textContent = 'Restore';
-            restoreBtn.style.marginLeft = '10px';
-            restoreBtn.style.padding = '4px 8px';
-            restoreBtn.style.fontSize = '11px';
-            restoreBtn.style.cursor = 'pointer';
-            restoreBtn.style.border = '1px solid var(--border-color)';
-            restoreBtn.style.backgroundColor = 'var(--bg-color)';
-            restoreBtn.style.color = 'var(--text-color)';
-            restoreBtn.style.borderRadius = '3px';
-            
-            restoreBtn.onclick = (e) => {
-                e.stopPropagation();
-                restoreVersion(version);
-            };
-            
-            li.style.display = 'flex';
-            li.style.alignItems = 'center';
-            li.style.justifyContent = 'space-between';
-            li.appendChild(restoreBtn);
-        }
+        // Label format: "Current (Time)" or "Revision {N} (Time)"
+        const verNum = prompt.versions.length - index; // rough version number
+        const prefix = isCurrent ? "Current" : `Revision ${verNum}`;
         
-        li.addEventListener('click', () => previewVersion(version));
-        els.historyList.appendChild(li);
+        option.textContent = `${prefix} - ${dateStr} ${timeStr}`;
+        if (isCurrent) option.selected = true;
+        
+        els.versionSelect.appendChild(option);
     });
-}
-
-function previewVersion(version) {
-    els.textArea.value = version.content;
-    updateStats();
-}
-
-async function restoreVersion(version) {
-    if (confirm('Restore this version? This will save it as the new current version.')) {
-        els.textArea.value = version.content;
-        await savePrompt();
-    }
+    
+    // Handle selection change
+    els.versionSelect.onchange = () => {
+        const selectedId = els.versionSelect.value;
+        const version = prompt.versions.find(v => v.id === selectedId);
+        if (version) {
+            els.textArea.value = version.content;
+            updateStats();
+            
+            // If viewing old version, maybe show visual cue?
+            // For now, the dropdown showing "vX" is the cue.
+        }
+    };
 }
 
 function createNewPrompt() {
     currentPromptId = null;
     els.titleInput.value = '';
     els.textArea.value = '';
-    if (els.historyList) els.historyList.innerHTML = '<div style="color:#888; padding:10px;">No history</div>';
+    if (els.versionSelect) els.versionSelect.innerHTML = '<option>New Draft</option>';
     els.titleInput.focus();
     updateStats();
     
@@ -286,11 +248,11 @@ function updateStats() {
          StorageService.getPrompts().then(prompts => {
              const p = prompts.find(x => x.id === currentPromptId);
              if (p) {
-                 els.versionLabel.textContent = `Ver: ${p.versions.length}`;
+                 els.versionLabel.textContent = `Rev: ${p.versions.length}`;
              }
          });
     } else {
-        els.versionLabel.textContent = 'Ver: 0';
+        els.versionLabel.textContent = 'Rev: 0';
     }
 }
 
@@ -333,7 +295,10 @@ async function savePrompt() {
             currentPromptId = newPrompt.id;
         }
         
-        const prompts = await StorageService.getPrompts();
+        // UX Feedback: Pulse Glow
+        els.textArea.classList.add('pulse-green');
+        setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
+        
         // Just reload prompts to handle filtering correctly
         await loadPrompts();
         
