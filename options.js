@@ -126,11 +126,36 @@ function renderHistory(prompt) {
         const dateStr = date.toLocaleDateString();
         
         li.innerHTML = `
-            <div style="font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? 'var(--primary-color)' : 'inherit'}">
-                ${isCurrent ? 'Current Version' : 'Previous Version'}
+            <div style="flex: 1;">
+                <div style="font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? 'var(--primary-color)' : 'inherit'}">
+                    ${isCurrent ? 'Current Version' : 'Previous Version'}
+                </div>
+                <div style="color: #888;">${dateStr} ${timeStr}</div>
             </div>
-            <div style="color: #888;">${dateStr} ${timeStr}</div>
         `;
+
+        if (!isCurrent) {
+            const restoreBtn = document.createElement('button');
+            restoreBtn.textContent = 'Restore';
+            restoreBtn.style.marginLeft = '10px';
+            restoreBtn.style.padding = '4px 8px';
+            restoreBtn.style.fontSize = '11px';
+            restoreBtn.style.cursor = 'pointer';
+            restoreBtn.style.border = '1px solid var(--border-color)';
+            restoreBtn.style.backgroundColor = 'var(--bg-color)';
+            restoreBtn.style.color = 'var(--text-color)';
+            restoreBtn.style.borderRadius = '3px';
+            
+            restoreBtn.onclick = (e) => {
+                e.stopPropagation(); // Prevent preview click
+                restoreVersion(version);
+            };
+            
+            li.style.display = 'flex';
+            li.style.alignItems = 'center';
+            li.style.justifyContent = 'space-between';
+            li.appendChild(restoreBtn);
+        }
         
         li.addEventListener('click', () => previewVersion(version));
         els.historyList.appendChild(li);
@@ -144,7 +169,17 @@ function renderHistory(prompt) {
 function previewVersion(version) {
     els.textArea.value = version.content;
     updateStats();
-    // Visual feedback could be added here (e.g., "Previewing v1...")
+}
+
+/**
+ * Restores a version by saving it as the new current version
+ * @param {Object} version 
+ */
+async function restoreVersion(version) {
+    if (confirm('Restore this version? This will save it as the new current version.')) {
+        els.textArea.value = version.content;
+        await savePrompt();
+    }
 }
 
 /**

@@ -42,7 +42,7 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *Goal: Allow users to experiment fearlessly.*
 
 *   [x] **Version History UI**: Add a "History" view to see previous iterations.
-*   [ ] **Revert Functionality**: Ability to restore an older version.
+*   [x] **Revert Functionality**: Ability to restore an older version.
 *   [ ] **Diff View (Optional)**: Visual indicator of text changes.
 
 ## Phase 3: AI-Powered Optimization (Gemini Nano)

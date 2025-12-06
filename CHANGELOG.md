@@ -6,8 +6,9 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 
 ### Added
 - **Full-Page Editor**: A new, spacious "IDE-like" editing environment accessible via the Options page.
-- **Version History**: Automatically tracks changes to prompts. Users can now view and preview previous versions of their prompts.
-- **Service Layer Architecture**: Introduced `StorageService` and `AIService` to decouple logic from the UI, improving maintainability and testability.
+- **Version History & Restore**: Automatically tracks changes. Users can view past versions and **restore** any previous version with a single click (linear history preservation).
+- **Prompting Principles Guide**: Added `PROMPTING_PRINCIPLES.md`, a definitive guide on the "4 Pillars" of prompting, available for user and AI reference.
+- **Service Layer Architecture**: Introduced `StorageService` and `AIService` to decouple logic from the UI.
 - **Data Model Migration**: Automatically migrates legacy text-only prompts to a robust object-based structure with metadata (ID, Title, Versions).
 - **Unit Testing Infrastructure**: Added Jest and Babel support for testing the new service layer.
 
