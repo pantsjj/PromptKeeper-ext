@@ -66,5 +66,32 @@ This document tracks the granular tasks required to implement the Roadmap. Use t
     *   "Clarify Task" (Task)
     *   "Add Persona" (Persona)
 
-## Phase 4: Advanced Organization (Priority: Low)
-*   (To be defined after Phase 1-3)
+### Task 3.3: Intent-Based Suggestions
+*   **Type**: AI Feature
+*   **Description**: Implement specialized transformation prompts in `injectedScript.js`.
+*   **Sub-tasks**:
+    *   **Magic Enhance**: Create a meta-prompt that extracts the "essence" of a rough input and reformats it.
+    *   **Image Gen Preset**: Create a meta-prompt optimized for visual descriptions (Subject, Style, Mood, Lighting).
+    *   **Professional Polish**: Create a meta-prompt that rewrites text for business communication.
+
+## Phase 4: Workspaces & Context Management (Priority: Low)
+*Objective: Implement Project grouping and shared system context.*
+
+### Task 4.1: Project Data Model
+*   **Type**: Data
+*   **Description**: Extend the data model to support `Projects`.
+*   **Structure**:
+    *   `Project` object: `id`, `name`, `systemPrompt` (the grounding context), `promptIds` (array of linked prompts).
+    *   Update `Prompt` object to include `projectId`.
+
+### Task 4.2: Workspace UI
+*   **Type**: UI
+*   **Description**: Create a sidebar or dropdown to switch between "All Prompts" and specific Projects.
+*   **Features**:
+    *   "Create Project" modal (Name + Optional System Prompt).
+    *   Drag-and-drop or checkbox selection to move prompts into a project.
+
+### Task 4.3: System Grounding Logic
+*   **Type**: Logic
+*   **Description**: Ensure that when a prompt is "Optimized" or "scored", the Project's `systemPrompt` is included in the context sent to Gemini Nano.
+*   **Logic**: `Context = Project.systemPrompt + CurrentPrompt`.

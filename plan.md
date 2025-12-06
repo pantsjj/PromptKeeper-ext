@@ -51,9 +51,13 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
         *   *"Professional Polish"*: Elevates tone for business contexts.
 *   [ ] **Model Management UI**: Handle the "Download" state of Gemini Nano gracefully (progress bars, status indicators) as per Chrome 143 guidelines.
 
-## Phase 4: Advanced Management & Templating
-*Goal: Reusability and structure.*
+## Phase 4: Workspaces & Context Management
+*Goal: Structure and coherency through "Project" grouping and shared grounding.*
 
+*   [ ] **Project Workspaces**: Group prompts into specific "Projects" (e.g., "Work Image Gen", "Professional Dev").
+*   **System Grounding (Shared Context)**:
+    *   Define a "System Prompt" or "Base Context" at the project level (e.g., "You are a senior brand strategist ensuring consistency with [Brand Guidelines]").
+    *   This grounding context is automatically applied when optimizing prompts within the project or provided as context to the AI model.
 *   [ ] **Variable Support**: Support `{{variable_name}}` syntax. When injecting, prompt the user (simple modal) to fill in the values.
 *   [ ] **Tagging System**: Filter prompts by tags (e.g., #creative, #coding, #work).
 *   [ ] **Export/Import**: JSON export for backup or sharing.
