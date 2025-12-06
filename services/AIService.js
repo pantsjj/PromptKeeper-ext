@@ -129,6 +129,9 @@ FEEDBACK: [Brief specific advice to improve missing pillars]
             case 'magic_enhance':
                 instruction = "Rewrite this prompt to include a defined Persona, Task, Context, and Format. Extrapolate missing details reasonably.";
                 break;
+            case 'image_gen':
+                instruction = "Rewrite this prompt to be an effective image generation prompt. Structure it by: Subject, Medium, Style, Lighting, Color, and Composition. Use descriptive keywords.";
+                break;
             default:
                 instruction = "Improve this prompt.";
         }
