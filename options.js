@@ -1,6 +1,8 @@
 import StorageService from './services/StorageService.js';
 import AIService from './services/AIService.js';
 
+console.log('Options Init: Script Loaded');
+
 let currentPromptId = null;
 let currentProjectId = null;
 
@@ -22,30 +24,63 @@ const els = {
     scoreFeedback: document.getElementById('score-feedback'),
     refineBtns: document.querySelectorAll('.refine-btn'),
     projectSelect: document.getElementById('project-select'),
-    addProjectBtn: document.getElementById('add-project-btn')
+    addProjectBtn: document.getElementById('add-project-btn'),
+    aiStatus: document.getElementById('ai-status')
 };
 
 /**
  * Initialize the Options Page
  */
 async function init() {
-    // ... (History setup remains) ...
-    const historyPlaceholder = document.querySelector('.panel-section:nth-child(3) .ai-tools-placeholder');
-    if (historyPlaceholder) {
-        const listContainer = document.createElement('ul');
-        listContainer.id = 'history-list';
-        listContainer.style.listStyle = 'none';
-        listContainer.style.padding = '0';
-        listContainer.style.margin = '0';
-        historyPlaceholder.replaceWith(listContainer);
-        els.historyList = listContainer;
-    } else {
-        els.historyList = document.getElementById('history-list'); 
-    }
+    try {
+        await checkAIStatus();
+        await loadProjects();
+        await loadPrompts();
+        
+        // History List Container setup
+        const historyPlaceholder = document.querySelector('.panel-section:nth-child(3) .ai-tools-placeholder');
+        if (historyPlaceholder) {
+            const listContainer = document.createElement('ul');
+            listContainer.id = 'history-list';
+            listContainer.style.listStyle = 'none';
+            listContainer.style.padding = '0';
+            listContainer.style.margin = '0';
+            historyPlaceholder.replaceWith(listContainer);
+            els.historyList = listContainer;
+        } else {
+            els.historyList = document.getElementById('history-list'); 
+        }
 
-    await loadProjects();
-    await loadPrompts();
-    setupEventListeners();
+        setupEventListeners();
+    } catch (err) {
+        console.error("Init failed:", err);
+    }
+}
+
+async function checkAIStatus() {
+    if (!els.aiStatus) return;
+    
+    try {
+        const status = await AIService.getAvailability();
+        console.log("AI Status:", status);
+        
+        if (status === 'readily') {
+            els.aiStatus.textContent = "✅ AI Ready (Gemini Nano)";
+            els.aiStatus.style.color = "var(--primary-color)";
+        } else if (status === 'after-download') {
+            els.aiStatus.textContent = "⬇️ AI Model needs download (will start on first use)";
+            els.aiStatus.style.color = "#f9ab00";
+        } else {
+            els.aiStatus.textContent = "❌ AI Not Supported on this device/browser";
+            els.aiStatus.style.color = "#d93025";
+            // Disable buttons
+            if (els.scoreBtn) els.scoreBtn.disabled = true;
+            els.refineBtns.forEach(b => b.disabled = true);
+        }
+    } catch (err) {
+        console.error("AI Check Error:", err);
+        els.aiStatus.textContent = "❓ AI Status Unknown";
+    }
 }
 
 /**
