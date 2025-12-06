@@ -29,6 +29,49 @@ class StorageService {
         return crypto.randomUUID();
     }
 
+    /**
+     * Migrates legacy array-of-strings data to the new object format.
+     * @param {string[]|Object[]} data - The raw data from storage
+     * @returns {Prompt[]} - The normalized Prompt objects
+     */
+    _normalizeData(data) {
+        if (!Array.isArray(data)) return [];
+
+        // Check if it's the old format (array of strings)
+        if (data.length > 0 && typeof data[0] === 'string') {
+            console.log('StorageService: Detected legacy data. Migrating...');
+            return data.map(content => this._createPromptObject(content));
+        }
+
+        return data;
+    }
+
+    /**
+     * Helper to create a new Prompt object from raw content
+     * @param {string} content 
+     * @returns {Prompt}
+     */
+    _createPromptObject(content) {
+        const promptId = this._generateUUID();
+        const versionId = this._generateUUID();
+        const timestamp = Date.now();
+        const title = content.length > 30 ? content.substring(0, 30) + '...' : content;
+
+        return {
+            id: promptId,
+            title: title || 'Untitled Prompt',
+            currentVersionId: versionId,
+            versions: [{
+                id: versionId,
+                content: content || '',
+                timestamp: timestamp
+            }],
+            tags: [],
+            createdAt: timestamp,
+            updatedAt: timestamp
+        };
+    }
+
     // --- Projects ---
 
     /**
