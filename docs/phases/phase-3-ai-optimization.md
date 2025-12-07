@@ -1,15 +1,16 @@
-# Phase 3: AI-Powered Optimization
-**Goal**: Leverage Gemini Nano to improve prompt quality using the "Prompting 101" framework.
+# Phase 3: AI-Powered Optimization (Completed)
+**Goal**: Leverage Chrome's built-in AI using a Hybrid Strategy (Prompt API + Rewriter API).
 
-## Task 3.1: Scoring Logic
-**Issue Title**: Feat: Implement "Score My Prompt" with Gemini Nano
+## Task 3.1: Architecture & Model Management
+**Issue Title**: Feat: Implement Modular AI Service with Diagnostics
 **Description**: 
-Evaluate the user's prompt against the 4 Pillars: Persona, Task, Context, Format.
+We need a robust service to handle the fragmented state of Chrome's built-in AI (Prompt API vs Rewriter API).
 
 **Acceptance Criteria**:
-- [x] Update `AIService` to support a "Scoring" session.
-- [x] System Prompt: "Evaluate based on Persona, Task, Context, Format. Return JSON { score: 1-10, feedback: '...' }."
-- [x] Display the Score and Feedback in the Right Sidebar.
+- [x] **Hybrid Strategy**: `refinePrompt` checks for `window.ai.rewriter` availability.
+- [x] **Fallbacks**: If specialized APIs are missing, gracefully fall back to the general `Prompt API`.
+- [x] **Diagnostic Tool**: Implement `getDiagnostic()` and a UI "Traffic Light" system to debug Chrome Flags status.
+- [x] **User Help**: Create `gemini-help.html` to guide users through the complex Flag enablement process.
 
 ## Task 3.2: Refinement Actions
 **Issue Title**: Feat: Add Quick Refinement Actions
@@ -17,16 +18,21 @@ Evaluate the user's prompt against the 4 Pillars: Persona, Task, Context, Format
 One-click buttons to fix common issues.
 
 **Acceptance Criteria**:
-- [x] Add buttons: "Formalize", "Clarify", "Summarize".
-- [x] Each button triggers a specific Gemini transformation prompt.
-- [x] Result replaces (or appends to) the current editor content.
+- [x] Add buttons: "Formalize" (Rewriter API), "Clarify" (Prompt API), "Summarize" (Summarizer/Prompt API).
+- [x] Each button triggers a specific transformation.
+- [x] Result replaces the current editor content (saved as new Revision).
 
 ## Task 3.3: Intent-Based Presets
 **Issue Title**: Feat: Implement Intent-Based Transformation Presets
 **Description**: 
-"Magic" buttons that transform rough notes into specific formats.
+"Magic" buttons that transform rough notes.
 
 **Acceptance Criteria**:
 - [x] **Magic Enhance**: Transforms rough notes -> Structured Prompt (Persona/Task/Context/Format).
-- [x] **Image Gen**: Transforms description -> Visual Prompt (Subject, Style, Mood).
-- [x] **Professional Polish**: Transforms slang/notes -> Business Email/Doc (Covered by "Formalize").
+- [x] **Professional Polish**: Transforms slang/notes -> Business Email/Doc.
+
+---
+
+## Deferred / Future Scope (Experimental)
+*   **Scoring Logic**: Evaluation against 4 Pillars proved inconsistent with current Gemini Nano capabilities (Sycophancy/Hallucination risk).
+*   **Image Gen Preset**: Requires broader world knowledge than currently available in the local model.

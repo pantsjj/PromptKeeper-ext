@@ -9,170 +9,140 @@ class AIService {
     }
 
     /**
+     * Helper to send message to AI bridge tab
+     * @param {Object} message 
+     * @returns {Promise<any>}
+     */
+    async _sendToAIBridge(message) {
+        // Retry configuration
+        const MAX_RETRIES = 3;
+        const INITIAL_DELAY = 500;
+
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                return await this._attemptSend(message);
+            } catch (error) {
+                const isConnectionError = error.message.includes('Receiving end does not exist') ||
+                    error.message.includes('Could not establish connection');
+
+                if (isConnectionError) {
+                    if (attempt < MAX_RETRIES) {
+                        console.log(`[AIService] Connection failed (attempt ${attempt}/${MAX_RETRIES}). Retrying...`);
+                        await new Promise(resolve => setTimeout(resolve, INITIAL_DELAY * attempt));
+                        continue;
+                    } else {
+                        // All retries failed. Try to heal by forcing recreation of the tab.
+                        console.warn('[AIService] All retries failed. Requesting bridge reinitialization...');
+                        try {
+                            await chrome.runtime.sendMessage({ action: 'reinitializeAIBridge' });
+                            // One last try after 1 second
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            return await this._attemptSend(message);
+                        } catch (fatalErr) {
+                            throw new Error(`AI Connection Failed after self-healing: ${fatalErr.message}`);
+                        }
+                    }
+                }
+                throw error;
+            }
+        }
+    }
+
+    async _attemptSend(message) {
+        console.log('[AIService] Sending message to AI bridge:', message.action);
+
+        // Get AI bridge tab ID from background
+        const response = await chrome.runtime.sendMessage({ action: 'getAIBridgeTabId' });
+        const tabId = response.tabId;
+
+        if (!tabId) {
+            throw new Error('AI bridge tab not ready');
+        }
+
+        return new Promise((resolve, reject) => {
+            chrome.tabs.sendMessage(tabId, message, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error('[AIService] Message error:', chrome.runtime.lastError.message);
+                    reject(new Error(chrome.runtime.lastError.message));
+                } else {
+                    console.log('[AIService] Received response:', response);
+                    resolve(response);
+                }
+            });
+        });
+    }
+
+    /**
      * Checks if the AI capability is available.
      * @returns {Promise<string>} 'readily', 'after-download', or 'no'
      */
     async getAvailability() {
-        if (!window.ai || !window.ai.languageModel) {
+        try {
+            const response = await this._sendToAIBridge({
+                action: 'checkAIAvailability'
+            });
+            return response.available || 'no';
+        } catch (e) {
+            console.error("Error checking AI availability:", e);
             return 'no';
         }
-        const capabilities = await window.ai.languageModel.capabilities();
-        return capabilities.available;
     }
 
     /**
-     * Creates or returns an active session.
-     * Handles the 'downloadprogress' event if model needs downloading.
-     * @param {function} [onProgress] - Callback for download progress
-     * @returns {Promise<Object>} The AI session
+     * Returns a diagnostic string for troubleshooting.
+     * @returns {Promise<string>}
      */
-    async getSession(onProgress) {
-        if (this.session) {
-            // Check if session is still valid (simplified check)
-            // Ideally we might want to recreate if it's stale, but for now reuse.
-            return this.session;
-        }
-
-        const availability = await this.getAvailability();
-
-        if (availability === 'no') {
-            throw new Error('AI capabilities are not supported on this device.');
-        }
-
+    async getDiagnostic() {
         try {
-            this.session = await window.ai.languageModel.create({
-                monitor(m) {
-                    m.addEventListener('downloadprogress', (e) => {
-                        if (onProgress) {
-                            onProgress({
-                                loaded: e.loaded,
-                                total: e.total,
-                                percentage: (e.loaded / e.total) * 100
-                            });
-                        }
-                        console.log(`AI Model Download: ${e.loaded}/${e.total}`);
-                    });
-                }
+            return await this._sendToAIBridge({
+                action: 'getDiagnostic'
             });
-            return this.session;
-        } catch (err) {
-            console.error('Failed to create AI session:', err);
-            throw err;
+        } catch (e) {
+            return `Error: ${e.message}`;
         }
     }
 
     /**
-     * Destroys the current session to free resources.
+     * Returns the status of each specific API.
+     * @returns {Promise<{prompt: string, rewriter: string}>}
      */
-    destroySession() {
-        if (this.session) {
-            this.session.destroy();
-            this.session = null;
-        }
-    }
-
-    /**
-     * Scores a prompt based on the 4 Pillars of effective prompting.
-     * @param {string} promptText 
-     * @returns {Promise<Object>} { score: number, feedback: string }
-     */
-    async scorePrompt(promptText) {
-        const systemInstruction = `
-You are an expert Prompt Engineer. Evaluate the user's prompt based on these 4 Pillars:
-1. Persona (Who)
-2. Task (What)
-3. Context (Why/Background)
-4. Format (How output should look)
-
-Return a response in this exact format:
-SCORE: [1-10]
-FEEDBACK: [Brief specific advice to improve missing pillars]
-`;
-        
-        const fullPrompt = `${systemInstruction}\n\nUser Prompt: "${promptText}"`;
-        
+    async getDetailedStatus() {
         try {
-            const response = await this.prompt(fullPrompt);
-            
-            // Simple parsing of the response
-            const scoreMatch = response.match(/SCORE:\s*(\d+)/i);
-            const feedbackMatch = response.match(/FEEDBACK:\s*(.+)/is);
-            
+            return await this._sendToAIBridge({
+                action: 'getDetailedStatus'
+            });
+        } catch (e) {
             return {
-                score: scoreMatch ? parseInt(scoreMatch[1], 10) : 0,
-                feedback: feedbackMatch ? feedbackMatch[1].trim() : "Could not parse feedback."
+                prompt: 'no',
+                rewriter: 'no'
             };
-        } catch (err) {
-            console.error('Scoring failed:', err);
-            return { score: 0, feedback: "AI service unavailable or error occurred." };
         }
     }
 
     /**
      * Refines a prompt based on a specific goal.
+     * Uses offscreen document to access window.ai
      * @param {string} promptText 
-     * @param {string} refinementType - e.g., 'formalize', 'clarify', 'expand'
+     * @param {string} refinementType 
      * @returns {Promise<string>}
      */
     async refinePrompt(promptText, refinementType) {
-        let instruction = "";
-        switch (refinementType) {
-            case 'formalize':
-                instruction = "Rewrite this prompt to be more professional and corporate. Remove slang.";
-                break;
-            case 'clarify':
-                instruction = "Make the 'Task' in this prompt clearer and more active. Use strong verbs.";
-                break;
-            case 'summarize':
-                instruction = "Shorten this prompt while keeping the core intent. Aim for ~21 words.";
-                break;
-            case 'magic_enhance':
-                instruction = "Rewrite this prompt to include a defined Persona, Task, Context, and Format. Extrapolate missing details reasonably.";
-                break;
-            case 'image_gen':
-                instruction = "Rewrite this prompt to be an effective image generation prompt. Structure it by: Subject, Medium, Style, Lighting, Color, and Composition. Use descriptive keywords.";
-                break;
-            default:
-                instruction = "Improve this prompt.";
-        }
-
-        return this.rewrite(promptText, instruction);
-    }
-
-    /**
-     * Generates text based on a prompt.
-     * @param {string} promptText 
-     * @param {Object} [options] - Options like systemPrompt (if supported)
-     * @returns {Promise<string>}
-     */
-    async prompt(promptText, _options = {}) {
-        const session = await this.getSession();
-        
-        // Note: As of Chrome 130+, streaming is preferred, but simple `prompt` works.
-        // We'll use the basic prompt for now.
         try {
-            const result = await session.prompt(promptText);
-            return result;
+            const response = await this._sendToAIBridge({
+                action: 'refinePrompt',
+                promptText,
+                refinementType
+            });
+
+            if (!response.success) {
+                throw new Error(response.error || 'AI refinement failed');
+            }
+
+            return response.result;
         } catch (err) {
-            console.error('AI Prompt Execution Failed:', err);
+            console.error('Refine prompt failed:', err);
             throw err;
         }
-    }
-
-    /**
-     * Rewrites text (Specialized helper)
-     * @param {string} text 
-     * @param {string} instruction 
-     * @returns {Promise<string>}
-     */
-    async rewrite(text, instruction) {
-        const metaPrompt = `
-Instruction: ${instruction}
-Input Text: "${text}"
-
-Rewrite the Input Text following the Instruction. Return ONLY the rewritten text.
-`;
-        return this.prompt(metaPrompt);
     }
 }
 

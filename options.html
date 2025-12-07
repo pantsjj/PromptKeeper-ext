@@ -1,17 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
     <title>PromptKeeper - Editor</title>
     <style>
         :root {
             /* Apple-inspired Light Mode */
-            --bg-color: #f5f5f7; /* Light gray background like macOS Settings */
-            --sidebar-bg: #ffffff; /* White sidebars */
+            --bg-color: #f5f5f7;
+            --sidebar-bg: #ffffff;
             --text-color: #1d1d1f;
             --text-secondary: #86868b;
             --border-color: #d2d2d7;
-            --primary-color: #0071e3; /* Apple Blue */
+            --primary-color: #0071e3;
             --primary-hover: #0077ed;
             --accent-color: #f5f5f7;
             --editor-bg: #ffffff;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
             --radius-md: 8px;
             --radius-lg: 12px;
             --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -20,9 +25,8 @@
 
         @media (prefers-color-scheme: dark) {
             :root {
-                /* Apple-inspired Dark Mode */
-                --bg-color: #1e1e1e; /* Dark gray window background */
-                --sidebar-bg: #2c2c2e; /* Slightly lighter sidebars */
+                --bg-color: #1e1e1e;
+                --sidebar-bg: #2c2c2e;
                 --text-color: #f5f5f7;
                 --text-secondary: #86868b;
                 --border-color: #424245;
@@ -40,8 +44,74 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* Changed for global header */
+            overflow: hidden;
+        }
+
+        /* --- Global Header --- */
+        #global-header {
+            height: 52px;
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        #search-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            /* Doubled from 480px ~240 chars */
+        }
+
+        #search-input {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid transparent;
+            border-radius: 20px;
+            padding: 10px 16px 10px 40px;
+            /* Increased top/bottom padding */
+            font-size: 14px;
+            /* Slightly larger */
+            color: var(--text-color);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        #search-input:focus {
+            background-color: var(--editor-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+        }
+
+        #search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            /* Adjusted for new padding */
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+            /* Slightly larger */
+            pointer-events: none;
+        }
+
+        /* --- Main Layout --- */
+        #main-layout {
             display: grid;
-            grid-template-columns: 220px 1fr 260px; /* Compact Sidebars */
+            grid-template-columns: 240px 1fr 260px;
+            /* Slightly wider sidebar */
+            flex: 1;
             overflow: hidden;
         }
 
@@ -56,23 +126,29 @@
             color: white;
             border: none;
             border-radius: var(--radius-md);
-            padding: 5px 10px; /* Smaller padding */
+            padding: 5px 12px;
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
         }
-        .primary-btn:hover { background-color: var(--primary-hover); }
+
+        .primary-btn:hover {
+            background-color: var(--primary-hover);
+        }
 
         .secondary-btn {
             background-color: transparent;
             border: 1px solid var(--border-color);
             color: var(--text-color);
             border-radius: var(--radius-md);
-            padding: 5px 10px;
+            padding: 5px 12px;
             font-size: 12px;
             cursor: pointer;
         }
-        .secondary-btn:hover { background-color: var(--accent-color); }
+
+        .secondary-btn:hover {
+            background-color: var(--accent-color);
+        }
 
         .icon-btn {
             background: none;
@@ -81,34 +157,50 @@
             color: var(--text-secondary);
             padding: 4px;
             border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .icon-btn:hover { color: var(--text-color); background-color: var(--accent-color); }
 
-        /* --- Layout --- */
+        .icon-btn:hover {
+            color: var(--text-color);
+            background-color: var(--accent-color);
+        }
 
-        /* Left Sidebar */
-        #sidebar-left {
+        /* --- Sidebar Styles --- */
+        .sidebar {
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            box-shadow: 1px 0 0 0 rgba(0,0,0,0.02); /* Very subtle separator */
+            overflow: hidden;
+        }
+
+        #sidebar-right {
+            border-left: 1px solid var(--border-color);
+            border-right: none;
         }
 
         .sidebar-section {
-            padding: 12px; /* Reduced padding */
-            border-bottom: 1px solid var(--border-color);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            /* Enable scroll */
         }
 
-        .section-header {
+        .sidebar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            padding: 4px 8px 8px 8px;
+            margin-bottom: 4px;
         }
 
         .section-title {
-            font-size: 10px; /* Smaller title */
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -116,90 +208,122 @@
             margin: 0;
         }
 
-        select {
-            width: 100%;
-            padding: 4px 6px;
-            border-radius: 6px; /* Slightly smaller radius */
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-size: 12px;
-            outline: none;
-        }
-
-        #prompt-list {
-            flex: 1;
-            overflow-y: auto;
+        /* List Styles */
+        .nav-list {
             list-style: none;
-            padding: 6px;
+            padding: 0;
             margin: 0;
+            overflow-y: auto;
         }
 
-        .prompt-item {
-            padding: 8px 10px; /* Compact item */
+        /* Workspace & Prompt Items */
+        .nav-item {
+            padding: 6px 10px;
             margin-bottom: 2px;
             border-radius: 6px;
             cursor: pointer;
             transition: background 0.15s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid transparent;
         }
 
-        .prompt-item:hover {
+        .nav-item:hover {
             background-color: var(--accent-color);
         }
 
-        .prompt-item.active {
+        .nav-item.active {
             background-color: var(--primary-color);
             color: white;
         }
-        .prompt-item.active .prompt-item-date { color: rgba(255,255,255,0.8); }
 
-        .prompt-item-title {
-            font-size: 12px; /* Smaller font */
+        .nav-item.active .item-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Drag target state */
+        .nav-item.drag-over {
+            background-color: var(--accent-color);
+            border-color: var(--primary-color);
+            box-shadow: inset 0 0 0 1px var(--primary-color);
+        }
+
+        .item-title {
+            font-size: 13px;
             font-weight: 500;
-            display: block;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-bottom: 2px;
         }
 
-        .prompt-item-date {
-            font-size: 10px;
+        .item-subtitle {
+            font-size: 11px;
             color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
         }
 
-        /* Main Editor */
+        /* Expand Button */
+        #expand-projects-btn {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #expand-projects-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        /* --- Main Editor --- */
         #main-editor {
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-color); 
+            background-color: var(--bg-color);
         }
 
-        #editor-header {
+        #editor-toolbar {
             padding: 12px 20px;
             background-color: var(--editor-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 12px;
+            justify-content: space-between;
         }
 
         #prompt-title-input {
-            flex: 1;
-            font-size: 16px; /* Slightly smaller */
+            font-size: 18px;
             font-weight: 600;
             border: none;
             background: transparent;
             color: var(--text-color);
             outline: none;
+            min-width: 200px;
+            width: 100%;
         }
-        #prompt-title-input::placeholder { color: var(--border-color); }
+
+        #prompt-title-input::placeholder {
+            color: var(--border-color);
+        }
 
         #editor-content {
             flex: 1;
-            padding: 20px 40px; /* More horizontal padding for reading focus */
+            padding: 20px 40px;
             overflow: hidden;
             background-color: var(--editor-bg);
+            position: relative;
         }
 
         #prompt-text-area {
@@ -210,26 +334,22 @@
             background: transparent;
             color: var(--text-color);
             font-family: var(--code-font);
-            font-size: 13px; /* Compact code font */
-            line-height: 1.5;
+            font-size: 14px;
+            line-height: 1.6;
             outline: none;
         }
 
-        /* Right Sidebar */
-        #sidebar-right {
-            background-color: var(--sidebar-bg);
-            border-left: 1px solid var(--border-color);
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
+        /* Stats Panel */
+        .panel-section {
+            margin-bottom: 24px;
         }
 
         .panel-section h3 {
-            font-size: 13px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--text-secondary);
             margin: 0 0 12px 0;
         }
 
@@ -241,131 +361,127 @@
             color: var(--text-secondary);
         }
 
-        /* AI Tools Widget */
-        #ai-tools-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        #score-result {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 12px;
-        }
-
-        .refine-actions {
-            margin-top: 5px;
-        }
-        
+        /* AI Tools */
         .refine-btn {
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             color: var(--text-color);
-            padding: 8px;
+            padding: 10px;
             font-size: 12px;
             border-radius: var(--radius-md);
             cursor: pointer;
             text-align: left;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
         .refine-btn:hover {
             border-color: var(--primary-color);
             color: var(--primary-color);
             background-color: var(--editor-bg);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
+
 <body>
-    <div id="sidebar-left">
-        <!-- Projects Section -->
-        <div class="sidebar-section">
-            <div class="section-header">
-                <h2 class="section-title">Workspaces</h2>
-                <button id="add-project-btn" class="icon-btn" title="Add Project">+</button>
-            </div>
-            <select id="project-select">
-                <option value="">All Prompts</option>
-                <!-- Projects injected here -->
-            </select>
+    <!-- Global Header with Search -->
+    <header id="global-header">
+        <div id="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="search-input" placeholder="Search prompts...">
         </div>
+    </header>
 
-        <div class="sidebar-section" style="border-bottom:none; padding-bottom: 0;">
-            <div class="section-header">
-                <h2 class="section-title">Prompts</h2>
-                <button id="new-prompt-btn" class="icon-btn" title="New Prompt">+</button>
-            </div>
-        </div>
-        <ul id="prompt-list">
-            <!-- Prompts injected here -->
-        </ul>
-    </div>
+    <div id="main-layout">
+        <!-- LEFT SIDEBAR -->
+        <div id="sidebar-left" class="sidebar">
 
-    <div id="main-editor">
-        <div id="editor-header">
-            <input type="text" id="prompt-title-input" placeholder="Untitled Prompt">
-            <div style="display:flex; gap:8px; align-items: center;">
-                <select id="version-history-select" style="width: auto; max-width: 160px;"></select>
-                <button id="delete-btn" class="secondary-btn" style="color: #ff3b30; border-color: #ff3b3030;">Delete</button>
-                <button id="save-btn" class="primary-btn">Save</button>
-            </div>
-        </div>
-        <div id="editor-content">
-            <textarea id="prompt-text-area" placeholder="Write your prompt here..."></textarea>
-        </div>
-    </div>
-
-    <div id="sidebar-right">
-        <!-- Stats -->
-        <div class="panel-section">
-            <h3>Details</h3>
-            <div class="stats-grid">
-                <div id="word-count">Words: 0</div>
-                <div id="char-count">Chars: 0</div>
-                <div id="version-label">Rev: 1</div>
-                <div>Status: Local</div>
-            </div>
-        </div>
-
-        <!-- AI Tools -->
-        <div class="panel-section">
-            <h3>AI Optimization</h3>
-            <div id="ai-status" style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">
-                <!-- JS will update this -->
-                Checking Gemini Nano...
-            </div>
-            <div id="ai-tools-container">
-                <button id="score-btn" class="secondary-btn" style="width:100%; border-color: var(--primary-color); color: var(--primary-color);">
-                    ✨ Score Prompt
-                </button>
-                
-                <div id="score-result" class="hidden">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
-                        <span id="score-value" style="font-size: 20px; font-weight: 700; color: var(--primary-color);">0/10</span>
-                        <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing:0.5px;">SCORE</span>
-                    </div>
-                    <p id="score-feedback" style="font-size: 12px; margin: 0; line-height: 1.4; color: var(--text-color);"></p>
+            <!-- Workspaces Section -->
+            <div style="padding: 12px 12px 0 12px; flex: 0 0 auto;">
+                <div class="sidebar-header">
+                    <h2 class="section-title">WORKSPACES</h2>
+                    <button id="add-project-btn" class="icon-btn" title="New Workspace">➕</button>
                 </div>
+                <ul id="workspace-list" class="nav-list">
+                    <!-- Static "All Prompts" item -->
+                    <li class="nav-item active" data-id="all" id="workspace-all">
+                        <span class="item-title">All Prompts</span>
+                    </li>
+                    <!-- Dynamic Workspaces go here -->
+                </ul>
+                <div id="more-projects-container" class="hidden">
+                    <ul id="more-projects-list" class="nav-list"></ul>
+                </div>
+                <button id="expand-projects-btn" class="hidden">Show more...</button>
+            </div>
 
-                <div class="refine-actions">
-                    <h4 class="section-title" style="margin-bottom:8px;">Refine</h4>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <button class="refine-btn" data-type="magic_enhance">🪄 Enhance</button>
-                        <button class="refine-btn" data-type="image_gen">🖼️ Image Gen</button>
-                        <button class="refine-btn" data-type="formalize">👔 Formalize</button>
-                        <button class="refine-btn" data-type="clarify">🔍 Clarify</button>
-                        <button class="refine-btn" data-type="summarize">✂️ Shorten</button>
-                    </div>
+            <div style="height: 1px; background: var(--border-color); margin: 8px 12px; opacity: 0.5;"></div>
+
+            <!-- Prompts Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <h2 class="section-title">PROMPTS</h2>
+                    <button id="new-prompt-btn" class="icon-btn" title="New Prompt">➕</button>
+                </div>
+                <ul id="prompt-list" class="nav-list">
+                    <!-- Prompts injected here -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- CENTER EDITOR -->
+        <div id="main-editor">
+            <div id="editor-toolbar">
+                <input type="text" id="prompt-title-input" placeholder="Untitled Prompt">
+                <div style="display:flex; gap:8px; align-items: center;">
+                    <select id="version-history-select" style="max-width: 140px;"></select>
+                    <button id="delete-btn" class="secondary-btn"
+                        style="color: #ff3b30; border-color: #ff3b3030;">Delete</button>
+                    <button id="save-btn" class="primary-btn">Save</button>
                 </div>
             </div>
+            <div id="editor-content">
+                <textarea id="prompt-text-area" placeholder="Write your prompt here..."></textarea>
+            </div>
         </div>
-        
-        <!-- History (Moved to Top Bar) -->
+
+        <!-- RIGHT SIDEBAR -->
+        <div id="sidebar-right" class="sidebar" style="padding: 16px;">
+            <!-- Stats -->
+            <div class="panel-section">
+                <h3>Details</h3>
+                <div class="stats-grid">
+                    <div id="word-count">Words: 0</div>
+                    <div id="char-count">Chars: 0</div>
+                    <div id="version-label">Rev: 1</div>
+                    <div id="project-label" title="Current Workspace"
+                        style="grid-column: span 2; margin-top:4px; color:var(--text-color);">No Workspace</div>
+                </div>
+            </div>
+
+            <!-- AI Tools -->
+            <div class="panel-section">
+                <h3>AI Optimization</h3>
+                <div id="ai-status" style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;"></div>
+
+                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                    <button class="refine-btn" data-type="magic_enhance"><span>🪄</span> Magic Enhance</button>
+                    <button class="refine-btn" data-type="formalize"><span>👔</span> Formalize Tone</button>
+                    <button class="refine-btn" data-type="clarify"><span>🔍</span> Improve Clarity</button>
+                    <button class="refine-btn" data-type="summarize"><span>✂️</span> Shorten</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="options.js"></script>
 </body>
+
 </html>

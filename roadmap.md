@@ -46,15 +46,28 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [ ] **Diff View (Optional)**: Visual indicator of text changes.
 
 ## Phase 3: AI-Powered Optimization (Gemini Nano)
-*Goal: Leverage Chrome's built-in AI using the "Gemini for Workspace" framework.*
+*Goal: Leverage Chrome's built-in AI using the "Hybrid API" framework (Prompt + Rewriter).*
 
-*   [x] **"Score" Action**: Analyze prompts against the 4 Pillars (Persona, Task, Context, Format).
-*   [x] **Iterative Refinement**: Quick actions for "Formalize", "Summarize", "Clarify".
+*   [x] **Refinement Actions**: Quick actions for "Formalize" (Rewriter API), "Summarize" (Summarizer API), "Clarify" (Prompt API).
 *   [x] **Intent-Based Suggestions (Auto-Generate)**:
-    *   **"Magic Enhance"**: Extracts intent from rough notes and formats it.
-    *   **"Image Gen Preset"**: Optimizes for visual models (Style, Lighting, Composition).
-    *   **"Professional Polish"**: Rewrites for business context.
-*   [x] **Model Management**: Graceful UI for model download progress (Handled in AIService session creation).
+    *   **"Magic Enhance"**: Extracts intent from rough notes and formats it (Prompt API).
+    *   **"Professional Polish"**: Rewrites for business context (Rewriter API).
+*   [x] **Model Management**: Diagnostic "Traffic Light" UI and Helper Guides for model availability.
+
+## Phase 3.5: Offscreen Document for AI Access
+*Goal: Workaround Chrome's limitation where `window.ai` is not available in extension contexts.*
+
+*   [x] **Offscreen Document**: Created hidden web page (`offscreen.html`) where `window.ai` IS accessible.
+*   [x] **Message Passing**: Implemented `chrome.runtime.sendMessage()` bridge between extension pages and offscreen document.
+*   [x] **Background Service Worker**: Manages offscreen document lifecycle (create on startup, ensure exists before operations).
+*   [x] **AIService Refactor**: Updated to use message passing instead of direct `window.ai` access.
+*   [x] **Manifest Updates**: Added `offscreen` permission and `background.service_worker` configuration.
+
+**Technical Note**: Chrome only exposes `window.ai` to web page contexts, not extension contexts (popup, options, background). This phase implements the official workaround using Offscreen Documents (Chrome 109+).
+
+**Documentation**: See [`docs/phases/phase-3.5-offscreen-document.md`](file:///Users/jp/Library/Mobile%20Documents/com~apple~CloudDocs/Documents/workspaces/PromptKeeper-ext/docs/phases/phase-3.5-offscreen-document.md)
+
+---
 
 ## Phase 4: Workspaces & Context Management
 *Goal: Structure and coherency through "Project" grouping and shared grounding.*
@@ -63,14 +76,35 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [x] **System Grounding (Shared Context)**:
     *   Define a "System Prompt" or "Base Context" at the project level (e.g., "You are a senior brand strategist ensuring consistency with [Brand Guidelines]").
     *   This grounding context is automatically applied when optimizing prompts within the project or provided as context to the AI model.
-*   [x] **Variable Support**: Support `{{variable_name}}` syntax. (Note: Implemented via manual edit/refine flow for now, fully dynamic injection moved to Future Scope).
+*   [x] **Variable Support**: Support `{{variable_name}}` syntax. (Note: Implemented via manual edit/refine flow for now).
 *   [x] **Tagging System**: Filter prompts by tags. (Covered by Project grouping).
-*   [x] **Export/Import**: JSON export for backup or sharing. (Legacy feature preserved).
+*   [x] **Export/Import**: JSON export/import for backup or sharing.
+
+## Phase 5: Google Drive Backup & Sync
+*Goal: Enable cross-device access and automatic backup to user's Google account.*
+
+*   [ ] **Google Sign-In**: Authenticate users via Chrome Identity API.
+*   [ ] **Automatic Backup**: Upload prompts to Google Drive AppData folder on every save.
+*   [ ] **Cross-Device Sync**: Download and merge prompts when signing in on a new device.
+*   [ ] **Conflict Resolution**: Handle edits made on multiple devices (Last Write Wins strategy).
+*   [ ] **Auto-Sync**: Background sync every 5 minutes when changes detected.
+*   [ ] **Sync Status UI**: Visual indicators showing sync state and last sync time.
+*   [ ] **Opt-Out Support**: Users can remain in local-only mode if preferred.
+
+**Target Version**: v2.1 or v3.0  
+**Estimated Effort**: 2-3 weeks  
+**Documentation**: See [`docs/phases/phase-5-google-drive-sync.md`](file:///Users/jp/Library/Mobile%20Documents/com~apple~CloudDocs/Documents/workspaces/PromptKeeper-ext/docs/phases/phase-5-google-drive-sync.md)
 
 ---
+
+## Future Scope / Experimental
+*   **"Score" Action**: Analyze prompts against the 4 Pillars. (Deferred: Gemini Nano lacks sufficient reasoning capability for objective scoring).
+*   **"Image Gen Preset"**: Optimizes for visual models. (Deferred: Requires larger model knowledge base).
+*   **Dynamic Variable Injection**: Form-based filling of `{{variables}}`.
+*   **Diff View**: Visual text comparison between revisions.
 
 ## Success Metrics
 *   **Trust**: User data never leaves the device.
 *   **Performance**: AI operations take < 2 seconds (after model load).
 *   **Utility**: Users can "Time Travel" through their prompt versions.
-*   **Quality**: Prompts optimized by the tool yield better results than raw input (verified by user feedback).
+

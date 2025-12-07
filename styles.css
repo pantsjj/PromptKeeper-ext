@@ -129,18 +129,56 @@ textarea {
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-/* AI Capability & Tunables (Legacy Support) */
-#ai-capability, #tunables {
-    margin-top: 5px; /* Reduced top margin */
-    padding: 10px; /* Reduced padding */
+/* AI Capability & Tunables */
+#ai-capability {
+    margin-top: 8px;
+    padding: 8px;
     background-color: #f5f5f7;
     border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-height: 40px; /* Prevent collapse */
 }
 
-#tunables h3 {
-    margin: 0 0 10px 0;
-    font-size: 12px;
-    color: #86868b;
+#ai-capability select {
+    flex: 1; /* Takes remaining space */
+    margin-bottom: 0;
+    width: auto; /* Override 100% */
+}
+
+#ai-capability button {
+    width: auto;
+    white-space: nowrap;
+    padding: 6px 12px;
+}
+
+/* AI Error State in Popup */
+.ai-error-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 4px;
+}
+
+.ai-error-text {
+    font-size: 11px;
+    color: #d93025;
+    font-weight: 500;
+}
+
+.ai-error-link {
+    font-size: 11px;
+    color: #0071e3;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#tunables {
+    margin-top: 5px; 
+    padding: 10px; 
+    background-color: #f5f5f7;
+    border-radius: 8px;
 }
 
 /* Footer Stats */
@@ -197,4 +235,43 @@ footer#stats {
 }
 #version-selector:hover {
     text-decoration: underline;
+}
+
+/* Status Traffic Lights */
+.status-dots-container {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ccc;
+    cursor: help;
+    position: relative;
+}
+
+.status-dot.readily { background-color: #34a853; } /* Green */
+.status-dot.no { background-color: #ea4335; } /* Red */
+.status-dot.after-download { background-color: #fbbc04; } /* Yellow */
+
+/* Simple Tooltip */
+.status-dot:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 10;
 }
