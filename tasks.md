@@ -71,3 +71,59 @@ This document tracks the granular tasks required to implement the Roadmap. Use t
 ### Task 4.2: System Grounding
 *   **Type**: Logic
 *   **Description**: Prepend `Project.systemPrompt` to the User Prompt during AI optimization sessions.
+
+## Phase 5: Google Drive Backup & Sync (Priority: High)
+*Objective: Enable cross-device access and automatic backup to user's Google account.*
+
+### Task 5.1: OAuth Setup & Manifest
+*   **Type**: Configuration
+*   **Description**: Configure Google Cloud OAuth credentials and update manifest.json.
+*   **Sub-tasks**:
+    *   Create OAuth 2.0 Client ID in Google Cloud Console
+    *   Enable Google Drive API
+    *   Add `identity` and `identity.email` permissions to manifest
+    *   Add `oauth2` configuration with Drive AppData scope
+
+### Task 5.2: Create SyncService
+*   **Type**: Feature
+*   **Description**: Build `services/SyncService.js` to handle Google Drive integration.
+*   **Methods**:
+    *   `signIn()`: Authenticate via Chrome Identity API
+    *   `signOut()`: Revoke token and clear auth state
+    *   `uploadToDrive(data)`: Upload prompts JSON to Drive AppData
+    *   `downloadFromDrive()`: Fetch prompts from Drive
+    *   `syncNow()`: Merge local and remote data
+    *   `enableAutoSync()`: Background sync timer
+
+### Task 5.3: UI Implementation
+*   **Type**: UI
+*   **Description**: Add sync controls to Options page and status indicators to Popup.
+*   **Features**:
+    *   "Sign in with Google" button
+    *   Sync status panel (user email, last sync time)
+    *   "Sync Now" manual trigger
+    *   Footer sync indicator (☁️ icon with status)
+
+### Task 5.4: StorageService Integration
+*   **Type**: Integration
+*   **Description**: Trigger sync on prompt save/update operations.
+*   **Changes**:
+    *   Modify `updatePrompt()` to call `SyncService.queueSync()`
+    *   Implement debounced sync (avoid excessive API calls)
+
+### Task 5.5: Conflict Resolution
+*   **Type**: Logic
+*   **Description**: Implement Last Write Wins merge strategy.
+*   **Algorithm**:
+    *   Compare `updatedAt` timestamps for matching prompt IDs
+    *   Keep newer version, discard older
+    *   Show notification of merged changes
+
+### Task 5.6: Testing
+*   **Type**: Testing
+*   **Description**: Unit tests for SyncService and manual cross-device testing.
+*   **Tests**:
+    *   Unit: Merge logic correctness
+    *   Unit: Auth token handling
+    *   Manual: Sign in on Device A → Edit → Verify sync on Device B
+    *   Manual: Offline mode graceful degradation

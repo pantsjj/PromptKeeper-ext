@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=840, height=680, user-scalable=no">
     <title>PromptKeeper</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
+
 <body>
-    <div id="full-editor-container">
-        <button id="open-full-editor">✨ Open Full Screen IDE ↗</button>
-    </div>
+
     <div id="app">
         <aside>
             <h2>Saved Prompts</h2>
@@ -19,7 +19,25 @@
         </aside>
 
         <main id="editor">
-            <h2>Current Prompt</h2>
+            <!-- Search Header (matching options page style) -->
+            <div style="text-align: center; padding: 16px 20px 12px 20px; border-bottom: 1px solid #e3e3e4;">
+                <div style="position: relative; max-width: 300px; margin: 0 auto;">
+                    <span
+                        style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #86868b; font-size: 14px; pointer-events: none;">🔍</span>
+                    <input type="search" id="popup-search" placeholder="Search prompts..." style="
+                        width: 100%;
+                        background: #f5f5f7; 
+                        border: 1px solid transparent;
+                        border-radius: 20px; 
+                        padding: 8px 16px 8px 36px; 
+                        font-size: 13px; 
+                        color: #1d1d1f; 
+                        outline: none;
+                        transition: all 0.2s;
+                    ">
+                </div>
+            </div>
+
             <div id="editor-content">
                 <label for="prompt-title">Title</label>
                 <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
@@ -30,13 +48,12 @@
                 <!-- AI Capability Area -->
                 <div id="ai-capability">
                     <select id="rewrite-options">
-                    <option value="retry">Retry</option>
-                    <option value="more-creative">More Creative</option>
-                    <option value="more-concise">More Concise</option>
-                    <option value="shorter">Shorter</option>
-                    <option value="longer">Longer</option>
+                        <option value="magic_enhance">🪄 Enhance</option>
+                        <option value="formalize">👔 Formalize</option>
+                        <option value="clarify">🔍 Clarify</option>
+                        <option value="summarize">✂️ Shorten</option>
                     </select>
-                    <button id="ai-optimize-button" class="ai-button">AI-Optimize</button>
+                    <button id="ai-optimize-button" class="ai-button">Refine</button>
                 </div>
 
                 <!-- Action Buttons -->
@@ -46,19 +63,19 @@
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button" class="paste-button">Paste</button>
                 </div>
-                  <!-- Language Translation Area -->
-               <!--  <div id="translation-capability"> -->
+                <!-- Language Translation Area -->
+                <!--  <div id="translation-capability"> -->
                 <!--     <select id="language-options"> -->
                 <!--     </select> -->
                 <!--     <button id="translate-paste-button" class="translate-button">Translate-Paste</button> -->
-              <!--   </div> -->
-                
-                </div>
-                
+                <!--   </div> -->
+
             </div>
-            
-        </main>
-        
+
+    </div>
+
+    </main>
+
     </div>
 
     <footer id="stats">
@@ -72,9 +89,12 @@
             <a href="#" id="export-link" style="color:#666; text-decoration:none; font-size:11px;">Export</a>
             <a href="#" id="import-link" style="color:#666; text-decoration:none; font-size:11px;">Import</a>
             <span style="color:#ddd;">|</span>
-            <a href="#" id="open-full-editor-link" style="color:#0071e3; text-decoration:none; font-size:11px; font-weight:500;">Manage Prompts ↗</a>
+            <a href="#" id="open-full-editor-link"
+                style="color:#0071e3; text-decoration:none; font-size:11px; font-weight:500;">Manage Prompts ↗</a>
             <span style="color:#ddd;">|</span>
-            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank" style="color:#999; text-decoration:none; font-size:11px;">@Jaroslav</a>
+            <div id="status-dots" class="status-dots-container"></div>
+            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
+                style="color:#999; text-decoration:none; font-size:11px;">@Jaroslav</a>
         </div>
         <!-- Hidden file input for import -->
         <input type="file" id="import-file" accept=".json" style="display: none;">
@@ -82,4 +102,5 @@
 
     <script src="popup.js" type="module"></script>
 </body>
+
 </html>

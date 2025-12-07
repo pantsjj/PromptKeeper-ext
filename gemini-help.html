@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enable Gemini Nano - PromptKeeper</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --radius-lg: 12px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --card-bg: #2c2c2e;
+                --text-color: #f5f5f7;
+                --text-secondary: #a1a1a6;
+                --border-color: #424245;
+                --primary-color: #0a84ff;
+            }
+        }
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 700px;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h1 { margin-top: 0; color: var(--primary-color); }
+        h2 { margin-top: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-size: 1.2em; }
+        code { background: rgba(125,125,125,0.1); padding: 2px 5px; border-radius: 4px; font-family: "SF Mono", monospace; font-size: 0.9em; }
+        ol { padding-left: 20px; }
+        li { margin-bottom: 10px; }
+        .note {
+            background-color: rgba(255, 179, 64, 0.1);
+            border-left: 4px solid #ffb340;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        a { color: var(--primary-color); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enable Gemini Nano in Chrome</h1>
+        <p>PromptKeeper uses <strong>Gemini Nano</strong>, Chrome's built-in local AI model. This feature is experimental and currently requires manual activation.</p>
+
+        <div class="note">
+            <strong>Requirement:</strong> Chrome Version <strong>128+</strong> (You are on a compatible version if updated).
+        </div>
+
+        <h2>Step 1: Enable Chrome Flags</h2>
+        <ol>
+            <li><a href="#" class="chrome-link" data-url="chrome://flags">Open chrome://flags ↗</a></li>
+            <li>If the link doesn't open, copy and paste it into a new tab.</li>
+            <li>Search for <strong>"Prompt API for Gemini Nano"</strong> (<code>#prompt-api-for-gemini-nano</code>) and set it to <strong>Enabled</strong>.</li>
+            <li>Search for <strong>"Enables optimization guide on device"</strong> (<code>#optimization-guide-on-device-model</code>) and set it to <strong>Enabled BypassPerfRequirement</strong>.</li>
+            <li>Click the <strong>Relaunch</strong> button at the bottom of the screen.</li>
+        </ol>
+
+        <div class="note" style="background-color: rgba(66, 133, 244, 0.1); border-left-color: #4285f4;">
+            <strong>Tip:</strong> We use the <em>Prompt API</em>, not the <em>Rewriter/Writer API</em>. Ensure you enable the correct one.
+        </div>
+
+        <h2>Step 2: Download the Model</h2>
+        <ol>
+            <li><a href="#" class="chrome-link" data-url="chrome://components">Open chrome://components ↗</a></li>
+            <li>If the link doesn't open, copy and paste it into a new tab.</li>
+            <li>Find <strong>Optimization Guide On Device Model</strong> in the list.</li>
+            <li>Click <strong>Check for update</strong>.
+                <ul>
+                    <li>If it says "Component not updated" or "New", wait a few minutes. It is downloading (~1.5GB) in the background.</li>
+                    <li>When it says "Up-to-date" (and shows a version > 0.0.0.0), it is ready.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>Step 3: Verify</h2>
+        <p>Return to PromptKeeper and refresh the page. The status should now say <strong>✅ AI Ready</strong>.</p>
+        
+        <p><a href="javascript:window.close()">Close this guide</a></p>
+    </div>
+    <script src="gemini-help.js"></script>
+</body>
+</html>

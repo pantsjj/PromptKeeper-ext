@@ -1,7 +1,7 @@
 # Gemini for Workspace: Prompting Best Practices
 *Source: Gemini for Google Workspace Prompting Guide 101 (Oct 2024)*
 
-This document serves as the "System Context" for the PromptKeeper agent. It defines the framework we use to score, optimize, and generate prompts.
+**Note on Implementation (Dec 2025):** PromptKeeper implements these best practices using a **Hybrid AI Strategy**. We use Chrome's **Prompt API** for creative enhancement and the **Rewriter API** for stylistic polish. Automated "Scoring" is currently deferred due to local model limitations, so users should use the 4 Pillars below as a mental checklist.
 
 ## The 4 Pillars of an Effective Prompt
 Every optimization request should evaluate or enhance the prompt based on these four components:
@@ -27,12 +27,12 @@ Every optimization request should evaluate or enhance the prompt based on these 
     *   *Check*: Is the output structure defined?
 
 ## Optimization Strategies (Iterative Refinement)
-When the user asks to "Refine" or "Optimize", apply these strategies:
+PromptKeeper's "Refine" buttons map to these strategies:
 
-*   **Break it up**: Split complex tasks into chained prompts.
-*   **Give Constraints**: Add word counts, specific exclusions, or style guides.
-*   **Say it another way**: If the output is wrong, rephrase the Task or add Context (don't just repeat).
-*   **Tone Adjustment**: Explicitly request "Formal", "Casual", "Technical", or "Empathetic".
+*   **Formalize**: (Rewriter API) Adjusts tone to be professional.
+*   **Shorten**: (Summarizer/Rewriter API) Condenses text.
+*   **Clarify**: (Prompt API) Rewrites task with stronger verbs.
+*   **Magic Enhance**: (Prompt API) Applies all 4 Pillars to rough notes.
 
 ## Intent-Based Presets
 PromptKeeper supports these specialized "Magic" modes:
@@ -41,9 +41,6 @@ PromptKeeper supports these specialized "Magic" modes:
     *   *Input*: Rough notes (e.g., "email boss about sick day").
     *   *Action*: Apply 4 Pillars.
     *   *Output*: "You are an employee. Draft a professional email to your manager [Persona/Task]. Explain you are unwell and cannot work today [Context]. Keep it brief and polite [Format/Tone]."
-
-*   **Image Generation**:
-    *   *Focus*: Subject, Medium (Photo, Oil Painting), Lighting (Golden hour), Composition (Wide shot), Style (Cyberpunk).
 
 *   **Professional Polish**:
     *   *Focus*: Grammar correction, Conciseness, Corporate tone (removing slang), Action-oriented language.

@@ -1,228 +1,137 @@
 import StorageService from './services/StorageService.js';
-// AIService will be used in future phases for the "Optimization" features
-// import AIService from './services/AIService.js';
+import AIService from './services/AIService.js';
 
 let currentPromptId = null;
 
-// Expanded arrays for generating random titles
-const adjectives = ['Quick', 'Lazy', 'Charming', 'Diligent', 'Mighty', 'Calm', 'Brave', 'Elegant', 'Fierce', 'Gentle', 'Happy', 'Jolly', 'Kind', 'Lively', 'Nice', 'Proud', 'Quirky', 'Rapid', 'Sharp', 'Vigorous'];
-const animals = ['Fox', 'Horse', 'Lion', 'Panda', 'Eagle', 'Bear', 'Cat', 'Dog', 'Elephant', 'Giraffe', 'Kangaroo', 'Leopard', 'Monkey', 'Otter', 'Penguin', 'Quail', 'Rabbit', 'Snake', 'Tiger', 'Wolf'];
-const objects = ['Pencil', 'Monitor', 'Chair', 'Tablet', 'Camera', 'Book', 'Clock', 'Desk', 'Guitar', 'Hat', 'Igloo', 'Jug', 'Kite', 'Lamp', 'Map', 'Notebook', 'Orange', 'Pillow', 'Quilt', 'Ruler'];
+// DOM Elements Cache
+const els = {};
 
-function generateRandomTitle() {
-    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const animal = animals[Math.floor(Math.random() * animals.length)];
-    const object = objects[Math.floor(Math.random() * objects.length)];
-    const num = Math.floor(Math.random() * 9000 + 1000);
-    return `${adjective}-${animal}-${object}-${num}`;
+function init() {
+    bindElements();
+    setupListeners();
+    loadPrompts();
+    checkAIStatus();
+    updateFooterStatus();
+
+    // Check URL params for auto-opening logic if needed, but mostly we are just specific here.
 }
 
-/**
- * Loads and displays the list of prompts.
- */
-async function loadPrompts() {
-    try {
-        const prompts = await StorageService.getPrompts();
-        const promptList = document.getElementById('prompt-list');
-        promptList.innerHTML = '';
+function bindElements() {
+    els.promptList = document.getElementById('prompt-list');
+    els.titleInput = document.getElementById('prompt-title');
+    els.textArea = document.getElementById('prompt-text');
+    els.searchInput = document.getElementById('popup-search');
 
-        if (prompts.length === 0) {
-            promptList.innerHTML = '<p>No prompts saved. Create a new one!</p>';
-            clearStats();
+    // Buttons
+    els.saveBtn = document.getElementById('save-button');
+    els.newBtn = document.getElementById('new-prompt-button');
+    els.deleteBtn = document.getElementById('delete-prompt-button');
+    els.pasteBtn = document.getElementById('paste-prompt-button');
+    els.refineBtn = document.getElementById('ai-optimize-button');
+
+    // Links
+    els.exportLink = document.getElementById('export-link');
+    els.importLink = document.getElementById('import-link');
+    els.openFullEditorLink = document.getElementById('open-full-editor-link');
+
+    // Inputs/Selectors
+    els.importFile = document.getElementById('import-file');
+    els.rewriteOptions = document.getElementById('rewrite-options');
+    els.versionSelect = document.getElementById('version-selector');
+
+    // Stats/Status
+    els.wordCount = document.getElementById('word-count');
+    els.storageUsed = document.getElementById('storage-used');
+    els.statusDots = document.getElementById('status-dots');
+    els.aiCapability = document.getElementById('ai-capability');
+}
+
+function setupListeners() {
+    // Search Filter
+    if (els.searchInput) {
+        els.searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const items = els.promptList.querySelectorAll('.prompt-item');
+            items.forEach(item => {
+                const title = item.querySelector('.prompt-title').textContent.toLowerCase();
+                // We could also search content if we had it in DOM, but title is usually sufficient for popup
+                if (title.includes(term)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    // Save
+    els.saveBtn.addEventListener('click', async () => {
+        let title = els.titleInput.value.trim();
+        const text = els.textArea.value.trim();
+
+        if (!text) {
+            alert('Please enter some text for the prompt.');
             return;
         }
 
-        prompts.forEach(prompt => {
-            const entry = document.createElement('div');
-            entry.className = 'prompt-entry';
-            // Simple date formatting
-            const dateStr = new Date(prompt.updatedAt).toLocaleString();
-            
-            entry.innerHTML = `
-                <span class="prompt-title">${prompt.title}</span>
-                <span class="date-stamp">${dateStr}</span>
-            `;
+        if (!title) title = generateRandomTitle();
 
-            entry.addEventListener('click', () => selectPrompt(prompt));
-            promptList.appendChild(entry);
-        });
-
-        // Auto-select logic
-        if (currentPromptId) {
-            const found = prompts.find(p => p.id === currentPromptId);
-            if (found) selectPrompt(found);
-            else if (prompts.length > 0) selectPrompt(prompts[0]);
-        } else if (prompts.length > 0) {
-            selectPrompt(prompts[0]);
-        }
-
-    } catch (err) {
-        console.error('Failed to load prompts:', err);
-    }
-}
-
-/**
- * Selects a prompt and populates the editor.
- * @param {Object} prompt 
- */
-function selectPrompt(prompt) {
-    currentPromptId = prompt.id;
-    document.getElementById('prompt-title').value = prompt.title;
-    
-    // Get content from the head version
-    const currentVersion = prompt.versions.find(v => v.id === prompt.currentVersionId);
-    document.getElementById('prompt-text').value = currentVersion ? currentVersion.content : '';
-    
-    updateStats();
-    renderVersionSelector(prompt);
-}
-
-function renderVersionSelector(prompt) {
-    const selector = document.getElementById('version-selector');
-    selector.innerHTML = '';
-    
-    // Sort versions desc (newest first)
-    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
-    
-    // Create "Header" option that looks like "Revisions #N"
-    // Actually, we want the *selected* option to show the detail, OR we want the "Label" behavior.
-    // To satisfy "Revisions #N" appearing as the label, we can try to format the selected option.
-    
-    sorted.forEach((v, idx) => {
-        const option = document.createElement('option');
-        option.value = v.id;
-        const verNum = prompt.versions.length - idx;
-        const isCurrent = v.id === prompt.currentVersionId;
-        const dateStr = new Date(v.timestamp).toLocaleString();
-        
-        option.textContent = `Revision ${verNum}: ${dateStr} ${isCurrent ? '(Current)' : ''}`;
-        if (isCurrent) option.selected = true;
-        selector.appendChild(option);
-    });
-    
-    // Add "Revisions #N" as a pseudo-label if needed? 
-    // No, standard dropdown behavior is safer. The user will see "v5: Date (Current)" in blue.
-    // If we want strictly "Revisions #N" as the visible text, we'd need a custom UI.
-    // Let's stick to standard <select> styled blue.
-    
-    selector.onchange = (e) => {
-        const vId = e.target.value;
-        const version = prompt.versions.find(v => v.id === vId);
-        if (version) {
-            document.getElementById('prompt-text').value = version.content;
-            updateStats(false); // don't re-render selector to avoid losing focus
-        }
-    };
-}
-
-/**
- * Updates the stats display (Word count, versions, etc)
- */
-function updateStats(renderSelector = true) {
-    const text = document.getElementById('prompt-text').value.trim();
-    const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
-    document.getElementById('word-count').textContent = `Words: ${wordCount}`;
-
-    if (currentPromptId && renderSelector) {
-        StorageService.getPrompts().then(prompts => {
-            const p = prompts.find(x => x.id === currentPromptId);
-            if (p) {
-                renderVersionSelector(p);
+        try {
+            if (currentPromptId) {
+                await StorageService.updatePrompt(currentPromptId, text);
+                await StorageService.renamePrompt(currentPromptId, title);
+            } else {
+                const newPrompt = await StorageService.addPrompt(text);
+                if (title && title !== newPrompt.title) {
+                    await StorageService.renamePrompt(newPrompt.id, title);
+                }
+                currentPromptId = newPrompt.id;
             }
-        });
-    } else if (!currentPromptId) {
-         document.getElementById('version-selector').innerHTML = '<option>New</option>';
-    }
-    
-    updateStorageStats();
-}
 
-function updateStorageStats() {
-    chrome.storage.local.getBytesInUse(null, (bytes) => {
-        document.getElementById('storage-used').textContent = `Total Storage: ${(bytes / 1024).toFixed(2)} KB`;
-    });
-}
-
-function clearStats() {
-    document.getElementById('word-count').textContent = 'Words: 0';
-    document.getElementById('version-count').textContent = 'Versions: 0';
-    document.getElementById('storage-used').textContent = 'Total Storage: 0 KB';
-}
-
-// --- Event Listeners ---
-
-// Save / Update
-document.getElementById('save-button').addEventListener('click', async () => {
-    let title = document.getElementById('prompt-title').value.trim();
-    const text = document.getElementById('prompt-text').value.trim();
-
-    if (!text) {
-        alert('Please enter some text for the prompt.');
-        return;
-    }
-
-    if (!title) title = generateRandomTitle();
-
-    try {
-        if (currentPromptId) {
-            // Update existing
-            await StorageService.updatePrompt(currentPromptId, text);
-            await StorageService.renamePrompt(currentPromptId, title);
-        } else {
-            // Create new
-            const newPrompt = await StorageService.addPrompt(text);
-            if (title && title !== newPrompt.title) {
-                 await StorageService.renamePrompt(newPrompt.id, title);
-            }
-            currentPromptId = newPrompt.id;
+            await loadPrompts();
+            // Pulse
+            els.textArea.classList.add('pulse-green');
+            setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
+        } catch (err) {
+            console.error('Save failed:', err);
+            alert('Failed to save prompt.');
         }
-        
-        loadPrompts();
-        // UX Feedback: Pulse Glow
-        const textArea = document.getElementById('prompt-text');
-        textArea.classList.add('pulse-green');
-        setTimeout(() => textArea.classList.remove('pulse-green'), 1000);
-    } catch (err) {
-        console.error('Save failed:', err);
-        alert('Failed to save prompt.');
-    }
-});
+    });
 
-// New Prompt
-document.getElementById('new-prompt-button').addEventListener('click', () => {
-    currentPromptId = null;
-    document.getElementById('prompt-title').value = '';
-    document.getElementById('prompt-text').value = '';
-    clearStats();
-});
-
-// Delete
-document.getElementById('delete-prompt-button').addEventListener('click', async () => {
-    if (!currentPromptId) return;
-    
-    if (confirm('Are you sure you want to delete this prompt?')) {
-        await StorageService.deletePrompt(currentPromptId);
+    // New
+    els.newBtn.addEventListener('click', () => {
         currentPromptId = null;
-        document.getElementById('prompt-title').value = '';
-        document.getElementById('prompt-text').value = '';
-        loadPrompts();
-    }
-});
+        els.titleInput.value = '';
+        els.textArea.value = '';
+        clearStats();
+    });
 
-// Paste / Inject
-document.getElementById('paste-prompt-button').addEventListener('click', () => {
-    const text = document.getElementById('prompt-text').value.trim();
-    if (!text) return;
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (!tabs[0] || tabs[0].url.startsWith('chrome://')) {
-            alert('Cannot paste into this page.');
-            return;
+    // Delete
+    els.deleteBtn.addEventListener('click', async () => {
+        if (!currentPromptId) return;
+        if (confirm('Are you sure you want to delete this prompt?')) {
+            await StorageService.deletePrompt(currentPromptId);
+            currentPromptId = null;
+            els.titleInput.value = '';
+            els.textArea.value = '';
+            clearStats();
+            await loadPrompts();
         }
-        
-        const tabId = tabs[0].id;
+    });
 
-        function sendMessage() {
+    // Paste
+    els.pasteBtn.addEventListener('click', () => {
+        const text = els.textArea.value.trim();
+        if (!text) return;
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0] || tabs[0].url.startsWith('chrome://')) {
+                alert('Cannot paste into this page.');
+                return;
+            }
+
+            const tabId = tabs[0].id;
+
             chrome.tabs.sendMessage(tabId, { action: "pastePrompt", text: text }, (response) => {
                 if (chrome.runtime.lastError || (response && response.status !== 'success')) {
                     // Inject and retry
@@ -235,73 +144,265 @@ document.getElementById('paste-prompt-button').addEventListener('click', () => {
                     });
                 }
             });
-        }
-        
-        sendMessage();
+        });
     });
-});
 
-// Export Prompts Link
-document.getElementById('export-link').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const prompts = await StorageService.getPrompts();
-    const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'promptkeeper-export.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-});
+    // AI Refine
+    els.refineBtn.addEventListener('click', async () => {
+        const text = els.textArea.value.trim();
+        if (!text) return alert("Enter a prompt to refine.");
 
-// Import Prompts Link
-document.getElementById('import-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('import-file').click();
-});
+        const type = els.rewriteOptions.value;
+        const originalText = els.refineBtn.textContent;
 
-document.getElementById('import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+        els.refineBtn.textContent = "...";
+        els.refineBtn.disabled = true;
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
         try {
-            const json = JSON.parse(event.target.result);
-            const count = await StorageService.importPrompts(json);
-            alert(`Successfully imported ${count} prompts.`);
-            loadPrompts();
+            const refined = await AIService.refinePrompt(text, type);
+            if (refined) {
+                els.textArea.value = refined;
+                updateStats();
+                els.textArea.classList.add('pulse-green');
+                setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
+            }
         } catch (err) {
-            console.error('Import failed:', err);
-            alert('Failed to import prompts. Invalid JSON file.');
+            console.error("Refine failed:", err);
+            alert("Failed to refine prompt.");
         } finally {
-             // Reset input so same file can be selected again if needed
-             e.target.value = '';
+            els.refineBtn.textContent = originalText;
+            els.refineBtn.disabled = false;
+        }
+    });
+
+    // Manage Prompts Link
+    els.openFullEditorLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            window.open(chrome.runtime.getURL('options.html'));
+        }
+    });
+
+    // Import/Export
+    els.exportLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const prompts = await StorageService.getPrompts();
+        const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'promptkeeper-export.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+
+    els.importLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        els.importFile.click();
+    });
+
+    els.importFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const json = JSON.parse(event.target.result);
+                const count = await StorageService.importPrompts(json);
+                alert(`Successfully imported ${count} prompts.`);
+                loadPrompts();
+            } catch (err) {
+                console.error('Import failed:', err);
+                alert('Failed to import prompts. Invalid JSON file.');
+            } finally {
+                e.target.value = '';
+            }
+        };
+        reader.readAsText(file);
+    });
+}
+
+// Helpers
+const adjectives = ['Quick', 'Lazy', 'Charming', 'Diligent', 'Mighty', 'Calm', 'Brave', 'Elegant', 'Fierce', 'Gentle', 'Happy', 'Jolly', 'Kind', 'Lively', 'Nice', 'Proud', 'Quirky', 'Rapid', 'Sharp', 'Vigorous'];
+const animals = ['Fox', 'Horse', 'Lion', 'Panda', 'Eagle', 'Bear', 'Cat', 'Dog', 'Elephant', 'Giraffe', 'Kangaroo', 'Leopard', 'Monkey', 'Otter', 'Penguin', 'Quail', 'Rabbit', 'Snake', 'Tiger', 'Wolf'];
+const objects = ['Pencil', 'Monitor', 'Chair', 'Tablet', 'Camera', 'Book', 'Clock', 'Desk', 'Guitar', 'Hat', 'Igloo', 'Jug', 'Kite', 'Lamp', 'Map', 'Notebook', 'Orange', 'Pillow', 'Quilt', 'Ruler'];
+
+function generateRandomTitle() {
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const animal = animals[Math.floor(Math.random() * animals.length)];
+    const object = objects[Math.floor(Math.random() * objects.length)];
+    const num = Math.floor(Math.random() * 9000 + 1000);
+    return `${adjective}-${animal}-${object}-${num}`;
+}
+
+async function loadPrompts() {
+    try {
+        const prompts = await StorageService.getPrompts();
+        els.promptList.innerHTML = ''; // Clear
+
+        if (prompts.length === 0) {
+            els.promptList.innerHTML = '<p style="padding:10px; color:#999; text-align:center;">No prompts saved.</p>';
+            clearStats();
+            return;
+        }
+
+        // Apply Search Filter if any
+        const searchTerm = els.searchInput ? els.searchInput.value.toLowerCase() : '';
+
+        prompts.forEach(prompt => {
+            const entry = document.createElement('div');
+            entry.className = 'prompt-item'; // Match CSS class we expect
+            // Can add styling class 'prompt-entry' if that's what styles.css uses, let's use prompt-item to be generic or prompt-entry
+            // In the previous file it was 'prompt-entry'.
+            entry.classList.add('prompt-entry');
+
+            const dateStr = new Date(prompt.updatedAt).toLocaleDateString();
+
+            entry.innerHTML = `
+                <span class="prompt-title">${prompt.title}</span>
+                <span class="date-stamp">${dateStr}</span>
+            `;
+
+            // Filter
+            if (searchTerm && !prompt.title.toLowerCase().includes(searchTerm)) {
+                entry.style.display = 'none';
+            }
+
+            entry.addEventListener('click', () => selectPrompt(prompt));
+            els.promptList.appendChild(entry);
+        });
+
+        // Auto-select logic
+        if (!currentPromptId && prompts.length > 0 && !searchTerm) {
+            selectPrompt(prompts[0]);
+        } else if (currentPromptId) {
+            // keep selection
+            const found = prompts.find(p => p.id === currentPromptId);
+            if (found) selectPrompt(found);
+        }
+
+    } catch (err) {
+        console.error('Failed to load prompts:', err);
+    }
+}
+
+function selectPrompt(prompt) {
+    currentPromptId = prompt.id;
+    els.titleInput.value = prompt.title;
+
+    // Get content from the head version
+    const currentVersion = prompt.versions.find(v => v.id === prompt.currentVersionId);
+    els.textArea.value = currentVersion ? currentVersion.content : '';
+
+    updateStats();
+    renderVersionSelector(prompt);
+}
+
+function renderVersionSelector(prompt) {
+    const selector = els.versionSelect;
+    if (!selector) return;
+
+    selector.innerHTML = '';
+    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+
+    sorted.forEach((v, idx) => {
+        const option = document.createElement('option');
+        option.value = v.id;
+        const verNum = prompt.versions.length - idx;
+        const isCurrent = v.id === prompt.currentVersionId;
+        const dateStr = new Date(v.timestamp).toLocaleDateString();
+
+        option.textContent = `v${verNum}: ${dateStr} ${isCurrent ? '(Curr)' : ''}`;
+        if (isCurrent) option.selected = true;
+        selector.appendChild(option);
+    });
+
+    selector.onchange = (e) => {
+        const vId = e.target.value;
+        const version = prompt.versions.find(v => v.id === vId);
+        if (version) {
+            els.textArea.value = version.content;
+            updateStats(false);
         }
     };
-    reader.readAsText(file);
-});
+}
 
-// Full Editor Link
-document.getElementById('open-full-editor-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    if (chrome.runtime.openOptionsPage) {
-        chrome.runtime.openOptionsPage();
-    } else {
-        window.open(chrome.runtime.getURL('options.html'));
-    }
-});
+function updateStats(renderSelector = true) {
+    const text = els.textArea.value.trim();
+    const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+    els.wordCount.textContent = `Words: ${wordCount}`;
 
-// Init
-document.addEventListener('DOMContentLoaded', () => {
-    loadPrompts();
-    updateStats();
-    
-    // Check if we are in the popup or standalone
-    if (window.innerWidth > 600) {
-        document.getElementById('full-editor-container').style.display = 'none';
-    } else {
-        document.getElementById('full-editor-container').style.display = 'block';
+    if (currentPromptId && renderSelector) {
+        StorageService.getPrompts().then(prompts => {
+            const p = prompts.find(x => x.id === currentPromptId);
+            if (p) {
+                renderVersionSelector(p);
+            }
+        });
+    } else if (!currentPromptId) {
+        if (els.versionSelect) els.versionSelect.innerHTML = '<option>New</option>';
     }
-});
+
+    chrome.storage.local.getBytesInUse(null, (bytes) => {
+        els.storageUsed.textContent = `Size: ${(bytes / 1024).toFixed(2)} KB`;
+    });
+}
+
+function clearStats() {
+    els.wordCount.textContent = 'Words: 0';
+    if (els.versionSelect) els.versionSelect.innerHTML = '<option>Rev: 0</option>';
+    els.storageUsed.textContent = 'Size: 0 KB';
+}
+
+async function updateFooterStatus() {
+    if (!els.statusDots) return;
+    try {
+        const statuses = await AIService.getDetailedStatus();
+        els.statusDots.innerHTML = '';
+
+        const dot1 = document.createElement('div');
+        dot1.className = `status-dot ${statuses.prompt}`;
+        dot1.title = `Prompt API: ${statuses.prompt}`;
+        els.statusDots.appendChild(dot1);
+
+        const dot2 = document.createElement('div');
+        dot2.className = `status-dot ${statuses.rewriter}`;
+        dot2.title = `Rewriter API: ${statuses.rewriter}`;
+        els.statusDots.appendChild(dot2);
+    } catch (e) {
+        console.warn("Status check failed", e);
+    }
+}
+
+async function checkAIStatus() {
+    if (!els.aiCapability) return;
+    const status = await AIService.getAvailability();
+    if (status === 'no') {
+        const diag = await AIService.getDiagnostic();
+        const helpUrl = chrome.runtime.getURL('gemini-help.html');
+
+        els.aiCapability.innerHTML = `
+            <div class="ai-error-container">
+                <div class="ai-error-text" style="color:#b06000;">⚠️ Local Gemini Nano is not available</div>
+                <div style="font-family:monospace; font-size:9px; color:#666; background:#eee; padding:2px; margin-bottom:2px;">[${diag}]</div>
+                <a href="https://developer.chrome.com/docs/ai/built-in" target="_blank" class="ai-error-link">Learn about Gemini Nano ↗</a>
+                <a href="${helpUrl}" target="_blank" class="ai-error-link">Enable Gemini Nano manually ↗</a>
+            </div>
+        `;
+        // Disable button
+        els.refineBtn.disabled = true;
+        els.refineBtn.title = diag;
+    } else if (status === 'after-download') {
+        const div = document.createElement('div');
+        div.style.fontSize = '10px';
+        div.style.color = '#f9ab00';
+        div.textContent = '⬇️ AI Model downloading...';
+        els.aiCapability.insertBefore(div, els.aiCapability.firstChild);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', init);
