@@ -34,7 +34,7 @@ async function init() {
     els.textArea = document.getElementById('prompt-text-area');
     els.saveBtn = document.getElementById('save-btn');
     els.deleteBtn = document.getElementById('delete-btn');
-    els.versionSelect = document.getElementById('version-history-select');
+    els.versionSelect = document.getElementById('footer-version-selector');
     els.wordCount = document.getElementById('word-count');
     els.charCount = document.getElementById('char-count');
     els.versionLabel = document.getElementById('version-label');
@@ -460,6 +460,14 @@ function renderHistoryDropdown(prompt) {
     if (!els.versionSelect) return;
     els.versionSelect.innerHTML = '';
 
+    // Add placeholder if no prompt
+    if (!prompt || !prompt.versions || prompt.versions.length === 0) {
+        const option = document.createElement('option');
+        option.textContent = 'v1: 06/12/2025 (Curr)';
+        els.versionSelect.appendChild(option);
+        return;
+    }
+
     const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
 
     sorted.forEach((v, idx) => {
@@ -479,6 +487,7 @@ function renderHistoryDropdown(prompt) {
         if (v) {
             els.textArea.value = v.content;
             updateStats();
+            updateFooterStats();
         }
     }
 }
