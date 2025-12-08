@@ -24,7 +24,7 @@
         "identity"
     ],
     "oauth2": {
-        "client_id": "804678258987-e841cbt90rcba2pn5lgti5tn5cfm2t0t.apps.googleusercontent.com",
+        "client_id": "804678258987-trop26ei3lek64gvdscchg2pfijo82mq.apps.googleusercontent.com",
         "scopes": [
             "https://www.googleapis.com/auth/drive.file",
             "https://www.googleapis.com/auth/userinfo.email"
