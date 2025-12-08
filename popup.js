@@ -1,5 +1,6 @@
 import StorageService from './services/StorageService.js';
-import AIService from './services/AIService.js';
+// Note: AI features removed from popup - Gemini Nano doesn't work in extension popups
+// AI features are available in the full-page Manage Prompts screen (options.html)
 
 let currentPromptId = null;
 
@@ -10,10 +11,7 @@ function init() {
     bindElements();
     setupListeners();
     loadPrompts();
-    checkAIStatus();
-    updateFooterStatus();
-
-    // Check URL params for auto-opening logic if needed, but mostly we are just specific here.
+    // Note: AI status check removed - use full page for AI features
 }
 
 function bindElements() {
@@ -27,7 +25,6 @@ function bindElements() {
     els.newBtn = document.getElementById('new-prompt-button');
     els.deleteBtn = document.getElementById('delete-prompt-button');
     els.pasteBtn = document.getElementById('paste-prompt-button');
-    els.refineBtn = document.getElementById('ai-optimize-button');
 
     // Links
     els.exportLink = document.getElementById('export-link');
@@ -36,14 +33,11 @@ function bindElements() {
 
     // Inputs/Selectors
     els.importFile = document.getElementById('import-file');
-    els.rewriteOptions = document.getElementById('rewrite-options');
     els.versionSelect = document.getElementById('version-selector');
 
     // Stats/Status
     els.wordCount = document.getElementById('word-count');
     els.storageUsed = document.getElementById('storage-used');
-    els.statusDots = document.getElementById('status-dots');
-    els.aiCapability = document.getElementById('ai-capability');
 }
 
 function setupListeners() {
@@ -145,34 +139,6 @@ function setupListeners() {
                 }
             });
         });
-    });
-
-    // AI Refine
-    els.refineBtn.addEventListener('click', async () => {
-        const text = els.textArea.value.trim();
-        if (!text) return alert("Enter a prompt to refine.");
-
-        const type = els.rewriteOptions.value;
-        const originalText = els.refineBtn.textContent;
-
-        els.refineBtn.textContent = "...";
-        els.refineBtn.disabled = true;
-
-        try {
-            const refined = await AIService.refinePrompt(text, type);
-            if (refined) {
-                els.textArea.value = refined;
-                updateStats();
-                els.textArea.classList.add('pulse-green');
-                setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
-            }
-        } catch (err) {
-            console.error("Refine failed:", err);
-            alert("Failed to refine prompt.");
-        } finally {
-            els.refineBtn.textContent = originalText;
-            els.refineBtn.disabled = false;
-        }
     });
 
     // Manage Prompts Link
@@ -356,53 +322,6 @@ function clearStats() {
     els.wordCount.textContent = 'Words: 0';
     if (els.versionSelect) els.versionSelect.innerHTML = '<option>Rev: 0</option>';
     els.storageUsed.textContent = 'Size: 0 KB';
-}
-
-async function updateFooterStatus() {
-    if (!els.statusDots) return;
-    try {
-        const statuses = await AIService.getDetailedStatus();
-        els.statusDots.innerHTML = '';
-
-        const dot1 = document.createElement('div');
-        dot1.className = `status-dot ${statuses.prompt}`;
-        dot1.title = `Prompt API: ${statuses.prompt}`;
-        els.statusDots.appendChild(dot1);
-
-        const dot2 = document.createElement('div');
-        dot2.className = `status-dot ${statuses.rewriter}`;
-        dot2.title = `Rewriter API: ${statuses.rewriter}`;
-        els.statusDots.appendChild(dot2);
-    } catch (e) {
-        console.warn("Status check failed", e);
-    }
-}
-
-async function checkAIStatus() {
-    if (!els.aiCapability) return;
-    const status = await AIService.getAvailability();
-    if (status === 'no') {
-        const diag = await AIService.getDiagnostic();
-        const helpUrl = chrome.runtime.getURL('gemini-help.html');
-
-        els.aiCapability.innerHTML = `
-            <div class="ai-error-container">
-                <div class="ai-error-text" style="color:#b06000;">⚠️ Local Gemini Nano is not available</div>
-                <div style="font-family:monospace; font-size:9px; color:#666; background:#eee; padding:2px; margin-bottom:2px;">[${diag}]</div>
-                <a href="https://developer.chrome.com/docs/ai/built-in" target="_blank" class="ai-error-link">Learn about Gemini Nano ↗</a>
-                <a href="${helpUrl}" target="_blank" class="ai-error-link">Enable Gemini Nano manually ↗</a>
-            </div>
-        `;
-        // Disable button
-        els.refineBtn.disabled = true;
-        els.refineBtn.title = diag;
-    } else if (status === 'after-download') {
-        const div = document.createElement('div');
-        div.style.fontSize = '10px';
-        div.style.color = '#f9ab00';
-        div.textContent = '⬇️ AI Model downloading...';
-        els.aiCapability.insertBefore(div, els.aiCapability.firstChild);
-    }
 }
 
 document.addEventListener('DOMContentLoaded', init);
