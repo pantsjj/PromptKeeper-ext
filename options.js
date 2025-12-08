@@ -60,12 +60,14 @@ async function init() {
     els.footerExportLink = document.getElementById('footer-export-link');
     els.footerImportLink = document.getElementById('footer-import-link');
     els.footerImportFile = document.getElementById('footer-import-file');
+    els.footerStatusDots = document.getElementById('footer-status-dots');
 
     setupEventListeners();
     await initGoogleDrive(); // Check Drive auth state
 
     try {
         await checkAIStatus();
+        await updateFooterStatusDots();
     } catch (err) { console.warn("AI Status Check failed:", err); }
 
     try {
@@ -672,6 +674,44 @@ function updateFooterStats() {
         const kb = (bytes / 1024).toFixed(1);
         els.footerStorageUsed.textContent = `Size: ${kb} KB`;
     });
+}
+
+// Update footer status dots with AI availability
+async function updateFooterStatusDots() {
+    if (!els.footerStatusDots) return;
+
+    els.footerStatusDots.innerHTML = '';
+
+    try {
+        const statuses = await AIService.getDetailedStatus();
+
+        // Prompt API dot
+        const dot1 = document.createElement('div');
+        dot1.className = `status-dot ${statuses.prompt === 'readily' ? '' : statuses.prompt === 'after-download' ? 'warning' : 'error'}`;
+        dot1.title = `Prompt API: ${statuses.prompt}`;
+        dot1.style.cursor = 'help';
+        els.footerStatusDots.appendChild(dot1);
+
+        // Rewriter API dot
+        const dot2 = document.createElement('div');
+        dot2.className = `status-dot ${statuses.rewriter === 'readily' ? '' : statuses.rewriter === 'after-download' ? 'warning' : 'error'}`;
+        dot2.title = `Rewriter API: ${statuses.rewriter}`;
+        dot2.style.cursor = 'help';
+        els.footerStatusDots.appendChild(dot2);
+    } catch (e) {
+        // Fallback to error dots if check fails
+        const dot1 = document.createElement('div');
+        dot1.className = 'status-dot error';
+        dot1.title = 'Prompt API: unavailable';
+        dot1.style.cursor = 'help';
+        els.footerStatusDots.appendChild(dot1);
+
+        const dot2 = document.createElement('div');
+        dot2.className = 'status-dot error';
+        dot2.title = 'Rewriter API: unavailable';
+        dot2.style.cursor = 'help';
+        els.footerStatusDots.appendChild(dot2);
+    }
 }
 
 // ============================================================================
