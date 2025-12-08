@@ -16,6 +16,11 @@ yarn-error.log*
 # System Files
 .DS_Store
 Thumbs.db
+test-results/
+
+# OAuth Client Secrets (DO NOT COMMIT)
+client_secret_*.json
+*client_secret*.json.db
 
 # IDEs
 .vscode/
@@ -26,3 +31,7 @@ dist/
 build/
 *.zip
 *.crx
+docs/PromptKeeper-GDrive-Auth.md
+docs/OAUTH-SETUP-CRITICAL.md
+docs/google-drive-implementation.md
+docs/marketing-image-prompts.md
