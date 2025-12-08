@@ -109,8 +109,8 @@
         /* --- Main Layout --- */
         #main-layout {
             display: grid;
-            grid-template-columns: 240px 1fr 260px;
-            /* Slightly wider sidebar */
+            grid-template-columns: 240px 1fr 280px;
+            /* Right sidebar: 260px -> 280px */
             flex: 1;
             overflow: hidden;
         }
@@ -468,18 +468,144 @@
 
             <!-- AI Tools -->
             <div class="panel-section">
-                <h3>AI Optimization</h3>
-                <div id="ai-status" style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;"></div>
+                <div class="ai-panel-card" id="ai-tools-panel">
+                    <h3>AI Optimization</h3>
+                    <div id="ai-status" style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;"></div>
 
-                <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
-                    <button class="refine-btn" data-type="magic_enhance"><span>🪄</span> Magic Enhance</button>
-                    <button class="refine-btn" data-type="formalize"><span>👔</span> Formalize Tone</button>
-                    <button class="refine-btn" data-type="clarify"><span>🔍</span> Improve Clarity</button>
-                    <button class="refine-btn" data-type="summarize"><span>✂️</span> Shorten</button>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                        <button class="refine-btn" data-type="magic_enhance"><span>🪄</span> Magic Enhance</button>
+                        <button class="refine-btn" data-type="formalize"><span>👔</span> Formalize Tone</button>
+                        <button class="refine-btn" data-type="clarify"><span>🔍</span> Improve Clarity</button>
+                        <button class="refine-btn" data-type="summarize"><span>✂️</span> Shorten</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Drive Backup -->
+            <div class="panel-section">
+                <div class="cloud-backup-card">
+                    <h3>☁️ Google Drive Backup</h3>
+
+                    <!-- Not Signed In State -->
+                    <div id="drive-signed-out">
+                        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;">
+                            Backup your prompts to Google Drive for safe keeping and cross-device access.
+                        </p>
+                        <button id="google-signin-btn" class="primary-btn" style="width:100%;">
+                            Sign in with Google
+                        </button>
+                    </div>
+
+                    <!-- Signed In State -->
+                    <div id="drive-signed-in" class="hidden">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                            <span style="color:var(--primary-color); font-size:14px;">✓</span>
+                            <span id="user-email" style="font-size:11px; color:var(--text-secondary);"></span>
+                        </div>
+
+                        <div style="display:grid; gap:8px; margin-bottom:12px;">
+                            <button id="backup-btn" class="secondary-btn" style="font-size:12px;">
+                                📤 Backup Now
+                            </button>
+                            <button id="restore-btn" class="secondary-btn" style="font-size:12px;">
+                                📥 Restore from Drive
+                            </button>
+                        </div>
+
+                        <div
+                            style="font-size:10px; color:var(--text-secondary); margin-bottom:12px; text-align:center;">
+                            Last backup: <span id="last-backup-time">Never</span>
+                        </div>
+
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; margin-bottom:12px;">
+                            <input type="checkbox" id="auto-sync-checkbox">
+                            Auto-backup every 30 min (Default: ON)
+                        </label>
+
+                        <button id="google-signout-btn" class="secondary-btn" style="width:100%; font-size:11px;">
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Library Stats -->
+            <div class="panel-section">
+                <h3>Library Stats</h3>
+                <div style="font-size:12px; color:var(--text-secondary); display:grid; gap:6px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Total Prompts:</span>
+                        <strong id="total-prompts-stat">0</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Workspaces:</span>
+                        <strong id="total-workspaces-stat">0</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Storage Used:</span>
+                        <strong id="storage-used-stat">0 KB</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Author / Credits -->
+            <div class="panel-section"
+                style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border-color);">
+                <div style="text-align:center; font-size:10px; color:var(--text-secondary);">
+                    <div style="margin-bottom:4px; font-weight:600;">PromptKeeper</div>
+                    <div>v2.0.0</div>
+                    <div style="margin-top:8px;">@author <strong>jpantsjoha</strong></div>
+                    <div style="margin-top:4px;">
+                        <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
+                            style="color:var(--primary-color); text-decoration:none;">
+                            GitHub ↗
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        /* AI Panel Card Styling */
+        .ai-panel-card {
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        /* Disabled state when AI unavailable */
+        .ai-panel-card.disabled {
+            background: var(--bg-color);
+            opacity: 0.6;
+            pointer-events: none;
+            border-style: dashed;
+        }
+
+        .ai-panel-card.disabled h3 {
+            color: var(--text-secondary);
+        }
+
+        .ai-panel-card.disabled .refine-btn {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Cloud Backup Card */
+        .cloud-backup-card {
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 
     <script type="module" src="options.js"></script>
 </body>
