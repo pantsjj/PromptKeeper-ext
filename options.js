@@ -53,6 +53,14 @@ async function init() {
     els.userEmail = document.getElementById('user-email');
     els.lastBackupTime = document.getElementById('last-backup-time');
 
+    // Footer status bar elements
+    els.footerWordCount = document.getElementById('footer-word-count');
+    els.footerVersionSelector = document.getElementById('footer-version-selector');
+    els.footerStorageUsed = document.getElementById('footer-storage-used');
+    els.footerExportLink = document.getElementById('footer-export-link');
+    els.footerImportLink = document.getElementById('footer-import-link');
+    els.footerImportFile = document.getElementById('footer-import-file');
+
     // Header status bar elements
     els.headerWordCount = document.getElementById('header-word-count');
     els.headerVersionSelector = document.getElementById('header-version-selector');
@@ -120,7 +128,10 @@ function setupEventListeners() {
     els.newBtn.addEventListener('click', createNewPrompt);
     els.saveBtn.addEventListener('click', savePrompt);
     els.deleteBtn.addEventListener('click', deletePrompt);
-    els.textArea.addEventListener('input', updateStats);
+    els.textArea.addEventListener('input', () => {
+        updateStats();
+        updateFooterStats();
+    });
 
     // Shortcuts
     document.addEventListener('keydown', (e) => {
@@ -173,7 +184,54 @@ function setupEventListeners() {
         });
     }
 
-    // Google Drive
+    // Footer Export/Import
+    if (els.footerExportLink) {
+        els.footerExportLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const prompts = await StorageService.getPrompts();
+            const dataStr = JSON.stringify(prompts, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `promptkeeper_export_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+    if (els.footerImportLink) {
+        els.footerImportLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            els.footerImportFile.click();
+        });
+    }
+    if (els.footerImportFile) {
+        els.footerImportFile.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    const imported = await StorageService.importPrompts(data);
+                    alert(`✅ Imported ${imported} prompts!`);
+                    await loadPrompts();
+                    updateLibraryStats();
+                } catch (err) {
+                    alert('Import failed: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+    }
+
+    // Right-click context menu for prompts and workspaces
+    els.promptList.addEventListener('contextmenu', handlePromptContextMenu);
+    els.workspaceList.addEventListener('contextmenu', handleWorkspaceContextMenu);
+
+    //Google Drive
     if (els.googleSigninBtn) {
         els.googleSigninBtn.addEventListener('click', handleGoogleSignIn);
     }
@@ -606,6 +664,55 @@ async function updateLibraryStats() {
     } catch (err) {
         console.error('Failed to update stats:', err);
     }
+}
+
+// ===========================================================================
+// Context Menu Handlers
+// ===========================================================================
+
+function handlePromptContextMenu(e) {
+    const promptItem = e.target.closest('.nav-item[data-prompt-id]');
+    if (!promptItem) return;
+
+    e.preventDefault();
+    const promptId = promptItem.dataset.promptId;
+
+    if (confirm('Delete this prompt?')) {
+        deletePrompt(promptId);
+    }
+}
+
+function handleWorkspaceContextMenu(e) {
+    const workspaceItem = e.target.closest('.nav-item[data-project-id]');
+    if (!workspaceItem) return;
+
+    e.preventDefault();
+    const projectId = workspaceItem.dataset.projectId;
+
+    if (confirm('Delete this workspace? Prompts will not be deleted.')) {
+        StorageService.deleteProject(projectId).then(() => {
+            loadWorkspaces();
+            if (currentProjectId === projectId) {
+                currentProjectId = null;
+                loadPrompts();
+            }
+        });
+    }
+}
+
+// Update footer stats
+function updateFooterStats() {
+    if (!els.textArea || !els.footerWordCount || !els.footerStorageUsed) return;
+
+    const text = els.textArea.value || '';
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+
+    els.footerWordCount.textContent = `Words: ${words}`;
+
+    chrome.storage.local.getBytesInUse(null, (bytes) => {
+        const kb = (bytes / 1024).toFixed(1);
+        els.footerStorageUsed.textContent = `Size: ${kb} KB`;
+    });
 }
 
 // ============================================================================

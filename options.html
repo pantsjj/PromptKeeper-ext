@@ -633,7 +633,84 @@
         .hidden {
             display: none !important;
         }
+
+        /* Footer Status Bar (matching popup) */
+        footer#stats {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: var(--editor-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-secondary);
+            min-height: 36px;
+            z-index: 100;
+        }
+
+        footer#stats a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        footer#stats a:hover {
+            color: var(--primary-color);
+        }
+
+        footer#stats a.primary-link {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .status-dots-container {
+            display: flex;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #34c759;
+        }
+
+        .status-dot.warning {
+            background: #ff9500;
+        }
+
+        .status-dot.error {
+            background: #ff3b30;
+        }
     </style>
+
+
+    <!-- Footer Status Bar -->
+    <footer id="stats">
+        <div style="display:flex; align-items:center; gap:15px; flex:1;">
+            <strong style="color:#5f6368;">Stats:</strong>
+            <span id="footer-word-count">Words: 0</span>
+            <select id="footer-version-selector" title="View Version History"
+                style="border:none; background:transparent; color:var(--text-color); cursor:pointer; font-size:11px;">
+                <option>v1: 06/12/2025 (Curr)</option>
+            </select>
+            <span id="footer-storage-used">Size: 0 KB</span>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="#" id="footer-export-link">Export</a>
+            <a href="#" id="footer-import-link">Import</a>
+            <span style="color:#ddd;">|</span>
+            <span style="color:#999; font-size:11px;">Full Screen IDE</span>
+            <span style="color:#ddd;">|</span>
+            <div id="footer-status-dots" class="status-dots-container">
+                <div class="status-dot"></div>
+                <div class="status-dot warning"></div>
+            </div>
+            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank">@Jaroslav</a>
+        </div>
+        <input type="file" id="footer-import-file" accept=".json" style="display: none;">
+    </footer>
 
     <script type="module" src="options.js"></script>
 </body>
