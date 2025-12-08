@@ -83,13 +83,13 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 ## Phase 5: Google Drive Backup & Sync
 *Goal: Enable cross-device access and automatic backup to user's Google account.*
 
-*   [ ] **Google Sign-In**: Authenticate users via Chrome Identity API.
-*   [ ] **Automatic Backup**: Upload prompts to Google Drive AppData folder on every save.
-*   [ ] **Cross-Device Sync**: Download and merge prompts when signing in on a new device.
-*   [ ] **Conflict Resolution**: Handle edits made on multiple devices (Last Write Wins strategy).
-*   [ ] **Auto-Sync**: Background sync every 5 minutes when changes detected.
-*   [ ] **Sync Status UI**: Visual indicators showing sync state and last sync time.
-*   [ ] **Opt-Out Support**: Users can remain in local-only mode if preferred.
+*   [x] **Google Sign-In**: Authenticate users via Chrome Identity API.
+*   [x] **Automatic Backup**: Upload prompts to Google Drive AppData folder on every save.
+*   [x] **Cross-Device Sync**: Download and merge prompts when signing in on a new device.
+*   [x] **Conflict Resolution**: Handle edits made on multiple devices (Last Write Wins strategy).
+*   [x] **Auto-Sync**: Background sync every 5 minutes when changes detected.
+*   [x] **Sync Status UI**: Visual indicators showing sync state and last sync time.
+*   [x] **Opt-Out Support**: Users can remain in local-only mode if preferred.
 
 **Target Version**: v2.1 or v3.0  
 **Estimated Effort**: 2-3 weeks  
