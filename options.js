@@ -61,14 +61,6 @@ async function init() {
     els.footerImportLink = document.getElementById('footer-import-link');
     els.footerImportFile = document.getElementById('footer-import-file');
 
-    // Header status bar elements
-    els.headerWordCount = document.getElementById('header-word-count');
-    els.headerVersionSelector = document.getElementById('header-version-selector');
-    els.headerStorageUsed = document.getElementById('header-storage-used');
-    els.headerExportLink = document.getElementById('header-export-link');
-    els.headerImportLink = document.getElementById('header-import-link');
-    els.headerImportFile = document.getElementById('header-import-file');
-
     setupEventListeners();
     await initGoogleDrive(); // Check Drive auth state
 
@@ -140,49 +132,6 @@ function setupEventListeners() {
             savePrompt();
         }
     });
-
-    // Header Export/Import
-    if (els.headerExportLink) {
-        els.headerExportLink.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const prompts = await StorageService.getPrompts();
-            const dataStr = JSON.stringify(prompts, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `promptkeeper_export_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-    }
-    if (els.headerImportLink) {
-        els.headerImportLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            els.headerImportFile.click();
-        });
-    }
-    if (els.headerImportFile) {
-        els.headerImportFile.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    const imported = await StorageService.importPrompts(data);
-                    alert(`✅ Imported ${imported} prompts!`);
-                    await loadPrompts();
-                    updateLibraryStats();
-                } catch (err) {
-                    alert('Import failed: ' + err.message);
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = ''; // Reset
-        });
-    }
 
     // Footer Export/Import
     if (els.footerExportLink) {
@@ -298,6 +247,7 @@ function renderProjectItem(project, container) {
     const li = document.createElement('li');
     li.className = 'nav-item';
     li.dataset.id = project.id;
+    li.dataset.projectId = project.id; // For context menu and debugging
     li.innerHTML = `<span class="item-title">${project.name}</span>`;
 
     li.addEventListener('click', () => switchProject(project.id));
