@@ -204,7 +204,7 @@ function setupEventListeners() {
         els.refineBtns.forEach(btn => {
             btn.addEventListener('click', async () => {
                 const type = btn.dataset.type;
-                await refinePrompt(type);
+                await handleRefine(type);
             });
         });
     }
