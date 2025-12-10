@@ -91,8 +91,8 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [x] **Sync Status UI**: Visual indicators showing sync state and last sync time.
 *   [x] **Opt-Out Support**: Users can remain in local-only mode if preferred.
 
-**Target Version**: v2.1 or v3.0  
-**Estimated Effort**: 2-3 weeks  
+**Target Version**: v2.0.0 (Released)
+**Estimated Effort**: Completed
 **Documentation**: See [`docs/phases/phase-5-google-drive-sync.md`](file:///Users/jp/Library/Mobile%20Documents/com~apple~CloudDocs/Documents/workspaces/PromptKeeper-ext/docs/phases/phase-5-google-drive-sync.md)
 
 ---
