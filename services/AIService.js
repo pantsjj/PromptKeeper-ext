@@ -22,8 +22,9 @@ class AIService {
             try {
                 return await this._attemptSend(message);
             } catch (error) {
-                const isConnectionError = error.message.includes('Receiving end does not exist') ||
-                    error.message.includes('Could not establish connection');
+                const errMsg = error?.message || String(error || 'Unknown error');
+                const isConnectionError = errMsg.includes('Receiving end does not exist') ||
+                    errMsg.includes('Could not establish connection');
 
                 if (isConnectionError) {
                     if (attempt < MAX_RETRIES) {
