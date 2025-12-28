@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=840, height=680, user-scalable=no">
     <title>PromptKeeper</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
+
 <body>
+
     <div id="app">
         <aside>
             <h2>Saved Prompts</h2>
@@ -16,7 +19,25 @@
         </aside>
 
         <main id="editor">
-            <h2>Current Prompt</h2>
+            <!-- Search Header (matching options page style) -->
+            <div style="text-align: center; padding: 16px 20px 12px 20px; border-bottom: 1px solid #e3e3e4;">
+                <div style="position: relative; max-width: 300px; margin: 0 auto;">
+                    <span
+                        style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #86868b; font-size: 14px; pointer-events: none;">🔍</span>
+                    <input type="search" id="popup-search" placeholder="Search prompts..." style="
+                        width: 100%;
+                        background: #f5f5f7; 
+                        border: 1px solid transparent;
+                        border-radius: 20px; 
+                        padding: 8px 16px 8px 36px; 
+                        font-size: 13px; 
+                        color: #1d1d1f; 
+                        outline: none;
+                        transition: all 0.2s;
+                    ">
+                </div>
+            </div>
+
             <div id="editor-content">
                 <label for="prompt-title">Title</label>
                 <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
@@ -25,87 +46,50 @@
                 <textarea id="prompt-text" placeholder="Write your prompt here..." rows="9"></textarea>
 
 
-                <!-- Bias and Toxicity Scores -->
-                <div id="analysis-scores">
-                    <p id="bias-score">Bias: --</p>
-                    <p id="toxicity-score">Toxicity: --</p>
-                </div>
-
-                <!-- AI Capability Area -->
-                <div id="ai-capability">
-                    <select id="rewrite-options">
-                    <option value="retry">Retry</option>
-                    <option value="more-creative">More Creative</option>
-                    <option value="more-concise">More Concise</option>
-                    <option value="shorter">Shorter</option>
-                    <option value="longer">Longer</option>
-                    </select>
-                    <button id="ai-optimize-button" class="ai-button">AI-Optimize</button>
-                </div>
-
                 <!-- Action Buttons -->
                 <div class="editor-buttons">
                     <button id="new-prompt-button">New</button>
                     <button id="save-button">Save</button>
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button" class="paste-button">Paste</button>
-                    
                 </div>
-                  <!-- Language Translation Area -->
-               <!--  <div id="translation-capability"> -->
+                <!-- Language Translation Area -->
+                <!--  <div id="translation-capability"> -->
                 <!--     <select id="language-options"> -->
                 <!--     </select> -->
                 <!--     <button id="translate-paste-button" class="translate-button">Translate-Paste</button> -->
-              <!--   </div> -->
-                
-                </div>
+                <!--   </div> -->
 
-                <!-- Tunables Section -->
-                <section id="tunables">
-                    <h3>About PromptKeeper</h3>
-                    <div class="tunables-content">
-                        <div class="tunables-column">
-                            <h4>Upcoming Features</h4>
-                            <ul>
-                                <li>AI services integration</li>
-                                <li>Prompt quality scoring</li>
-                                <li>Cloud sync</li>
-                                <li>Reusable templates</li>
-                            </ul>
-                        </div>
-                        <div class="tunables-column">
-                            <h4>About the Author</h4>
-                            <li>Author: <a href="https://jaroslav-pantsjoha.medium.com/" target="_blank">Jaroslav</a></li>
-                                <li>Get involved: <a href="https://github.com/jpantsjoha/PromptKeeper-GenAI-Prompts" target="_blank">GitHub Project</a></li>
-                                    <li><b>Version:</b> 1.0.8</li>
-                                    <li>Open Source Under MIT License. No Guarantees or Warranty Howsoever Implied</li>
-                                    
-                        </div>
-                    </div>
-                    <div class="tunables-buttons">
-                        <button id="export-prompts">Export Prompts</button>
-                        <button id="import-prompts">Import Prompts</button>
-                        <input type="file" id="import-file" accept=".json" style="display: none;">
-                    </div>
-                    
-                </section>
-                
             </div>
-            
-        </main>
-        
+
+    </div>
+
+    </main>
+
     </div>
 
     <footer id="stats">
-        <h4>Stats:</h4>
-        <span id="word-count">Words: 0</span>
-        <span id="version-count">Versions: 0</span>
-        <span id="storage-used">Total Storage: 0 KB</span>
+        <div style="display:flex; align-items:center; gap:15px; flex:1;">
+            <strong style="color:#5f6368;">Stats:</strong>
+            <span id="word-count">Words: 0</span>
+            <select id="version-selector" title="View Version History"></select>
+            <span id="storage-used">Size: 0 KB</span>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="#" id="export-link" style="color:#666; text-decoration:none; font-size:11px;">Export</a>
+            <a href="#" id="import-link" style="color:#666; text-decoration:none; font-size:11px;">Import</a>
+            <span style="color:#ddd;">|</span>
+            <a href="#" id="open-full-editor-link"
+                style="color:#0071e3; text-decoration:none; font-size:11px; font-weight:500;">Manage Prompts ↗</a>
+            <span style="color:#ddd;">|</span>
+            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
+                style="color:#999; text-decoration:none; font-size:11px;">@Jaroslav</a>
+        </div>
+        <!-- Hidden file input for import -->
+        <input type="file" id="import-file" accept=".json" style="display: none;">
     </footer>
 
-    <script src="popup.js"></script>
-    <!-- <script src="translation.js"></script> DISABLE for 1.0.9 tag-->
-    <script src="rewrite.js"></script>
-
+    <script src="popup.js" type="module"></script>
 </body>
+
 </html>

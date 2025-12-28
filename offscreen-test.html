@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Offscreen Test</title>
+</head>
+
+<body>
+    <h1>Testing Offscreen Document</h1>
+    <div id="status">Loading...</div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+
+        // Test 1: Check if we're in offscreen context
+        statusDiv.innerHTML = '<p>✅ Offscreen document loaded</p>';
+
+        // Test 2: Check window.ai
+        if (typeof window.ai !== 'undefined') {
+            statusDiv.innerHTML += '<p>✅ window.ai is AVAILABLE</p>';
+
+            // Test 3: Check languageModel
+            if (window.ai.languageModel) {
+                statusDiv.innerHTML += '<p>✅ window.ai.languageModel exists</p>';
+
+                // Test 4: Check capabilities
+                window.ai.languageModel.capabilities().then(caps => {
+                    statusDiv.innerHTML += `<p>✅ Capabilities: ${caps.available}</p>`;
+                }).catch(err => {
+                    statusDiv.innerHTML += `<p>❌ Capabilities error: ${err.message}</p>`;
+                });
+            } else {
+                statusDiv.innerHTML += '<p>❌ window.ai.languageModel is undefined</p>';
+            }
+        } else {
+            statusDiv.innerHTML += '<p>❌ window.ai is NOT available</p>';
+        }
+
+        // Test 5: Message listener
+        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            console.log('[Offscreen Test] Received message:', request);
+            statusDiv.innerHTML += `<p>📨 Received: ${JSON.stringify(request)}</p>`;
+
+            if (request.action === 'ping') {
+                sendResponse({ pong: true });
+            }
+
+            return true;
+        });
+
+        statusDiv.innerHTML += '<p>✅ Message listener registered</p>';
+
+        console.log('[Offscreen Test] Ready');
+    </script>
+</body>
+
+</html>

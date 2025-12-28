@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptKeeper Guide</title>
+    <style>
+        :root {
+            /* Apple-inspired Light Mode */
+            --bg-color: #f5f5f7;
+            --sidebar-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --code-font: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --sidebar-bg: #2c2c2e;
+                --text-color: #f5f5f7;
+                --text-secondary: #86868b;
+                --border-color: #424245;
+                --primary-color: #0a84ff;
+            }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #doc-sidebar {
+            width: 220px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        #doc-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        p,
+        li {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        code {
+            font-family: var(--code-font);
+            background: var(--bg-color);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 6px 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .img-placeholder {
+            width: 100%;
+            height: 150px;
+            background: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin: 15px 0;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="doc-sidebar">
+        <h3 style="margin-top:0; color:var(--text-color);">PromptKeeper Guide</h3>
+        <nav>
+            <a href="#intro" class="nav-link">Introduction</a>
+            <a href="#workspaces" class="nav-link">Workspaces</a>
+            <a href="#prompts" class="nav-link">Managing Prompts</a>
+            <a href="#backup" class="nav-link">Google Drive Backup</a>
+            <a href="#ai" class="nav-link">AI Features <span class="feature-tag">BETA</span></a>
+            <a href="#shortcuts" class="nav-link">Keyboard Shortcuts</a>
+        </nav>
+    </div>
+
+    <div id="doc-content">
+        <section id="intro">
+            <h1>Getting Started</h1>
+            <p>Welcome to PromptKeeper, your private, local workspace for managing AI prompts directly in your browser.
+                This guide helps you master the features.</p>
+
+            <h3>Why PromptKeeper?</h3>
+            <ul>
+                <li><strong>Local & Private:</strong> Data stays on your device unless you choose to back it up.</li>
+                <li><strong>Browser Integrated:</strong> Access your library instantly via the Side Panel.</li>
+                <li><strong>New feature soon:</strong> AI-Optimization. Use local Gemini Nano AI to refine your prompts.
+                </li>
+            </ul>
+        </section>
+
+        <section id="workspaces">
+            <h2>Workspaces</h2>
+            <p>Workspaces allow you to organize your prompts by project, client, or topic (e.g., <code>coding</code>,
+                <code>marketing</code>, <code>personal</code>).
+            </p>
+
+            <h3>Creating a Workspace</h3>
+            <p>Click the <strong>+</strong> button in the Workspaces list. Enter a name (max 3 words). Use formatting
+                like <code>my_project</code> or <code>Client X</code>.</p>
+
+            <h3>Context Menu (Right-Click)</h3>
+            <p>Right-click any workspace in the list to access options:</p>
+            <ul>
+                <li><strong>Delete Workspace:</strong> Removes the workspace container.</li>
+            </ul>
+
+            <div
+                style="background: var(--bg-color); padding: 12px; border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                <strong>💡 Smart Delete:</strong> When you delete a workspace, your prompts are <em>NOT</em> deleted.
+                They are moved to "All Prompts" and tagged with the deleted workspace's name. If you recreate the
+                workspace with the same name later, the prompts will automatically return!
+            </div>
+        </section>
+
+        <section id="prompts">
+            <h2>Managing Prompts</h2>
+            <p>Write, edit, and organize your prompts with a full-featured code editor.</p>
+
+            <h3>Versioning</h3>
+            <p>Every time you modify a prompt, PromptKeeper tracks the changes. Use the <strong>Rev: X</strong> dropdown
+                in the footer to start a new version branch or revert to an older one.</p>
+
+            <h3>Paste-to-Page</h3>
+            <p>Click the <strong style="color:#ff9500;">Paste-to-Page</strong> button to instantly insert your active
+                prompt into the current web page's text field (great for ChatGPT, Claude, etc.).</p>
+        </section>
+
+        <section id="backup">
+            <h2>Google Drive Backup</h2>
+            <p>Protect your data by syncing with your personal Google Drive.</p>
+            <ul>
+                <li><strong>Auto-Backup:</strong> Enabled by default, runs every 30 minutes.</li>
+                <li><strong>Manual Backup:</strong> Click "Backup Now" in the options panel.</li>
+                <li><strong>Privacy:</strong> Files are stored in a private Application Data folder on your Drive,
+                    visible only to this extension.</li>
+            </ul>
+        </section>
+
+        <section id="ai">
+            <h2>AI Optimization</h2>
+            <p>If your browser supports <strong>Gemini Nano</strong>, you'll see the AI tools panel.</p>
+            <ul>
+                <li><strong>Magic Enhance:</strong> Adds structure and clarity.</li>
+                <li><strong>Formalize:</strong> Adjusts tone for professional contexts.</li>
+                <li><strong>Clarify:</strong> Removes ambiguity.</li>
+            </ul>
+        </section>
+
+        <section id="shortcuts">
+            <h2>Keyboard Shortcuts</h2>
+            <ul>
+                <li><code>Cmd/Ctrl + S</code>: Save current prompt</li>
+                <li><code>Cmd/Ctrl + B</code>: Open Side Panel</li>
+            </ul>
+        </section>
+    </div>
+
+</body>
+
+</html>
