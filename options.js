@@ -21,12 +21,18 @@ async function init() {
     // Bind DOM elements after DOM is ready
     els.searchInput = document.getElementById('search-input');
     els.workspaceList = document.getElementById('workspace-list');
+    els.workspaceSection = document.getElementById('workspace-section');
+    els.workspaceChevron = document.getElementById('workspace-chevron');
+    els.workspaceTitle = document.getElementById('workspace-section-title');
     els.moreProjectsContainer = document.getElementById('more-projects-container');
     els.moreProjectsList = document.getElementById('more-projects-list');
     els.expandProjectsBtn = document.getElementById('expand-projects-btn');
     els.addProjectBtn = document.getElementById('add-project-btn');
     els.workspaceAll = document.getElementById('workspace-all');
     els.promptList = document.getElementById('prompt-list');
+    els.promptsSection = document.getElementById('prompts-section');
+    els.promptsChevron = document.getElementById('prompts-chevron');
+    els.promptsTitle = document.getElementById('prompts-section-title');
     els.newBtn = document.getElementById('new-prompt-btn');
     els.titleInput = document.getElementById('prompt-title-input');
     els.textArea = document.getElementById('prompt-text-area');
@@ -113,6 +119,32 @@ function setupEventListeners() {
             searchFilter = e.target.value.toLowerCase();
             loadPrompts();
         });
+    }
+
+    // Collapsible sections - Workspaces
+    const toggleWorkspaceSection = () => {
+        if (!els.workspaceSection || !els.workspaceChevron) return;
+        const collapsed = els.workspaceSection.classList.toggle('collapsed');
+        els.workspaceChevron.classList.toggle('collapsed', collapsed);
+    };
+    if (els.workspaceChevron) {
+        els.workspaceChevron.addEventListener('click', toggleWorkspaceSection);
+    }
+    if (els.workspaceTitle) {
+        els.workspaceTitle.addEventListener('click', toggleWorkspaceSection);
+    }
+
+    // Collapsible sections - Prompts
+    const togglePromptsSection = () => {
+        if (!els.promptsSection || !els.promptsChevron) return;
+        const collapsed = els.promptsSection.classList.toggle('collapsed');
+        els.promptsChevron.classList.toggle('collapsed', collapsed);
+    };
+    if (els.promptsChevron) {
+        els.promptsChevron.addEventListener('click', togglePromptsSection);
+    }
+    if (els.promptsTitle) {
+        els.promptsTitle.addEventListener('click', togglePromptsSection);
     }
 
     // Workspaces

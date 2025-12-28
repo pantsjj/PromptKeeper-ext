@@ -6,7 +6,6 @@
     <title>PromptKeeper - Editor</title>
     <style>
         :root {
-            /* Apple-inspired Light Mode */
             --bg-color: #f5f5f7;
             --sidebar-bg: #ffffff;
             --text-color: #1d1d1f;
@@ -206,6 +205,37 @@
             letter-spacing: 0.5px;
             color: var(--text-secondary);
             margin: 0;
+            flex: 1;
+            /* Allow title to take space */
+            cursor: pointer;
+        }
+
+        /* Collapsible Styles */
+        .collapsible-content {
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .collapsible-content.collapsed {
+            display: none;
+        }
+
+        .chevron-icon {
+            font-size: 10px;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .chevron-icon:hover {
+            color: var(--text-color);
+            background: var(--accent-color);
+        }
+
+        .chevron-icon.collapsed {
+            transform: rotate(-90deg);
         }
 
         /* List Styles */
@@ -407,20 +437,25 @@
             <!-- Workspaces Section -->
             <div style="padding: 12px 12px 0 12px; flex: 0 0 auto;">
                 <div class="sidebar-header">
-                    <h2 class="section-title">WORKSPACES</h2>
-                    <button id="add-project-btn" class="icon-btn" title="New Workspace">➕</button>
+                    <h2 id="workspace-section-title" class="section-title">WORKSPACES</h2>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <button id="add-project-btn" class="icon-btn" title="New Workspace">+</button>
+                        <span id="workspace-chevron" class="chevron-icon">▼</span>
+                    </div>
                 </div>
-                <ul id="workspace-list" class="nav-list">
-                    <!-- Static "All Prompts" item -->
-                    <li class="nav-item active" data-id="all" id="workspace-all">
-                        <span class="item-title">All Prompts</span>
-                    </li>
-                    <!-- Dynamic Workspaces go here -->
-                </ul>
-                <div id="more-projects-container" class="hidden">
-                    <ul id="more-projects-list" class="nav-list"></ul>
+                <div id="workspace-section" class="collapsible-content">
+                    <ul id="workspace-list" class="nav-list">
+                        <!-- Static "All Prompts" item -->
+                        <li class="nav-item active" data-id="all" id="workspace-all">
+                            <span class="item-title">All Prompts</span>
+                        </li>
+                        <!-- Dynamic Workspaces go here -->
+                    </ul>
+                    <div id="more-projects-container" class="hidden">
+                        <ul id="more-projects-list" class="nav-list"></ul>
+                    </div>
+                    <button id="expand-projects-btn" class="hidden">Show more...</button>
                 </div>
-                <button id="expand-projects-btn" class="hidden">Show more...</button>
             </div>
 
             <div style="height: 1px; background: var(--border-color); margin: 8px 12px; opacity: 0.5;"></div>
@@ -428,12 +463,17 @@
             <!-- Prompts Section -->
             <div class="sidebar-section">
                 <div class="sidebar-header">
-                    <h2 class="section-title">PROMPTS</h2>
-                    <button id="new-prompt-btn" class="icon-btn" title="New Prompt">➕</button>
+                    <h2 id="prompts-section-title" class="section-title">PROMPTS</h2>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <button id="new-prompt-btn" class="icon-btn" title="New Prompt">+</button>
+                        <span id="prompts-chevron" class="chevron-icon">▼</span>
+                    </div>
                 </div>
-                <ul id="prompt-list" class="nav-list">
-                    <!-- Prompts injected here -->
-                </ul>
+                <div id="prompts-section" class="collapsible-content">
+                    <ul id="prompt-list" class="nav-list">
+                        <!-- Prompts injected here -->
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -683,6 +723,33 @@
             align-items: center;
             gap: 5px;
             white-space: nowrap;
+        }
+
+        /* Context Menu (options page only) */
+        .context-menu {
+            position: absolute;
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            z-index: 2000;
+            min-width: 150px;
+            padding: 4px 0;
+        }
+
+        .context-menu.hidden {
+            display: none;
+        }
+
+        .menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-color);
+        }
+
+        .menu-item:hover {
+            background-color: var(--accent-color);
         }
     </style>
 

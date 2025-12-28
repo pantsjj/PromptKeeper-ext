@@ -89,6 +89,64 @@ test.describe('Side Panel', () => {
         await expect(pasteButton).toBeEnabled();
     });
 
+    test('Sidebar controls: plus buttons and chevrons visible in side panel', async ({ page }) => {
+        const workspaceHeader = page.locator('#workspace-toggle');
+        const promptsHeader = page.locator('#prompts-toggle');
+
+        const workspacePlus = workspaceHeader.locator('#add-project-btn');
+        const workspaceChevron = workspaceHeader.locator('.section-toggle');
+        const promptsPlus = promptsHeader.locator('#add-prompt-btn-sidebar');
+        const promptsChevron = promptsHeader.locator('.section-toggle');
+
+        await expect(workspacePlus).toBeVisible();
+        await expect(workspaceChevron).toBeVisible();
+        await expect(promptsPlus).toBeVisible();
+        await expect(promptsChevron).toBeVisible();
+    });
+
+    test('Collapsible sections toggle correctly in side panel', async ({ page }) => {
+        const workspaceHeader = page.locator('#workspace-toggle');
+        const promptsHeader = page.locator('#prompts-toggle');
+
+        const workspacesSection = page.locator('#workspaces-section');
+        const promptsSection = page.locator('#prompts-section');
+
+        const workspaceTitle = workspaceHeader.locator('.section-title');
+        const workspaceChevron = workspaceHeader.locator('.section-toggle');
+        const promptsTitle = promptsHeader.locator('.section-title');
+        const promptsChevron = promptsHeader.locator('.section-toggle');
+
+        // Initially not collapsed
+        await expect(workspacesSection).not.toHaveClass(/collapsed/);
+        await expect(promptsSection).not.toHaveClass(/collapsed/);
+
+        // Workspace: toggle via title
+        await workspaceTitle.click();
+        await expect(workspacesSection).toHaveClass(/collapsed/);
+
+        // Workspace: toggle back via chevron
+        await workspaceChevron.click();
+        await expect(workspacesSection).not.toHaveClass(/collapsed/);
+
+        // Prompts: toggle via title
+        await promptsTitle.click();
+        await expect(promptsSection).toHaveClass(/collapsed/);
+
+        // Prompts: toggle back via chevron
+        await promptsChevron.click();
+        await expect(promptsSection).not.toHaveClass(/collapsed/);
+
+        // Plus buttons should not collapse when clicked
+        const workspacePlus = workspaceHeader.locator('#add-project-btn');
+        const promptsPlus = promptsHeader.locator('#add-prompt-btn-sidebar');
+
+        await workspacePlus.click();
+        await expect(workspacesSection).not.toHaveClass(/collapsed/);
+
+        await promptsPlus.click();
+        await expect(promptsSection).not.toHaveClass(/collapsed/);
+    });
+
     test('Responsive Layout Check', async ({ page }) => {
         // 1. Check layout at normal width
         await page.setViewportSize({ width: 500, height: 600 });
