@@ -302,7 +302,49 @@ async function loadWorkspaces() {
             li.classList.add('active');
             loadPrompts(project.id); // Filter prompts by project
         });
+        // Make workspace a drop target
+        setupDropTarget(li, project.id);
         els.workspaceList.appendChild(li);
+    });
+}
+
+/**
+ * Drag and Drop - Make prompt draggable
+ */
+function setupDragSource(el, promptId) {
+    el.draggable = true;
+    el.addEventListener('dragstart', (e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', promptId);
+        el.style.opacity = '0.5';
+    });
+    el.addEventListener('dragend', () => {
+        el.style.opacity = '1';
+        document.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over'));
+    });
+}
+
+/**
+ * Drag and Drop - Make workspace a drop target
+ */
+function setupDropTarget(el, targetProjectId) {
+    el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', () => {
+        el.classList.remove('drag-over');
+    });
+    el.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        el.classList.remove('drag-over');
+        const promptId = e.dataTransfer.getData('text/plain');
+        if (promptId) {
+            console.log(`[Popup] Moving prompt ${promptId} to project ${targetProjectId}`);
+            await StorageService.setPromptProject(promptId, targetProjectId);
+            loadPrompts(); // Refresh
+        }
     });
 }
 
@@ -353,6 +395,8 @@ async function loadPrompts(filterProjectId = null) {
             }
 
             entry.addEventListener('click', () => selectPrompt(prompt));
+            // Make prompt draggable
+            setupDragSource(entry, prompt.id);
             els.promptList.appendChild(entry);
         });
 

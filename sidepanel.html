@@ -215,6 +215,20 @@
             background: var(--accent-color);
         }
 
+        /* Drag and Drop Visual Feedback */
+        .drag-over {
+            background: var(--accent-color) !important;
+            border: 2px dashed var(--primary-color) !important;
+        }
+
+        .prompt-entry[draggable="true"] {
+            cursor: grab;
+        }
+
+        .prompt-entry[draggable="true"]:active {
+            cursor: grabbing;
+        }
+
         /* Workspace and Prompt Lists */
         #workspace-list,
         #prompt-list {
