@@ -46,6 +46,7 @@ async function init() {
     els.backupBtn = document.getElementById('backup-btn');
     els.restoreBtn = document.getElementById('restore-btn');
     els.autoSyncCheckbox = document.getElementById('auto-sync-checkbox');
+    els.confirmDeleteCheckbox = document.getElementById('confirm-deletion-checkbox');
     els.driveSignedOut = document.getElementById('drive-signed-out');
     els.driveSignedIn = document.getElementById('drive-signed-in');
     els.userEmail = document.getElementById('user-email');
@@ -60,6 +61,7 @@ async function init() {
     els.modalConfirmBtn = document.getElementById('modal-confirm-btn');
 
     // Footer status bar elements
+    els.footerDocsLink = document.getElementById('footer-docs-link');
     els.footerWordCount = document.getElementById('footer-word-count');
     els.footerVersionSelector = document.getElementById('footer-version-selector');
     els.footerStorageUsed = document.getElementById('footer-storage-used');
@@ -69,7 +71,14 @@ async function init() {
     els.footerStatusDots = document.getElementById('footer-status-dots');
 
     setupEventListeners();
+
     await initGoogleDrive(); // Check Drive auth state
+
+    // Load Settings
+    chrome.storage.local.get(['confirmWorkspaceDeletion'], (result) => {
+        const confirmDelete = result.confirmWorkspaceDeletion !== false; // Default true
+        if (els.confirmDeleteCheckbox) els.confirmDeleteCheckbox.checked = confirmDelete;
+    });
 
     try {
         await checkAIStatus();
@@ -110,9 +119,7 @@ function setupEventListeners() {
     if (els.addProjectBtn) els.addProjectBtn.addEventListener('click', handleAddProject);
     if (els.workspaceAll) {
         els.workspaceAll.addEventListener('click', () => switchProject(null));
-        setupDropTarget(els.workspaceAll, null); // Allow dropping on "All" to remove from project? Or just ignore.
-        // Let's say dropping on "All" removes it from any project (unassigned)
-        setupDropTarget(els.workspaceAll, null);
+        setupDropTarget(els.workspaceAll, null); // Allow dropping on "All" to remove from project
     }
 
     if (els.expandProjectsBtn) {
@@ -184,9 +191,18 @@ function setupEventListeners() {
         });
     }
 
-    // Right-click context menu for prompts and workspaces
+    // Toggle AI Panel via Footer Status Dots
+    if (els.footerStatusDots) {
+        els.footerStatusDots.addEventListener('click', () => {
+            const aiPanel = document.getElementById('ai-tools-panel');
+            if (aiPanel) aiPanel.classList.toggle('hidden');
+        });
+    }
+
+    // Right-click context menu for prompts
     els.promptList.addEventListener('contextmenu', handlePromptContextMenu);
-    els.workspaceList.addEventListener('contextmenu', handleWorkspaceContextMenu);
+    // Workspace context menu is handled in renderProjectItem
+
 
     //Google Drive
     if (els.googleSigninBtn) {
@@ -204,6 +220,11 @@ function setupEventListeners() {
     if (els.autoSyncCheckbox) {
         els.autoSyncCheckbox.addEventListener('change', handleAutoSyncToggle);
     }
+    if (els.confirmDeleteCheckbox) {
+        els.confirmDeleteCheckbox.addEventListener('change', (e) => {
+            chrome.storage.local.set({ confirmWorkspaceDeletion: e.target.checked });
+        });
+    }
 
     // AI Refinement
     if (els.refineBtns) {
@@ -212,6 +233,17 @@ function setupEventListeners() {
                 const type = btn.dataset.type;
                 await handleRefine(type);
             });
+        });
+    }
+
+    // Context Menu
+    initContextMenu();
+
+    // Footer Docs Link
+    if (els.footerDocsLink) {
+        els.footerDocsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: 'how_to.html' });
         });
     }
 }
@@ -258,7 +290,26 @@ function renderProjectItem(project, container) {
     li.dataset.projectId = project.id; // For context menu and debugging
     li.innerHTML = `<span class="item-title">${project.name}</span>`;
 
-    li.addEventListener('click', () => switchProject(project.id));
+    li.addEventListener('click', (e) => {
+        // Prevent if clicking drag handle or something else explicitly
+        if (e.target.closest('.drag-handle')) return;
+        switchProject(project.id);
+    });
+
+    // Context Menu
+    li.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        switchProject(project.id);
+        const menu = document.getElementById('context-menu');
+        if (menu) {
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            menu.dataset.targetId = project.id;
+            menu.dataset.targetName = project.name;
+            menu.classList.remove('hidden');
+        }
+    });
+
     setupDropTarget(li, project.id);
 
     container.appendChild(li);
@@ -336,8 +387,13 @@ async function handleAddProject() {
 
     input.focus();
 
+    let isCommittingOrCancelling = false;
+
     // 4. Handle Commit / Cancel
     const commit = async () => {
+        if (isCommittingOrCancelling) return;
+        isCommittingOrCancelling = true;
+
         const rawName = input.value.trim();
         if (!rawName) {
             li.remove();
@@ -351,12 +407,14 @@ async function handleAddProject() {
         if (wordCount > 3) {
             alert('Max 3 words allowed (e.g. my_project_name)');
             input.focus();
+            isCommittingOrCancelling = false; // Reset if invalid
             return;
         }
 
         if (safeName.length > 64) {
             alert('Max 64 characters exceeded');
             input.focus();
+            isCommittingOrCancelling = false;
             return;
         }
 
@@ -373,6 +431,8 @@ async function handleAddProject() {
     };
 
     const cancel = () => {
+        if (isCommittingOrCancelling) return;
+        isCommittingOrCancelling = true;
         li.remove();
     };
 
@@ -380,14 +440,22 @@ async function handleAddProject() {
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             input.blur();
-            commit();
+            // commit called by blur
         }
-        if (e.key === 'Escape') cancel();
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            cancel();
+        }
     });
 
     input.addEventListener('blur', () => {
-        if (input.value.trim()) commit();
-        else cancel();
+        // Delay slightly to check if cancel happened
+        setTimeout(() => {
+            if (!isCommittingOrCancelling) {
+                if (input.value.trim()) commit();
+                else cancel();
+            }
+        }, 50);
     });
 }
 
@@ -466,6 +534,7 @@ function selectPrompt(prompt) {
     els.textArea.value = currentVersion ? currentVersion.content : '';
 
     updateStats();
+    updateFooterStats();
     renderHistoryDropdown(prompt);
 
     // Highlight
@@ -549,6 +618,46 @@ function updateStats() {
         });
     } else {
         els.versionLabel.textContent = 'Rev: 0';
+    }
+}
+
+function initContextMenu() {
+    const contextMenu = document.getElementById('context-menu');
+    const deleteOption = document.getElementById('ctx-delete-workspace');
+
+    document.addEventListener('click', () => {
+        if (contextMenu) contextMenu.classList.add('hidden');
+    });
+
+    if (deleteOption) {
+        deleteOption.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const projectId = contextMenu.dataset.targetId;
+            const projectName = contextMenu.dataset.targetName;
+
+            if (projectId && projectName) {
+                let confirmed = true;
+                if (els.confirmDeleteCheckbox && els.confirmDeleteCheckbox.checked) {
+                    confirmed = confirm(
+                        `Delete workspace '${projectName}'?\n\n` +
+                        `Prompts will NOT be deleted. They will be tagged '${projectName}' ` +
+                        `and moved to "All Prompts".`
+                    );
+                }
+
+                if (confirmed) {
+                    try {
+                        await StorageService.deleteProject(projectId);
+                        currentProjectId = null; // Reset
+                        await loadWorkspaces(); // Reload list
+                        switchProject(null); // Go to all
+                    } catch (err) {
+                        console.error('Failed to delete', err);
+                    }
+                }
+            }
+            contextMenu.classList.add('hidden');
+        });
     }
 }
 
@@ -733,23 +842,7 @@ function handlePromptContextMenu(e) {
     }
 }
 
-function handleWorkspaceContextMenu(e) {
-    const workspaceItem = e.target.closest('.nav-item[data-project-id]');
-    if (!workspaceItem) return;
 
-    e.preventDefault();
-    const projectId = workspaceItem.dataset.projectId;
-
-    if (confirm('Delete this workspace? Prompts will not be deleted.')) {
-        StorageService.deleteProject(projectId).then(() => {
-            loadWorkspaces();
-            if (currentProjectId === projectId) {
-                currentProjectId = null;
-                loadPrompts();
-            }
-        });
-    }
-}
 
 // Update footer stats
 function updateFooterStats() {

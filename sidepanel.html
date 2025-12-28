@@ -38,7 +38,10 @@
             }
         }
 
-        /* Side Panel Layout Overrides */
+        * {
+            box-sizing: border-box;
+        }
+
         html,
         body {
             width: 100%;
@@ -51,7 +54,8 @@
             color: var(--text-color);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow-x: hidden;
+            /* Prevent horizontal scroll */
         }
 
         /* Search Header */
@@ -185,8 +189,11 @@
 
         /* Workspaces section - compact, fits content */
         #workspaces-section {
-            max-height: 120px;
+            max-height: 50vh;
+            /* Allow growing up to 50% of height */
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Prompts section - takes remaining space */
@@ -199,8 +206,9 @@
             display: none;
         }
 
-        /* Add Project Button */
-        #add-project-btn {
+        /* Add Project & Prompt Buttons */
+        #add-project-btn,
+        #add-prompt-btn-sidebar {
             background: none;
             border: none;
             color: var(--primary-color);
@@ -211,7 +219,8 @@
             line-height: 1;
         }
 
-        #add-project-btn:hover {
+        #add-project-btn:hover,
+        #add-prompt-btn-sidebar:hover {
             background: var(--accent-color);
         }
 
@@ -235,6 +244,49 @@
             list-style: none;
             padding: 4px 8px;
             margin: 0;
+        }
+
+        .prompt-entry {
+            padding: 10px 12px;
+            margin-bottom: 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .prompt-entry:hover {
+            background: var(--accent-color);
+        }
+
+        .prompt-entry.active {
+            background: var(--primary-color);
+            color: white;
+            border-bottom-color: transparent;
+        }
+
+        .prompt-title {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .date-stamp {
+            display: block;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .prompt-entry.active .prompt-title {
+            color: white;
+        }
+
+        .prompt-entry.active .date-stamp {
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .nav-item {
@@ -550,7 +602,10 @@
             <!-- Prompts Section -->
             <div id="prompts-toggle" class="section-header">
                 <h2 class="section-title">Prompts</h2>
-                <span class="section-toggle">▼</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="add-prompt-btn-sidebar" title="Add Prompt">+</button>
+                    <span class="section-toggle">▼</span>
+                </div>
             </div>
             <div id="prompts-section" class="section-content">
                 <ul id="prompt-list">
@@ -571,6 +626,11 @@
                     </div>
                     <button id="google-signout-btn">Sign Out</button>
                 </div>
+            </div>
+
+            <!-- Context Menu (Hidden by default) -->
+            <div id="context-menu" class="context-menu hidden">
+                <div class="menu-item" id="ctx-delete-workspace">Delete Workspace</div>
             </div>
         </div>
 
@@ -613,63 +673,15 @@
             <span style="color: var(--border-color);">|</span>
             <a href="#" id="open-full-editor-link">Manage ↗</a>
             <span style="color: var(--border-color);">|</span>
-            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
-                style="color: var(--text-secondary); text-decoration: none; font-size: 11px;">@Jaroslav</a>
+            <a href="https://www.linkedin.com/in/johas/" target="_blank"
+                style="color: var(--text-secondary); text-decoration: none; font-size: 11px;">☕️ @Jaroslav</a>
         </div>
         <!-- Hidden elements for compatibility -->
         <input type="file" id="import-file" accept=".json" style="display: none;">
     </footer>
 
     <script src="popup.js" type="module"></script>
-    <script>
-        // Collapsible section toggle functionality
-        // Run after DOM is loaded to ensure elements exist
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleHeaders = document.querySelectorAll('#workspace-toggle, #prompts-toggle');
-            toggleHeaders.forEach(header => {
-                header.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    header.classList.toggle('collapsed');
-                    const content = header.nextElementSibling;
-                    if (content && content.classList.contains('section-content')) {
-                        content.classList.toggle('collapsed');
-                    }
-                });
-            });
 
-            // Resize handle functionality
-            const resizeHandle = document.getElementById('resize-handle');
-            const sidebar = document.getElementById('sidebar');
-            if (resizeHandle && sidebar) {
-                let isResizing = false;
-
-                resizeHandle.addEventListener('mousedown', (e) => {
-                    isResizing = true;
-                    resizeHandle.classList.add('dragging');
-                    sidebar.style.transition = 'none';
-                    document.body.style.cursor = 'col-resize';
-                    e.preventDefault();
-                });
-
-                document.addEventListener('mousemove', (e) => {
-                    if (!isResizing) return;
-                    const newWidth = e.clientX;
-                    if (newWidth >= 100 && newWidth <= 300) {
-                        sidebar.style.width = newWidth + 'px';
-                    }
-                });
-
-                document.addEventListener('mouseup', () => {
-                    if (isResizing) {
-                        isResizing = false;
-                        resizeHandle.classList.remove('dragging');
-                        sidebar.style.transition = '';
-                        document.body.style.cursor = '';
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 
 </html>

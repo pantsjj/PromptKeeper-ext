@@ -1,34 +1,23 @@
 # PromptKeeper FAQ
 
-## General
-
-### What is PromptKeeper?
-PromptKeeper is a local-first Chrome Extension that acts as an IDE for your generative AI prompts. It helps you version, organize, and optimize your prompts using Chrome's built-in AI.
-
-### Is it free?
-Yes, PromptKeeper is free and open source.
-
 ## Privacy & Data
+**Q: Where are my prompts stored?**
+A: Your prompts are stored **locally** on your device using Chrome's persistent storage. They are never sent to any external server (including ours) unless you explicitly choose to backup to Google Drive.
 
-### Where are my prompts stored?
-By default, all prompts are stored locally in your browser (`chrome.storage.local`). They never leave your device unless you enable Google Drive Sync.
+**Q: Is the AI running on my computer?**
+A: Yes! Smart Refinement features use **Gemini Nano**, which runs directly inside your Chrome browser. This ensures zero latency and complete privacy—your text never leaves your machine for processing.
 
-### Does PromptKeeper read my Google Drive files?
-No. PromptKeeper only has access to a specific, hidden "AppData" folder in your Google Drive. It cannot see or modify any of your other documents or files.
+## Workspaces & Organization
+**Q: How do "Smart Workspaces" work?**
+A: Workspaces help you group prompts. If you delete a workspace, PromptKeeper uses "Smart Delete"—your prompts are **not** deleted. Instead, they are moved to "All Prompts" and tagged with the workspace name. If you create the workspace again later, they will automatically reappear!
 
-### Do I need an API key for the AI features?
-No! PromptKeeper uses **Gemini Nano**, which is built into Chrome. All AI processing happens locally on your device.
+## Backup & Sync
+**Q: How does Google Drive backup work?**
+A: We store a single `backup.json` file in a private, hidden folder (`appDataFolder`) on your personal Google Drive. This file is only accessible by this extension.
+
+**Q: Can I sync across devices?**
+A: Yes. If you sign in to the same Google account on another computer and enable "Auto-backup", your prompts will sync (last-write-wins).
 
 ## Troubleshooting
-
-### "Local Gemini Nano is not available" error
-This usually means Chrome hasn't downloaded the model yet or the flags aren't enabled.
-1. Ensure you are on Chrome 128+.
-2. Go to `chrome://flags` and enable `#optimization-guide-on-device-model` and `#prompt-api-for-gemini-nano`.
-3. Relaunch Chrome.
-4. Open the [Diagnostic Tool](gemini-diagnostic.html) to check status.
-
-### Sync isn't working between devices
-1. Make sure you are signed in with the *same* Google account on both browsers.
-2. Check that "Sync" is enabled in your browser settings.
-3. Verify you have internet connectivity.
+**Q: Why don't I see the AI tools?**
+A: You need Chrome version 128+ and must enable the "Prompt API" and "Optimization Guide On Device Model" flags. Check our [AI Setup Guide](./ai_setup.md) for details.
