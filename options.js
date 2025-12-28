@@ -8,8 +8,6 @@ console.log('Options Init: Script Loaded');
 let currentPromptId = null;
 let currentProjectId = null; // null = 'all'
 let searchFilter = '';
-let isDragging = false;
-let draggedPromptId = null;
 
 // DOM Elements - will be populated in init()
 const els = {};
@@ -52,6 +50,14 @@ async function init() {
     els.driveSignedIn = document.getElementById('drive-signed-in');
     els.userEmail = document.getElementById('user-email');
     els.lastBackupTime = document.getElementById('last-backup-time');
+
+    // Modal elements
+    els.modalOverlay = document.getElementById('modal-overlay');
+    els.modalTitle = document.getElementById('modal-title');
+    els.modalInputName = document.getElementById('modal-input-name');
+    els.modalInputDesc = document.getElementById('modal-input-desc');
+    els.modalCancelBtn = document.getElementById('modal-cancel-btn');
+    els.modalConfirmBtn = document.getElementById('modal-confirm-btn');
 
     // Footer status bar elements
     els.footerWordCount = document.getElementById('footer-word-count');
@@ -290,13 +296,99 @@ function updateProjectLabel() {
     }
 }
 
-async function handleAddProject() {
-    const name = prompt("Enter Workspace Name:");
-    if (!name) return;
-    const direction = prompt("Enter Direction/Context (Optional - helps AI understand this workspace):");
+// --- Project Management ---
 
-    await StorageService.addProject(name, direction || "");
-    await loadWorkspaces();
+/**
+ * Handles adding a new project via inline input
+ */
+async function handleAddProject() {
+    // 1. Check if input already exists
+    if (document.getElementById('new-project-input')) {
+        document.getElementById('new-project-input').focus();
+        return;
+    }
+
+    // 2. Create LI with Input
+    const li = document.createElement('li');
+    li.className = 'nav-item';
+    li.style.padding = '0';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'new-project-input';
+    input.placeholder = 'project_name';
+    input.style.width = '100%';
+    input.style.border = 'none';
+    input.style.padding = '8px 10px';
+    input.style.background = 'transparent';
+    input.style.outline = 'none';
+    input.style.fontSize = '13px';
+    input.style.fontFamily = 'inherit';
+
+    li.appendChild(input);
+
+    // 3. Insert after 'All Prompts' or top of list
+    if (els.workspaceList.children.length > 0) {
+        els.workspaceList.insertBefore(li, els.workspaceList.children[1]);
+    } else {
+        els.workspaceList.appendChild(li);
+    }
+
+    input.focus();
+
+    // 4. Handle Commit / Cancel
+    const commit = async () => {
+        const rawName = input.value.trim();
+        if (!rawName) {
+            li.remove();
+            return;
+        }
+
+        // Validation: snake_case, max 3 words
+        const safeName = rawName.replace(/\s+/g, '_').toLowerCase();
+        const wordCount = safeName.split('_').filter(w => w.length > 0).length;
+
+        if (wordCount > 3) {
+            alert('Max 3 words allowed (e.g. my_project_name)');
+            input.focus();
+            return;
+        }
+
+        if (safeName.length > 64) {
+            alert('Max 64 characters exceeded');
+            input.focus();
+            return;
+        }
+
+        try {
+            const project = await StorageService.addProject(safeName);
+            li.remove();
+            await loadWorkspaces();
+            switchProject(project.id);
+        } catch (err) {
+            console.error('Failed to create project:', err);
+            alert('Failed to create workspace');
+            li.remove();
+        }
+    };
+
+    const cancel = () => {
+        li.remove();
+    };
+
+    // Events
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            input.blur();
+            commit();
+        }
+        if (e.key === 'Escape') cancel();
+    });
+
+    input.addEventListener('blur', () => {
+        if (input.value.trim()) commit();
+        else cancel();
+    });
 }
 
 /**
@@ -350,7 +442,9 @@ function renderPromptList(prompts) {
         let dateStr = '';
         try {
             dateStr = new Date(prompt.updatedAt).toLocaleDateString();
-        } catch (e) { }
+        } catch {
+            // Ignore date parsing errors
+        }
 
         li.innerHTML = `
             <span class="item-title">${prompt.title || 'Untitled'}</span>
@@ -499,16 +593,12 @@ function renderHistoryDropdown(prompt) {
  */
 function setupDragSource(el, promptId) {
     el.addEventListener('dragstart', (e) => {
-        isDragging = true;
-        draggedPromptId = promptId;
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', promptId);
         el.style.opacity = '0.5';
     });
 
-    el.addEventListener('dragend', (e) => {
-        isDragging = false;
-        draggedPromptId = null;
+    el.addEventListener('dragend', () => {
         el.style.opacity = '1';
         // Cleanup drag classes
         document.querySelectorAll('.drag-over').forEach(x => x.classList.remove('drag-over'));
@@ -698,7 +788,7 @@ async function updateFooterStatusDots() {
         dot2.title = `Rewriter API: ${statuses.rewriter}`;
         dot2.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot2);
-    } catch (e) {
+    } catch {
         // Fallback to error dots if check fails
         const dot1 = document.createElement('div');
         dot1.className = 'status-dot error';

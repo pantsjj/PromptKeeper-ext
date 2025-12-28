@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptKeeper</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <style>
+        :root {
+            /* Apple-inspired Light Mode */
+            --bg-color: #f5f5f7;
+            --sidebar-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --primary-hover: #0077ed;
+            --accent-color: #f5f5f7;
+            --editor-bg: #ffffff;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --code-font: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --sidebar-bg: #2c2c2e;
+                --text-color: #f5f5f7;
+                --text-secondary: #86868b;
+                --border-color: #424245;
+                --primary-color: #0a84ff;
+                --primary-hover: #409cff;
+                --accent-color: #3a3a3c;
+                --editor-bg: #1e1e1e;
+            }
+        }
+
+        /* Side Panel Layout Overrides */
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            min-width: 200px;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Search Header */
+        #search-header {
+            padding: 12px 16px;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        #search-header .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        #search-header .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        #popup-search {
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid transparent;
+            border-radius: 20px;
+            padding: 8px 16px 8px 36px;
+            font-size: 13px;
+            color: var(--text-color);
+            outline: none;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        #popup-search:focus {
+            background: var(--editor-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+        }
+
+        /* Main Container */
+        #main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Sidebar */
+        #sidebar {
+            width: 200px;
+            min-width: 150px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: width 0.2s, opacity 0.2s;
+        }
+
+        /* Resize Handle */
+        #resize-handle {
+            width: 6px;
+            background: transparent;
+            cursor: col-resize;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        #resize-handle:hover,
+        #resize-handle.dragging {
+            background: var(--primary-color);
+            opacity: 0.5;
+        }
+
+        /* Auto-hide sidebar when panel is narrow (< 300px) */
+        @media (max-width: 299px) {
+            #sidebar {
+                display: none;
+            }
+
+            #resize-handle {
+                display: none;
+            }
+        }
+
+        /* Collapsible Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            cursor: pointer;
+            user-select: none;
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-header:hover {
+            background: var(--accent-color);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .section-toggle {
+            font-size: 10px;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+        }
+
+        .section-header.collapsed .section-toggle {
+            transform: rotate(-90deg);
+        }
+
+        /* Section Content */
+        .section-content {
+            overflow-y: auto;
+        }
+
+        /* Workspaces section - compact, fits content */
+        #workspaces-section {
+            max-height: 120px;
+            flex-shrink: 0;
+        }
+
+        /* Prompts section - takes remaining space */
+        #prompts-section {
+            flex: 1;
+            min-height: 100px;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        /* Add Project Button */
+        #add-project-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1;
+        }
+
+        #add-project-btn:hover {
+            background: var(--accent-color);
+        }
+
+        /* Workspace and Prompt Lists */
+        #workspace-list,
+        #prompt-list {
+            list-style: none;
+            padding: 4px 8px;
+            margin: 0;
+        }
+
+        .nav-item {
+            padding: 8px 10px;
+            margin-bottom: 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-item:hover {
+            background: var(--accent-color);
+        }
+
+        .nav-item.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Google Sign-in Section */
+        #google-section {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            font-size: 11px;
+        }
+
+        #google-signin-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #google-signin-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        #drive-signed-in {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #user-email {
+            font-size: 11px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #google-signout-btn {
+            padding: 6px 10px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 11px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Right Editor Panel */
+        #editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--editor-bg);
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        #editor-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #editor-content label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        #prompt-title {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            background: var(--bg-color);
+            color: var(--text-color);
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        #prompt-title:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+        }
+
+        #prompt-text {
+            flex: 1;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-family: var(--code-font);
+            font-size: 13px;
+            line-height: 1.5;
+            background: var(--bg-color);
+            color: var(--text-color);
+            resize: none;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        #prompt-text:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+        }
+
+        /* Editor Buttons */
+        .editor-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding-top: 8px;
+        }
+
+        .editor-buttons button {
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #new-prompt-button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+
+        #new-prompt-button:hover {
+            background: var(--accent-color);
+        }
+
+        #save-button {
+            background: var(--primary-color);
+            border: none;
+            color: white;
+        }
+
+        #save-button:hover {
+            background: var(--primary-hover);
+        }
+
+        #delete-prompt-button {
+            background: transparent;
+            border: 1px solid #ff3b3030;
+            color: #ff3b30;
+        }
+
+        #delete-prompt-button:hover {
+            background: #ff3b3010;
+        }
+
+        #paste-prompt-button {
+            background: linear-gradient(135deg, #ff9500, #ff6b00);
+            border: none;
+            color: white;
+            animation: pulse-orange 2s infinite;
+        }
+
+        @keyframes pulse-orange {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 149, 0, 0);
+            }
+        }
+
+        #paste-prompt-button:hover {
+            background: linear-gradient(135deg, #ff6b00, #ff5500);
+            animation: none;
+        }
+
+        /* Footer Status Bar */
+        footer#stats {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--sidebar-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 10px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        footer#stats .left-stats {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        footer#stats .right-stats {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        footer#stats a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        footer#stats a:hover {
+            color: var(--primary-color);
+        }
+
+        #open-full-editor-link {
+            color: var(--primary-color) !important;
+            font-weight: 500;
+        }
+
+        #version-selector {
+            border: none;
+            background: transparent;
+            color: var(--primary-color);
+            font-size: 10px;
+            cursor: pointer;
+            padding: 0;
+            max-width: 80px;
+        }
+
+        /* Responsive: Hide sidebar completely at very narrow widths */
+        @media (max-width: 299px) {
+            #sidebar {
+                display: none !important;
+            }
+
+            #search-header {
+                padding: 8px 12px;
+            }
+
+            #editor-content {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Search Header -->
+    <div id="search-header">
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="popup-search" placeholder="Search prompts...">
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="main-container">
+
+        <!-- Left Sidebar -->
+        <div id="sidebar">
+            <!-- Workspaces Section -->
+            <div id="workspace-toggle" class="section-header">
+                <h2 class="section-title">Workspaces</h2>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="add-project-btn" title="Add Workspace">+</button>
+                    <span class="section-toggle">▼</span>
+                </div>
+            </div>
+            <div id="workspaces-section" class="section-content">
+                <ul id="workspace-list">
+                    <li class="nav-item active" data-id="all">All Prompts</li>
+                    <!-- Dynamic workspaces go here -->
+                </ul>
+            </div>
+
+            <!-- Prompts Section -->
+            <div id="prompts-toggle" class="section-header">
+                <h2 class="section-title">Prompts</h2>
+                <span class="section-toggle">▼</span>
+            </div>
+            <div id="prompts-section" class="section-content">
+                <ul id="prompt-list">
+                    <!-- Dynamic prompts go here -->
+                </ul>
+            </div>
+
+            <!-- Google Sign-in Section -->
+            <div id="google-section">
+                <div id="drive-signed-out">
+                    <button id="google-signin-btn">Sign in with Google</button>
+                </div>
+                <div id="drive-signed-in" class="hidden">
+                    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 6px;">
+                        <span style="color: var(--primary-color);">✓</span>
+                        <span id="user-email"
+                            style="font-size: 12px; overflow: hidden; text-overflow: ellipsis;"></span>
+                    </div>
+                    <button id="google-signout-btn">Sign Out</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div id="resize-handle" title="Drag to resize"></div>
+
+        <!-- Right Editor Panel -->
+        <div id="editor-panel">
+            <div id="editor-content">
+                <div>
+                    <label for="prompt-title">Title</label>
+                    <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
+                </div>
+
+                <div style="flex: 1; display: flex; flex-direction: column;">
+                    <label for="prompt-text">Prompt Text</label>
+                    <textarea id="prompt-text" placeholder="Write your prompt here..."></textarea>
+                </div>
+
+                <div class="editor-buttons">
+                    <button id="new-prompt-button">New</button>
+                    <button id="save-button">Save</button>
+                    <button id="delete-prompt-button">Delete</button>
+                    <button id="paste-prompt-button">Paste-to-Page</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Status Bar -->
+    <footer id="stats">
+        <div class="left-stats">
+            <span id="word-count">Words: 0</span>
+            <select id="version-selector" title="View Version History"></select>
+            <span id="storage-used">0 KB</span>
+        </div>
+        <div class="right-stats">
+            <a href="#" id="backup-link" title="Backup to Google Drive">Backup</a>
+            <a href="#" id="restore-link" title="Restore from Google Drive">Restore</a>
+            <span style="color: var(--border-color);">|</span>
+            <a href="#" id="open-full-editor-link">Manage ↗</a>
+            <span style="color: var(--border-color);">|</span>
+            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
+                style="color: var(--text-secondary); text-decoration: none; font-size: 11px;">@Jaroslav</a>
+        </div>
+        <!-- Hidden elements for compatibility -->
+        <input type="file" id="import-file" accept=".json" style="display: none;">
+    </footer>
+
+    <script src="popup.js" type="module"></script>
+    <script>
+        // Collapsible section toggle functionality
+        // Run after DOM is loaded to ensure elements exist
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleHeaders = document.querySelectorAll('#workspace-toggle, #prompts-toggle');
+            toggleHeaders.forEach(header => {
+                header.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    header.classList.toggle('collapsed');
+                    const content = header.nextElementSibling;
+                    if (content && content.classList.contains('section-content')) {
+                        content.classList.toggle('collapsed');
+                    }
+                });
+            });
+
+            // Resize handle functionality
+            const resizeHandle = document.getElementById('resize-handle');
+            const sidebar = document.getElementById('sidebar');
+            if (resizeHandle && sidebar) {
+                let isResizing = false;
+
+                resizeHandle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    resizeHandle.classList.add('dragging');
+                    sidebar.style.transition = 'none';
+                    document.body.style.cursor = 'col-resize';
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+                    const newWidth = e.clientX;
+                    if (newWidth >= 100 && newWidth <= 300) {
+                        sidebar.style.width = newWidth + 'px';
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        resizeHandle.classList.remove('dragging');
+                        sidebar.style.transition = '';
+                        document.body.style.cursor = '';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
