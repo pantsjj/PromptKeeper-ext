@@ -15,7 +15,7 @@ async function checkGlobals() {
     // Check new namespace structure if applicable
     try {
         if (typeof ai !== 'undefined') msg += "✅ global 'ai' var is PRESENT\n";
-    } catch (e) { msg += "⚠️ global 'ai' var is UNDEFINED\n"; }
+    } catch { msg += "⚠️ global 'ai' var is UNDEFINED\n"; }
 
     log('res-globals', msg, type);
 }

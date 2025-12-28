@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "jest",
+    "test:e2e": "playwright test",
     "lint": "eslint ."
   },
   "repository": {

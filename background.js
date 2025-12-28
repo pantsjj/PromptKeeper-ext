@@ -1,13 +1,20 @@
 /**
  * Background Service Worker
  * Manages the AI bridge tab for AI operations
+ * Enables Side Panel for right-docked prompt access
  */
 
 let aiBridgeTabId = null;
 
 // Create AI bridge tab on extension startup
 chrome.runtime.onStartup.addListener(setupAIBridge);
-chrome.runtime.onInstalled.addListener(setupAIBridge);
+chrome.runtime.onInstalled.addListener(() => {
+  setupAIBridge();
+  // Enable side panel to open when clicking extension icon
+  if (chrome.sidePanel) {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => { });
+  }
+});
 
 async function setupAIBridge() {
   console.log('[Background] Setting up AI bridge tab');
@@ -18,7 +25,7 @@ async function setupAIBridge() {
       await chrome.tabs.get(aiBridgeTabId);
       console.log('[Background] AI bridge tab already exists');
       return;
-    } catch (_e) {
+    } catch {
       // Tab doesn't exist, create new one
       aiBridgeTabId = null;
     }
@@ -39,7 +46,7 @@ async function setupAIBridge() {
     setTimeout(async () => {
       try {
         await chrome.tabs.update(aiBridgeTabId, { active: false });
-      } catch (_e) {
+      } catch {
         // Ignore errors
       }
     }, 500);
