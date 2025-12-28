@@ -80,4 +80,67 @@ test.describe('Workspace Management', () => {
         await expect(input).not.toBeVisible();
         await expect(page.locator('.nav-item', { hasText: 'cancelled_proj' })).not.toBeVisible();
     });
+
+    test('Sidebar controls: plus buttons and chevrons visible', async ({ page }) => {
+        const workspacePlus = page.locator('#add-project-btn');
+        const workspaceChevron = page.locator('#workspace-chevron');
+        const promptsPlus = page.locator('#new-prompt-btn');
+        const promptsChevron = page.locator('#prompts-chevron');
+
+        await expect(workspacePlus).toBeVisible();
+        await expect(workspaceChevron).toBeVisible();
+        await expect(promptsPlus).toBeVisible();
+        await expect(promptsChevron).toBeVisible();
+    });
+
+    test('Collapsible sections toggle visibility', async ({ page }) => {
+        const workspaceSection = page.locator('#workspace-section');
+        const workspaceChevron = page.locator('#workspace-chevron');
+        const workspaceTitle = page.locator('#workspace-section-title');
+
+        const promptsSection = page.locator('#prompts-section');
+        const promptsChevron = page.locator('#prompts-chevron');
+        const promptsTitle = page.locator('#prompts-section-title');
+
+        // Initially should not be marked as collapsed (regardless of exact layout visibility)
+        await expect(workspaceSection).not.toHaveClass(/collapsed/);
+        await expect(promptsSection).not.toHaveClass(/collapsed/);
+
+        // Toggle workspaces via title
+        await workspaceTitle.click();
+        await expect(workspaceSection).toHaveClass(/collapsed/);
+        await expect(workspaceChevron).toHaveClass(/collapsed/);
+
+        // Toggle back via chevron
+        await workspaceChevron.click();
+        await expect(workspaceSection).not.toHaveClass(/collapsed/);
+
+        // Toggle prompts via title
+        await promptsTitle.click();
+        await expect(promptsSection).toHaveClass(/collapsed/);
+        await expect(promptsChevron).toHaveClass(/collapsed/);
+
+        // Toggle back via chevron
+        await promptsChevron.click();
+        await expect(promptsSection).not.toHaveClass(/collapsed/);
+    });
+
+    test('Workspace context menu floats near cursor', async ({ page }) => {
+        // Ensure at least one workspace exists
+        const addBtn = page.locator('#add-project-btn');
+        await addBtn.click();
+        const input = page.locator('#new-project-input');
+        await input.fill('ctx_workspace');
+        await page.keyboard.press('Enter');
+
+        const wsItem = page.locator('.nav-item', { hasText: 'ctx_workspace' });
+        await expect(wsItem).toBeVisible();
+
+        // Open context menu with right-click
+        await wsItem.click({ button: 'right' });
+
+        const menu = page.locator('#context-menu');
+        await expect(menu).toBeVisible();
+        await expect(menu).toHaveCSS('position', 'absolute');
+    });
 });
