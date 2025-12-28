@@ -64,7 +64,7 @@ async function getDetailedStatus() {
         try {
             const caps = await window.ai.languageModel.capabilities();
             statuses.prompt = caps.available;
-        } catch (e) {
+        } catch {
             statuses.prompt = 'no';
         }
     }

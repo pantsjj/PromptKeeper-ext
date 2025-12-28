@@ -1,16 +1,22 @@
 {
     "manifest_version": 3,
     "name": "PromptKeeper",
-    "description": "The Local AI Prompt IDE. Organize, version, and optimize prompts with built-in Gemini Nano.",
+    "description": "Save, organize, and optimize AI prompts. Sync via Google Drive. Local AI with Gemini Nano. Side Panel for easy paste-to-page.",
     "author": "Jaroslav Pantsjoha",
     "version": "2.0.0",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtIvVYJT/bebjYKUIUh7vJ8OLj46ww2RlOhAcJ8XLdbDbGkVD1imGcPriZsWFhN6J1rCuf8AhbyF2Kq2iY13WAQtKCtE4ZV9mEFhk48yFMzZpasjwgmgFpuuU1Rp2y7ZeClgL9h2xbhvS6o+k+gRwFNcwGvseN1MQkGXs0YmJ3IQKxz5bAG+nALGib0pHNE2vhkjjeFbb7SpKMsaPeK1AsWPU5i3/0gnt4ogUYlomK9DU+lDLjJtye/3SG48QeYb9A80an+k4zbJN0RrJhAdd9uwzKjrhMbBcF6S7rjSmwyuaGnMn41CEMTDF6X4l0Ez+HGy243NGA5ggQWzr5NeJdQIDAQAB",
     "action": {
-        "default_title": "PromptKeeper",
-        "default_popup": "popup.html",
+        "default_title": "PromptKeeper - Click to open Side Panel",
         "default_icon": {
-            "48": "images/new-logo-webp.webp",
-            "128": "images/new-logo-webp.webp"
+            "48": "images/icon-48.png",
+            "64": "images/icon-128.png",
+            "128": "images/icon-128.png"
         }
+    },
+    "icons": {
+        "48": "images/icon-48.png",
+        "64": "images/icon-128.png",
+        "128": "images/icon-128.png"
     },
     "options_page": "options.html",
     "background": {
@@ -21,10 +27,15 @@
         "storage",
         "scripting",
         "tabs",
-        "identity"
+        "identity",
+        "alarms",
+        "sidePanel"
     ],
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
     "oauth2": {
-        "client_id": "804678258987-trop26ei3lek64gvdscchg2pfijo82mq.apps.googleusercontent.com",
+        "client_id": "804678258987-e841cbt90rcba2pn5lgti5tn5cfm2t0t.apps.googleusercontent.com",
         "scopes": [
             "https://www.googleapis.com/auth/drive.file",
             "https://www.googleapis.com/auth/userinfo.email"

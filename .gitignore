@@ -6,6 +6,8 @@ package-lock.json
 coverage/
 .jest/
 tests/__snapshots__/
+test-results/
+playwright-report/
 
 # Logs
 npm-debug.log*
@@ -16,7 +18,6 @@ yarn-error.log*
 # System Files
 .DS_Store
 Thumbs.db
-test-results/
 
 # OAuth Client Secrets (DO NOT COMMIT)
 client_secret_*.json
@@ -31,7 +32,16 @@ dist/
 build/
 *.zip
 *.crx
+
+# Local Development (gitignored, not packaged)
+local-artifacts/
+key.pem
+pubkey.txt
+
+# Private docs (not for public repo)
 docs/PromptKeeper-GDrive-Auth.md
 docs/OAUTH-SETUP-CRITICAL.md
 docs/google-drive-implementation.md
 docs/marketing-image-prompts.md
+test-results/.last-run.json
+
