@@ -33,7 +33,8 @@ All items are tracked as GitHub issues: https://github.com/pantsjj/PromptKeeper-
 ## Feature Backlog
 
 ### Diff View [#7](https://github.com/pantsjj/PromptKeeper-ext/issues/7)
-Visual indicator of text changes between prompt versions (Phase 2 roadmap item).
+Visual indicator of text changes between prompt versions (Phase 2 roadmap item).  
+With ADR‑003 we now cap the visible history dropdown at the most recent 50 revisions; the diff view should compare the current head version against any selected historical version and present a GitHub‑style colour scheme (green additions, red deletions).
 
 ### Dynamic Variable Injection [#8](https://github.com/pantsjj/PromptKeeper-ext/issues/8)
 Form-based filling of `{{variables}}` in prompts (Future Scope).

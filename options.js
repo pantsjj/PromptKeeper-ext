@@ -185,7 +185,14 @@ function setupEventListeners() {
         els.footerExportLink.addEventListener('click', async (e) => {
             e.preventDefault();
             const prompts = await StorageService.getPrompts();
-            const dataStr = JSON.stringify(prompts, null, 2);
+            const projects = await StorageService.getProjects();
+            const backup = {
+                version: '2.0.0',
+                timestamp: new Date().toISOString(),
+                prompts,
+                projects
+            };
+            const dataStr = JSON.stringify(backup, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -604,8 +611,17 @@ async function savePrompt() {
         els.textArea.classList.add('pulse-green');
         setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000); // Assumes css class exists or just ignore
 
-        loadPrompts();
+        await loadPrompts();
         updateLibraryStats();
+
+        // Refresh current prompt details & history dropdown immediately
+        if (currentPromptId) {
+            const prompts = await StorageService.getPrompts();
+            const updated = prompts.find(p => p.id === currentPromptId);
+            if (updated) {
+                selectPrompt(updated);
+            }
+        }
 
     } catch (err) {
         console.error('Save error:', err);
@@ -705,7 +721,8 @@ function renderHistoryDropdown(prompt) {
         return;
     }
 
-    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+    // Show the most recent 50 versions in the dropdown (full history kept in storage)
+    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
 
     sorted.forEach((v, idx) => {
         const option = document.createElement('option');
@@ -1009,7 +1026,7 @@ async function handleRestore() {
 
     try {
         const data = await GoogleDriveService.restoreFromDrive();
-        const importedPrompts = await StorageService.importPrompts(data.prompts);
+        const importedPrompts = await StorageService.importPrompts(data);
 
         alert(`✅ Restored ${importedPrompts} prompts from Google Drive!`);
 
