@@ -9,6 +9,9 @@ global.chrome = {
     identity: {
         getAuthToken: jest.fn(),
         removeCachedAuthToken: jest.fn()
+    },
+    runtime: {
+        lastError: undefined
     }
 };
 
@@ -18,6 +21,7 @@ global.fetch = jest.fn();
 describe('GoogleDriveService', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        chrome.runtime.lastError = undefined;
     });
 
     describe('authenticate', () => {
