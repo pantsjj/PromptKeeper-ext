@@ -1,44 +1,72 @@
 {
     "manifest_version": 3,
     "name": "PromptKeeper",
-    "description": "Keep track of your fine GenAI prompts in one place. Paste directly from Extension. Export prompts to share.",
+    "description": "Save, organize, and optimize AI prompts. Sync via Google Drive. Local AI with Gemini Nano. Side Panel for easy paste-to-page.",
     "author": "Jaroslav Pantsjoha",
-    "version": "1.0.9",
+    "version": "2.0.0",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtIvVYJT/bebjYKUIUh7vJ8OLj46ww2RlOhAcJ8XLdbDbGkVD1imGcPriZsWFhN6J1rCuf8AhbyF2Kq2iY13WAQtKCtE4ZV9mEFhk48yFMzZpasjwgmgFpuuU1Rp2y7ZeClgL9h2xbhvS6o+k+gRwFNcwGvseN1MQkGXs0YmJ3IQKxz5bAG+nALGib0pHNE2vhkjjeFbb7SpKMsaPeK1AsWPU5i3/0gnt4ogUYlomK9DU+lDLjJtye/3SG48QeYb9A80an+k4zbJN0RrJhAdd9uwzKjrhMbBcF6S7rjSmwyuaGnMn41CEMTDF6X4l0Ez+HGy243NGA5ggQWzr5NeJdQIDAQAB",
     "action": {
-        "default_title": "PromptKeeper",
-        "default_popup": "popup.html",
+        "default_title": "PromptKeeper - Click to open Side Panel",
         "default_icon": {
-            "48": "images/icon48.png",
-            "128": "images/icon128.png"
+            "48": "images/icon-48.png",
+            "64": "images/icon-128.png",
+            "128": "images/icon-128.png"
         }
     },
-    "trial_tokens": [
-        "AuFmwNULLNULLYAPoKHvAeb+o0XowFuMO3wu4FD6evJPHdL34zQtx3xtrN6PhGtLmiQcE79QMAAAB4eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElGb3JFeHRlbnNpb24iLCJleHBpcnkiOjE3NjA0ODYzOTl9",
-        "At/AuFmwNULLNULLYAPoKHvAeb+M9UjdDi5tlJnVPxhXo6+DEFSPKkRwgizYY1se70bE1KL7n65FzimYNcEtzlFFo3C/uQwAAABveyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiVHJhbnNsYXRpb25BUEkiLCJleHBpcnkiOjE3NTMxNDI0MDB9",
-        "AjPvSO6ki25/AuFmwNULLNULLYAPoKHvAeb+QgIgES7yCn/H+cxTV7pAE0nSzeHauwbOIKoexcM47VswwAAABzeyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiQUlTdW1tYXJpemF0aW9uQVBJIiwiZXhwaXJ5IjoxNzUzMTQyNDAwfQ==",
-        "Ak5fCRjb2B+AuFmwNULLNULLYAPoKHvAeb/Zv3XXP7oJ1XkyBPGfR0HSewUyWhC4uEQ1CzpKw8Ob7lsp8sYELyeG4dF9L8qhE0CkGgEAAAB1eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmVjbGppZGdmamVlZWRpaG1ibWdnbG5nZmlhampocGwiLCJmZWF0dXJlIjoiTGFuZ3VhZ2VEZXRlY3Rpb25BUEkiLCJleHBpcnkiOjE3NDk1OTk5OTl9"
-    ],
+    "icons": {
+        "48": "images/icon-48.png",
+        "64": "images/icon-128.png",
+        "128": "images/icon-128.png"
+    },
+    "options_page": "options.html",
+    "background": {
+        "service_worker": "background.js"
+    },
     "permissions": [
         "activeTab",
         "storage",
         "scripting",
-        "aiLanguageModelOriginTrial" 
+        "tabs",
+        "identity",
+        "alarms",
+        "sidePanel"
     ],
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "oauth2": {
+        "client_id": "804678258987-e841cbt90rcba2pn5lgti5tn5cfm2t0t.apps.googleusercontent.com",
+        "scopes": [
+            "https://www.googleapis.com/auth/drive.file",
+            "https://www.googleapis.com/auth/userinfo.email"
+        ]
+    },
     "content_scripts": [
         {
-            "matches": ["<all_urls>"],
-            "js": ["contentScript.js"],
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "contentScript.js"
+            ],
             "run_at": "document_idle"
-          }
+        }
     ],
     "web_accessible_resources": [
         {
-          "resources": ["injectedScript.js"],
-          "matches": ["<all_urls>"]
+            "resources": [
+                "injectedScript.js",
+                "gemini-help.html",
+                "gemini-diagnostic.html"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
         }
-      ],
+    ],
     "host_permissions": [
-        "<all_urls>"
+        "<all_urls>",
+        "https://www.googleapis.com/*"
     ],
     "content_security_policy": {
         "extension_pages": "script-src 'self'; object-src 'self'"

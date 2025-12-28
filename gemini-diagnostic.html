@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Nano Diagnostic</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f0f0f0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #ddd;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .success {
+            border-left-color: #28a745;
+            color: #155724;
+            background: #d4edda;
+        }
+
+        .error {
+            border-left-color: #dc3545;
+            color: #721c24;
+            background: #f8d7da;
+        }
+
+        .warn {
+            border-left-color: #ffc107;
+            color: #856404;
+            background: #fff3cd;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🤖 Gemini Nano Diagnostic Tool</h1>
+
+    <div class="card">
+        <h3>1. Global Object Check</h3>
+        <p>Checks if the AI namespace exists in the browser.</p>
+        <button id="btn-globals">Run Check</button>
+        <div id="res-globals" class="result">Waiting...</div>
+    </div>
+
+    <div class="card">
+        <h3>2. Capabilities Check (Prompt API)</h3>
+        <p>Checks if the Language Model is ready to use.</p>
+        <button id="btn-caps">Check Availability</button>
+        <div id="res-caps" class="result">Waiting...</div>
+    </div>
+
+    <div class="card">
+        <h3>3. Rewriter API Check</h3>
+        <p>Checks if the specialized Rewriter API is active.</p>
+        <button id="btn-rewriter">Check Rewriter</button>
+        <div id="res-rewriter" class="result">Waiting...</div>
+    </div>
+
+    <div class="card">
+        <h3>4. Functional Test (Hello World)</h3>
+        <p>Attempts to generate text. <strong>Note:</strong> Takes time if model is cold.</p>
+        <button id="btn-test">Run Test Prompt</button>
+        <div id="res-test" class="result">Waiting...</div>
+    </div>
+
+    <script src="gemini-diagnostic.js"></script>
+</body>
+
+</html>

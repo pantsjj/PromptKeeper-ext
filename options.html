@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PromptKeeper - Editor</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --sidebar-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --primary-hover: #0077ed;
+            --accent-color: #f5f5f7;
+            --editor-bg: #ffffff;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --code-font: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --sidebar-bg: #2c2c2e;
+                --text-color: #f5f5f7;
+                --text-secondary: #86868b;
+                --border-color: #424245;
+                --primary-color: #0a84ff;
+                --primary-hover: #409cff;
+                --accent-color: #3a3a3c;
+                --editor-bg: #1e1e1e;
+            }
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* Changed for global header */
+            overflow: hidden;
+        }
+
+        /* --- Global Header --- */
+        #global-header {
+            height: 52px;
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        #search-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            /* Doubled from 480px ~240 chars */
+        }
+
+        #search-input {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid transparent;
+            border-radius: 20px;
+            padding: 10px 16px 10px 40px;
+            /* Increased top/bottom padding */
+            font-size: 14px;
+            /* Slightly larger */
+            color: var(--text-color);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        #search-input:focus {
+            background-color: var(--editor-bg);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+        }
+
+        #search-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            /* Adjusted for new padding */
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+            /* Slightly larger */
+            pointer-events: none;
+        }
+
+        /* --- Main Layout --- */
+        #main-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr 280px;
+            /* Right sidebar: 260px -> 280px */
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- Components --- */
+        button {
+            font-family: var(--font-stack);
+            transition: all 0.2s ease;
+        }
+
+        .primary-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .primary-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .secondary-btn {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: var(--radius-md);
+            padding: 5px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .secondary-btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            color: var(--text-color);
+            background-color: var(--accent-color);
+        }
+
+        /* --- Sidebar Styles --- */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #sidebar-right {
+            border-left: 1px solid var(--border-color);
+            border-right: none;
+        }
+
+        .sidebar-section {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            /* Enable scroll */
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px 8px 8px;
+            margin-bottom: 4px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin: 0;
+            flex: 1;
+            /* Allow title to take space */
+            cursor: pointer;
+        }
+
+        /* Collapsible Styles */
+        .collapsible-content {
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        .collapsible-content.collapsed {
+            display: none;
+        }
+
+        .chevron-icon {
+            font-size: 10px;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .chevron-icon:hover {
+            color: var(--text-color);
+            background: var(--accent-color);
+        }
+
+        .chevron-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        /* List Styles */
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+        }
+
+        /* Workspace & Prompt Items */
+        .nav-item {
+            padding: 6px 10px;
+            margin-bottom: 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background-color: var(--accent-color);
+        }
+
+        .nav-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .nav-item.active .item-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Drag target state */
+        .nav-item.drag-over {
+            background-color: var(--accent-color);
+            border-color: var(--primary-color);
+            box-shadow: inset 0 0 0 1px var(--primary-color);
+        }
+
+        .item-title {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        /* Expand Button */
+        #expand-projects-btn {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #expand-projects-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        /* --- Main Editor --- */
+        #main-editor {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+        }
+
+        #editor-toolbar {
+            padding: 12px 20px;
+            background-color: var(--editor-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between;
+        }
+
+        #prompt-title-input {
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            outline: none;
+            min-width: 200px;
+            width: 100%;
+        }
+
+        #prompt-title-input::placeholder {
+            color: var(--border-color);
+        }
+
+        #editor-content {
+            flex: 1;
+            padding: 20px 40px;
+            overflow: hidden;
+            background-color: var(--editor-bg);
+            position: relative;
+        }
+
+        #prompt-text-area {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            background: transparent;
+            color: var(--text-color);
+            font-family: var(--code-font);
+            font-size: 14px;
+            line-height: 1.6;
+            outline: none;
+        }
+
+        /* Stats Panel */
+        .panel-section {
+            margin-bottom: 24px;
+        }
+
+        .panel-section h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0 0 12px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* AI Tools */
+        .refine-btn {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            font-size: 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refine-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            background-color: var(--editor-bg);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Global Header with Search -->
+    <header id="global-header">
+        <div id="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="search-input" placeholder="Search prompts...">
+        </div>
+    </header>
+
+    <div id="main-layout">
+        <!-- LEFT SIDEBAR -->
+        <div id="sidebar-left" class="sidebar">
+
+            <!-- Workspaces Section -->
+            <div style="padding: 12px 12px 0 12px; flex: 0 0 auto;">
+                <div class="sidebar-header">
+                    <h2 id="workspace-section-title" class="section-title">WORKSPACES</h2>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <button id="add-project-btn" class="icon-btn" title="New Workspace">+</button>
+                        <span id="workspace-chevron" class="chevron-icon">▼</span>
+                    </div>
+                </div>
+                <div id="workspace-section" class="collapsible-content">
+                    <ul id="workspace-list" class="nav-list">
+                        <!-- Static "All Prompts" item -->
+                        <li class="nav-item active" data-id="all" id="workspace-all">
+                            <span class="item-title">All Prompts</span>
+                        </li>
+                        <!-- Dynamic Workspaces go here -->
+                    </ul>
+                    <div id="more-projects-container" class="hidden">
+                        <ul id="more-projects-list" class="nav-list"></ul>
+                    </div>
+                    <button id="expand-projects-btn" class="hidden">Show more...</button>
+                </div>
+            </div>
+
+            <div style="height: 1px; background: var(--border-color); margin: 8px 12px; opacity: 0.5;"></div>
+
+            <!-- Prompts Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <h2 id="prompts-section-title" class="section-title">PROMPTS</h2>
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <button id="new-prompt-btn" class="icon-btn" title="New Prompt">+</button>
+                        <span id="prompts-chevron" class="chevron-icon">▼</span>
+                    </div>
+                </div>
+                <div id="prompts-section" class="collapsible-content">
+                    <ul id="prompt-list" class="nav-list">
+                        <!-- Prompts injected here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER EDITOR -->
+        <div id="main-editor">
+            <div id="editor-toolbar">
+                <input type="text" id="prompt-title-input" placeholder="Untitled Prompt">
+                <div style="display:flex; gap:8px; align-items: center;">
+                    <button id="delete-btn" class="secondary-btn"
+                        style="color: #ff3b30; border-color: #ff3b3030;">Delete</button>
+                    <button id="save-btn" class="primary-btn">Save</button>
+                </div>
+            </div>
+            <div id="editor-content">
+                <textarea id="prompt-text-area" placeholder="Write your prompt here..."></textarea>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div id="sidebar-right" class="sidebar" style="padding: 16px;">
+            <!-- Stats -->
+            <div class="panel-section">
+                <h3>Details</h3>
+                <div class="stats-grid">
+                    <div id="word-count">Words: 0</div>
+                    <div id="char-count">Chars: 0</div>
+                    <div id="version-label">Rev: 1</div>
+                    <div id="project-label" title="Current Workspace"
+                        style="grid-column: span 2; margin-top:4px; color:var(--text-color);">No Workspace</div>
+                </div>
+            </div>
+
+            <!-- AI Tools -->
+            <div class="panel-section">
+                <div class="ai-panel-card hidden" id="ai-tools-panel">
+                    <h3>AI Optimization</h3>
+                    <div id="ai-status" style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;"></div>
+
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                        <button class="refine-btn" data-type="magic_enhance"><span>🪄</span> Magic Enhance</button>
+                        <button class="refine-btn" data-type="formalize"><span>👔</span> Formalize Tone</button>
+                        <button class="refine-btn" data-type="clarify"><span>🔍</span> Improve Clarity</button>
+                        <button class="refine-btn" data-type="summarize"><span>✂️</span> Shorten</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="panel-section">
+                <h3>Options</h3>
+                <div class="ai-panel-card" style="padding: 12px;">
+                    <label
+                        style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; color:var(--text-color);">
+                        <input type="checkbox" id="confirm-deletion-checkbox" checked>
+                        Confirm workspace deletion
+                    </label>
+                </div>
+            </div>
+
+            <!-- Google Drive Backup -->
+            <div class="panel-section">
+                <div class="cloud-backup-card">
+                    <h3>☁️ Google Drive Backup</h3>
+
+                    <!-- Not Signed In State -->
+                    <div id="drive-signed-out">
+                        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;">
+                            Backup your prompts to Google Drive for safe keeping and cross-device access.
+                        </p>
+                        <button id="google-signin-btn" class="primary-btn" style="width:100%;">
+                            Sign in with Google
+                        </button>
+                    </div>
+
+                    <!-- Signed In State -->
+                    <div id="drive-signed-in" class="hidden">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                            <span style="color:var(--primary-color); font-size:14px;">✓</span>
+                            <span id="user-email" style="font-size:11px; color:var(--text-secondary);"></span>
+                        </div>
+
+                        <div style="display:grid; gap:8px; margin-bottom:12px;">
+                            <button id="backup-btn" class="secondary-btn" style="font-size:12px;">
+                                📤 Backup Now
+                            </button>
+                            <button id="restore-btn" class="secondary-btn" style="font-size:12px;">
+                                📥 Restore from Drive
+                            </button>
+                        </div>
+
+                        <div
+                            style="font-size:10px; color:var(--text-secondary); margin-bottom:12px; text-align:center;">
+                            Last backup: <span id="last-backup-time">Never</span>
+                        </div>
+
+                        <label
+                            style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; margin-bottom:12px;">
+                            <input type="checkbox" id="auto-sync-checkbox">
+                            Auto-backup every 30 min (Default: ON)
+                        </label>
+
+                        <button id="google-signout-btn" class="secondary-btn" style="width:100%; font-size:11px;">
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Library Stats -->
+            <div class="panel-section">
+                <h3>Library Stats</h3>
+                <div style="font-size:12px; color:var(--text-secondary); display:grid; gap:6px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Total Prompts:</span>
+                        <strong id="total-prompts-stat">0</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Workspaces:</span>
+                        <strong id="total-workspaces-stat">0</strong>
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Storage Used:</span>
+                        <strong id="storage-used-stat">0 KB</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Author / Credits -->
+            <div class="panel-section"
+                style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border-color);">
+                <div style="text-align:center; font-size:10px; color:var(--text-secondary);">
+                    <div style="margin-bottom:4px; font-weight:600;">PromptKeeper</div>
+                    <div>v2.0.0</div>
+                    <div style="margin-top:8px;">@author <strong>jpantsjoha</strong></div>
+                    <div style="margin-top:4px;">
+                        <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
+                            style="color:var(--primary-color); text-decoration:none;">
+                            GitHub ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* AI Panel Card Styling */
+        .ai-panel-card {
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+
+        /* Disabled state when AI unavailable */
+        .ai-panel-card.disabled {
+            background: var(--bg-color);
+            opacity: 0.6;
+            pointer-events: none;
+            border-style: dashed;
+        }
+
+        .ai-panel-card.disabled h3 {
+            color: var(--text-secondary);
+        }
+
+        .ai-panel-card.disabled .refine-btn {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Cloud Backup Card */
+        .cloud-backup-card {
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Footer Status Bar (matching popup) */
+        footer#stats {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: var(--editor-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 11px;
+            color: var(--text-secondary);
+            min-height: 36px;
+            z-index: 100;
+        }
+
+        footer#stats a {
+            color: #666;
+            text-decoration: none;
+        }
+
+        footer#stats a:hover {
+            color: var(--primary-color);
+        }
+
+        footer#stats a.primary-link {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .status-dots-container {
+            display: flex;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #34c759;
+        }
+
+        .status-dot.warning {
+            background: #ff9500;
+        }
+
+        .status-dot.error {
+            background: #ff3b30;
+        }
+
+        /* Footer Columns */
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            /* Pushes right-stats to the end */
+        }
+
+        .right-stats {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        /* Context Menu (options page only) */
+        .context-menu {
+            position: absolute;
+            background: var(--editor-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            z-index: 2000;
+            min-width: 150px;
+            padding: 4px 0;
+        }
+
+        .context-menu.hidden {
+            display: none;
+        }
+
+        .menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-color);
+        }
+
+        .menu-item:hover {
+            background-color: var(--accent-color);
+        }
+    </style>
+
+    <!-- Footer Status Bar -->
+    <footer id="stats">
+        <div class="footer-left">
+            <strong style="color:#5f6368;">Stats:</strong>
+            <span id="footer-word-count">Words: 0</span>
+            <select id="footer-version-selector" title="View Version History"
+                style="border:none; background:transparent; color:var(--text-color); cursor:pointer; font-size:11px;">
+                <!-- populated by js -->
+            </select>
+            <span class="separator">|</span>
+            <span id="footer-storage-used">Size: 0 KB</span>
+            <span class="separator">|</span>
+            <span class="status-dots-container" id="footer-status-dots">
+                <!-- dots injected by js -->
+            </span>
+        </div>
+        <div class="right-stats">
+            <a href="#" id="footer-docs-link">Docs</a>
+            <span class="separator">|</span>
+            <a href="#" id="footer-export-link">Export</a>
+            <span class="separator">|</span>
+            <a href="#" id="footer-import-link">Import</a>
+            <input type="file" id="footer-import-file" style="display: none;" accept=".json">
+        </div>
+    </footer>
+
+    <!-- Modal Dialog -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal-container">
+            <h3 id="modal-title">New Workspace</h3>
+            <div class="modal-body">
+                <label for="modal-input-name">Workspace Name</label>
+                <input type="text" id="modal-input-name" placeholder="e.g., creative_writing (max 3 words)"
+                    maxlength="64">
+                <div id="modal-error" style="color: #ff3b30; font-size: 12px; height: 16px; margin-top: 4px;"></div>
+                <p style="font-size: 11px; color: #86868b; margin-top: 8px;">
+                    Use underscores for multi-word names (e.g., <code>personal_finance</code>). Max 3 words.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel-btn">Cancel</button>
+                <button id="modal-confirm-btn" class="primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu (Hidden by default) -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="menu-item" id="ctx-delete-workspace">Delete Workspace</div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="options.js"></script>
+</body>
+
+</html>

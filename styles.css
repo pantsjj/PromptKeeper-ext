@@ -1,362 +1,345 @@
 /* Global Styles */
-html, body {
+html,
+body {
     width: 780px;
-    height: 720px;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
+    height: 600px;
+    /* Explicit height for popup */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f8f9fa;
-    color: #212529;
+    background-color: #f5f5f7;
+    color: #1d1d1f;
     display: flex;
     flex-direction: column;
-    box-sizing: border-box;
 }
 
 /* App Container */
 #app {
     display: flex;
-    flex-grow: 1;
-    box-sizing: border-box;
+    flex: 1;
+    overflow: hidden;
+    /* Prevent body scroll, handle inside containers */
 }
 
-/* Prompt List */
+/* Prompt List Sidebar */
 aside {
-    color: #06294d;
+    width: 220px;
     background-color: #ffffff;
-    border-right: 1px solid #dee2e6;
-    width: 200px;
+    border-right: 1px solid #d2d2d7;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
 }
 
 aside h2 {
     margin: 0;
-    font-size: 1.2em;
-    color: #2881ee;
-    background-color: #e8eaed;
-    padding: 10px;
-    border-bottom: 1px solid #dee2e6;
+    font-size: 13px;
+    font-weight: 600;
+    color: #86868b;
+    background-color: #f5f5f7;
+    padding: 12px 16px;
+    border-bottom: 1px solid #d2d2d7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Prompt List Entries */
 #prompt-list {
-    padding: 10px;
+    padding: 0;
+    list-style: none;
 }
 
 .prompt-entry {
-    margin-bottom: 15px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f5f5f7;
     cursor: pointer;
+    transition: background 0.1s;
 }
 
 .prompt-entry:hover {
-    background-color: #f1f3f4;
+    background-color: #f5f5f7;
 }
 
 .prompt-title {
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1d1d1f;
     display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .date-stamp {
-    font-size: 0.8em;
-    color: #6c757d;
-    margin-top: 3px;
+    font-size: 11px;
+    color: #86868b;
 }
 
 /* Editor Section */
 #editor {
-    flex-grow: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     background-color: #ffffff;
-    overflow-y: auto;
-    padding: 0 10px;
-    /* max-width: 600px; */
+    padding: 0;
+    overflow: hidden;
 }
 
 #editor h2 {
     margin: 0;
-    font-size: 1.2em;
-    color: #2881ee;
-    background-color: #e8eaed;
-    padding: 10px;
-    border-bottom: 1px solid #dee2e6;
+    font-size: 13px;
+    font-weight: 600;
+    color: #86868b;
+    background-color: #f5f5f7;
+    padding: 12px 16px;
+    border-bottom: 1px solid #d2d2d7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Editor Content */
 #editor-content {
-    width: 100%;
-    padding: 10px 0;
+    flex: 1;
+    padding: 10px 15px;
+    /* Reduced padding */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Reduced gap from 15px */
 }
 
-#editor-content label {
-    font-weight: bold;
+label {
+    font-size: 11px;
+    /* Slightly smaller */
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 2px;
+    /* Tighter label spacing */
     display: block;
 }
 
-#prompt-title, #prompt-text {
+input[type="text"],
+textarea,
+select {
     width: 100%;
-    padding: 5px;
-    margin: 5px 0 5px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
+    padding: 6px;
+    /* Compact padding */
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
     box-sizing: border-box;
-    background-color: #ffffff;
+    margin-bottom: 0;
+    /* Remove default margins, rely on flex gap */
 }
 
-#prompt-text {
-    max-width: 100%;
+textarea {
+    resize: vertical;
+    min-height: 120px;
+    /* Slightly shorter min height */
+    font-family: 'Menlo', monospace;
+    line-height: 1.4;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-/* Analysis Scores */
-#analysis-scores {
+/* AI Capability & Tunables */
+#ai-capability {
+    margin-top: 8px;
+    padding: 8px;
+    background-color: #f5f5f7;
+    border-radius: 8px;
     display: flex;
-    justify-content: space-between;
-    max-width: 100%;
+    gap: 8px;
+    align-items: center;
+    min-height: 40px;
+    /* Prevent collapse */
 }
 
-#bias-score, #toxicity-score {
-    font-size: 0.9em;
-    font-weight: bold;
-    padding: 5px;
-    border-radius: 4px;
-    text-align: center;
-}
-
-#bias-score.positive,
-#toxicity-score.positive {
-    background-color: #28a745;
-    color: white;
-}
-
-#bias-score.negative,
-#toxicity-score.negative {
-    background-color: #dc3545;
-    color: white;
-}
-
-#bias-score.median,
-#toxicity-score.median {
-    background-color: black;
-    color: white;
-}
-
-/* Editor Buttons */
-.editor-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-start;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    max-width: 100%;
-}
-
-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease-in-out;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-.paste-button {
-    background-color: #28a745;
-}
-
-.paste-button:hover {
-    background-color: #218838;
-}
-
-.ai-button {
-    background-color: #17a2b8;
-}
-
-.ai-button:hover {
-    background-color: #138496;
-}
-
-/* Tunables Section */
-#tunables {
-    padding: 10px;
-    background-color: #f0f0f5;
-    border-top: 1px solid #dee2e6;
-    margin-top: 10px;
-    max-width: 96%;
-}
-
-#tunables h3 {
-    margin-top: 0;
-    font-size: 1.1em;
-    color: #5f6368;
-    background-color: #e8eaed;
-    padding: 10px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.tunables-content {
-    display: flex;
-    gap: 20px;
-    margin-top: 10px;
-}
-
-.tunables-column {
+#ai-capability select {
     flex: 1;
+    /* Takes remaining space */
+    margin-bottom: 0;
+    width: auto;
+    /* Override 100% */
 }
 
-.tunables-column h4 {
-    margin-top: 0;
+#ai-capability button {
+    width: auto;
+    white-space: nowrap;
+    padding: 6px 12px;
 }
 
-.tunables-buttons {
-    margin-top: 20px;
+/* AI Error State in Popup */
+.ai-error-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 4px;
 }
 
-#export-prompts, #import-prompts {
-    background-color: #6c757d;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
+.ai-error-text {
+    font-size: 11px;
+    color: #d93025;
+    font-weight: 500;
+}
+
+.ai-error-link {
+    font-size: 11px;
+    color: #0071e3;
+    text-decoration: underline;
     cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease-in-out;
-    margin-right: 10px;
 }
 
-#export-prompts:hover, #import-prompts:hover {
-    background-color: #5a6268;
+#tunables {
+    margin-top: 5px;
+    padding: 10px;
+    background-color: #f5f5f7;
+    border-radius: 8px;
 }
 
 /* Footer Stats */
 footer#stats {
+    padding: 8px 16px;
+    background-color: #f5f5f7;
+    border-top: 1px solid #d2d2d7;
+    font-size: 11px;
+    color: #86868b;
     display: flex;
-    align-items: center;
-    padding: 10px;
-    background-color: #ffffff;
-    border-top: 1px solid #dee2e6;
-    box-sizing: border-box;
+    gap: 15px;
 }
 
-footer#stats h4 {
-    margin: 0;
-    font-size: 1em;
-    color: #5f6368;
-    margin-right: 10px;
+/* Full Editor Callout */
+#full-editor-container {
+    background-color: #0071e3;
+    color: white;
+    padding: 8px;
+    text-align: center;
 }
 
-footer#stats span {
-    margin-right: 20px;
-    font-size: 0.9em;
-    color: #212529;
+#open-full-editor {
+    background: none;
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    text-align: center;
 }
 
-/* Remove any extra margins or paddings */
-footer#stats * {
-    background-color: transparent;
+/* Pulse Animation */
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+        border-color: #28a745;
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+        border-color: #28a745;
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+        border-color: #d2d2d7;
+    }
+}
+
+.pulse-green {
+    animation: pulse-green 1s ease-out;
+}
+
+/* Version Selector in Footer */
+#version-selector {
+    width: auto;
     border: none;
+    background-color: transparent;
+    color: #0071e3;
+    /* Blue */
+    font-weight: 500;
+    font-size: 11px;
+    padding: 0;
+    cursor: pointer;
+    outline: none;
+    max-width: 150px;
+    text-overflow: ellipsis;
 }
 
-/* Hide vertical scrollbar */
-body::-webkit-scrollbar {
+#version-selector:hover {
+    text-decoration: underline;
+}
+
+/* Status Traffic Lights */
+.status-dots-container {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ccc;
+    cursor: help;
+    position: relative;
+}
+
+.status-dot.readily {
+    background-color: #34a853;
+}
+
+/* Green */
+.status-dot.no {
+    background-color: #ea4335;
+}
+
+/* Red */
+.status-dot.after-download {
+    background-color: #fbbc04;
+}
+
+/* Yellow */
+
+/* Simple Tooltip */
+.status-dot:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    margin-bottom: 5px;
+    z-index: 10;
+}
+
+/* Context Menu */
+.context-menu {
+    position: absolute;
+    background: white;
+    border: 1px solid #dcdcdc;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    z-index: 1000;
+    min-width: 150px;
+    padding: 4px 0;
+}
+
+.context-menu.hidden {
     display: none;
 }
 
-
-/* AI Capability Area */
-#ai-capability {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto; /* Pushes the AI capability area to the right */
-    background-color: #e9f7fa; /* Light blue background */
-    padding: 5px;
-    border-radius: 5px;
-}
-
-#ai-capability select {
-    padding: 5px;
-    border-radius: 4px;
-    border: 1px solid #ced4da;
-    background-color: #ffffff;
-    font-size: 0.9em;
-}
-
-#ai-capability button {
-    background-color: #17a2b8; /* Complementary color */
-    color: white;
-    border: none;
+.menu-item {
     padding: 8px 12px;
-    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease-in-out;
+    font-size: 13px;
+    color: #333;
 }
 
-#ai-capability button:hover {
-    background-color: #138496;
+.menu-item:hover {
+    background-color: #f0f0f0;
+    color: #1d1d1f;
 }
-
-#ai-capability .spinner {
-    border: 4px solid #f3f3f3; /* Light grey */
-    border-top: 4px solid #17a2b8; /* Blue */
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Adjust editor-buttons to wrap if needed */
-.editor-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-}
-
-/* Ensure buttons have consistent margins */
-.editor-buttons button,
-.editor-buttons select {
-    margin: 5px 0;
-}
-
-/* Translation Capability Area */
-#translation-capability {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-  
-  #translation-capability select {
-    padding: 5px;
-    border-radius: 4px;
-    border: 1px solid #ced4da;
-    background-color: #ffffff;
-    font-size: 0.9em;
-  }
-  
-  #translation-capability button {
-    background-color: #ffc107; /* Amber color */
-    color: black;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    transition: background-color 0.3s ease-in-out;
-  }
-  
-  #translation-capability button:hover {
-    background-color: #e0a800;
-  }
-  

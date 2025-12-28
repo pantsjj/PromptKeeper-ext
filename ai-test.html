@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AI Test Page</title>
+</head>
+
+<body>
+    <h1>Testing window.ai Access</h1>
+    <div id="result"></div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+
+        // Test 1: Check if window.ai exists
+        if (typeof window.ai !== 'undefined') {
+            resultDiv.innerHTML = '<p style="color: green;">✅ window.ai IS AVAILABLE!</p>';
+
+            // Test 2: Check languageModel
+            if (window.ai.languageModel) {
+                resultDiv.innerHTML += '<p style="color: green;">✅ window.ai.languageModel exists</p>';
+
+                // Test 3: Check capabilities
+                window.ai.languageModel.capabilities().then(caps => {
+                    resultDiv.innerHTML += `<p style="color: green;">✅ Capabilities: ${caps.available}</p>`;
+                }).catch(err => {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ Capabilities error: ${err.message}</p>`;
+                });
+            } else {
+                resultDiv.innerHTML += '<p style="color: red;">❌ window.ai.languageModel is undefined</p>';
+            }
+        } else {
+            resultDiv.innerHTML = '<p style="color: red;">❌ window.ai is NOT AVAILABLE (extension context)</p>';
+            resultDiv.innerHTML += '<p>This confirms window.ai is not exposed to extension pages.</p>';
+        }
+    </script>
+</body>
+
+</html>
