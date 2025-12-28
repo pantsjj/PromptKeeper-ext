@@ -79,10 +79,38 @@ describe('StorageService', () => {
     // but current UI implementation creates new copies. We test that flow.
     
     const importData = JSON.parse(jsonExport);
-    const importedPrompt = await StorageService.addPrompt(importData[0].versions[0].content);
-    
-    expect(importedPrompt.versions[0].content).toBe('Exportable Content');
-    // ID should be new (different from exported one) because we created a copy
-    expect(importedPrompt.id).not.toBe(p1.id);
+    const importedCount = await StorageService.importPrompts(importData);
+    // Importing the same prompt set again should result in 0 new prompts due to ID dedupe
+    expect(importedCount).toBe(0);
+  });
+
+  test('importPrompts merges prompts and projects from backup object', async () => {
+    // Existing prompts & projects
+    const existingPrompt = { id: 'p-existing', title: 'Existing', versions: [], currentVersionId: null };
+    const existingProject = { id: 'proj-existing', name: 'Existing WS' };
+
+    chrome.storage.local.get.mockImplementation((keys, cb) => {
+      const req = Array.isArray(keys) ? keys : [keys];
+      const result = {};
+      if (req.includes('prompts')) result.prompts = [existingPrompt];
+      if (req.includes('projects')) result.projects = [existingProject];
+      cb(result);
+    });
+
+    const newPrompt = { id: 'p-new', title: 'New', versions: [], currentVersionId: null };
+    const newProject = { id: 'proj-new', name: 'New WS' };
+
+    const backupObject = {
+      version: '2.0.0',
+      prompts: [existingPrompt, newPrompt],
+      projects: [existingProject, newProject]
+    };
+
+    const importedCount = await StorageService.importPrompts(backupObject);
+    expect(importedCount).toBe(1); // only p-new should be counted as new
+    expect(chrome.storage.local.set).toHaveBeenCalledWith(
+      expect.objectContaining({ prompts: expect.any(Array) }),
+      expect.any(Function)
+    );
   });
 });

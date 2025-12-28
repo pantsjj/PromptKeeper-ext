@@ -111,7 +111,13 @@ function setupListeners() {
                 currentPromptId = newPrompt.id;
             }
 
+            // Reload list and re-select the updated prompt so history dropdown refreshes immediately
             await loadPrompts();
+            if (currentPromptId) {
+                const prompts = await StorageService.getPrompts();
+                const updated = prompts.find(p => p.id === currentPromptId);
+                if (updated) selectPrompt(updated);
+            }
             // Pulse
             els.textArea.classList.add('pulse-green');
             setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
@@ -530,7 +536,8 @@ function renderVersionSelector(prompt) {
     if (!selector) return;
 
     selector.innerHTML = '';
-    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+    // Show the most recent 50 versions in the dropdown (full history kept in storage)
+    const sorted = [...prompt.versions].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
 
     sorted.forEach((v, idx) => {
         const option = document.createElement('option');
@@ -750,10 +757,10 @@ async function handleRestoreFromDrive() {
         if (!confirm('Merge prompts from Google Drive with local library?')) return;
 
         const data = await GoogleDriveService.restoreFromDrive();
-        const importedCount = await StorageService.importPrompts(data.prompts);
+        const importedCount = await StorageService.importPrompts(data);
 
         alert(`✅ Restored ${importedCount} prompts from Google Drive!`);
-        loadPrompts();
+        await refreshUI();
         console.log('[GoogleDrive] Restore complete');
     } catch (err) {
         console.error('[GoogleDrive] Restore failed:', err);

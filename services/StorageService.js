@@ -312,27 +312,56 @@ class StorageService {
     }
 
     /**
-     * Imports prompts from a JSON array.
-     * Handles legacy string arrays by normalizing them.
-     * Merges with existing prompts (appends imported to the top).
-     * @param {any[]} data 
-     * @returns {Promise<number>} Count of imported prompts
+     * Imports prompts (and optionally projects) from backup data.
+     * 
+     * Supported shapes:
+     *   - Array<Prompt|string>                 → prompts only (legacy export)
+     *   - { prompts: Array, projects?: Array } → full library backup
+     * 
+     * Prompts are merged into the existing library (deduped by ID).
+     * Projects, when present, are merged and deduped by ID as well.
+     * 
+     * @param {any[]|{prompts:any[],projects?:any[]}} data 
+     * @returns {Promise<number>} Count of newly imported prompts
      */
     async importPrompts(data) {
+        let promptsPayload = data;
+        let projectsPayload = null;
+
+        // New-style backup object: { prompts, projects }
         if (!Array.isArray(data)) {
-            throw new Error("Invalid import data: Must be an array.");
+            if (!data || !Array.isArray(data.prompts)) {
+                throw new Error("Invalid import data: Expected an array or {prompts:[],projects:[]} object.");
+            }
+            promptsPayload = data.prompts;
+            projectsPayload = Array.isArray(data.projects) ? data.projects : null;
         }
 
-        const importedPrompts = this._normalizeData(data);
+        const importedPrompts = this._normalizeData(promptsPayload);
         const existingPrompts = await this.getPrompts();
 
-        // deduplicate by ID if possible, otherwise just concat
-        // (If importing a backup of the same library, we might get duplicates if we don't check IDs)
+        // Prompt deduplication by ID
         const existingIds = new Set(existingPrompts.map(p => p.id));
         const uniqueImported = importedPrompts.filter(p => !existingIds.has(p.id));
+        const mergedPrompts = [...uniqueImported, ...existingPrompts];
+        await this.saveAllPrompts(mergedPrompts);
 
-        const merged = [...uniqueImported, ...existingPrompts];
-        await this.saveAllPrompts(merged);
+        // Optional: merge projects when provided
+        if (projectsPayload) {
+            const existingProjects = await this.getProjects();
+            const existingProjectIds = new Set(existingProjects.map(p => p.id));
+            const uniqueProjects = projectsPayload.filter(p => !existingProjectIds.has(p.id));
+
+            if (uniqueProjects.length > 0) {
+                const mergedProjects = [...existingProjects, ...uniqueProjects];
+                await new Promise((resolve, reject) => {
+                    this.storage.set({ [STORAGE_KEY_PROJECTS]: mergedProjects }, () => {
+                        if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+                        resolve();
+                    });
+                });
+            }
+        }
 
         return uniqueImported.length;
     }

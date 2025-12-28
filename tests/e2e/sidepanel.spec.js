@@ -147,6 +147,31 @@ test.describe('Side Panel', () => {
         await expect(promptsSection).not.toHaveClass(/collapsed/);
     });
 
+    test('Revision dropdown updates immediately after saving multiple times in side panel', async ({ page }) => {
+        const titleInput = page.locator('#prompt-title');
+        const textArea = page.locator('#prompt-text');
+        const saveButton = page.locator('#save-button');
+        const versionSelect = page.locator('#version-selector');
+
+        // Create a new prompt
+        await page.locator('#new-prompt-button').click();
+        await titleInput.fill('Revision Test');
+        await textArea.fill('v1');
+        await saveButton.click();
+
+        // Save a second version
+        await textArea.fill('v2');
+        await saveButton.click();
+
+        // Save a third version
+        await textArea.fill('v3');
+        await saveButton.click();
+
+        // Revision dropdown should list at least 3 versions without reselecting from the list
+        const options = versionSelect.locator('option');
+        await expect(await options.count()).toBeGreaterThan(2);
+    });
+
     test('Responsive Layout Check', async ({ page }) => {
         // 1. Check layout at normal width
         await page.setViewportSize({ width: 500, height: 600 });
