@@ -1,69 +1,89 @@
 # PromptKeeper - The Local AI Prompt IDE
 
-**PromptKeeper** is a privacy-first Chrome Extension designed to help you manage, optimize, and engineer prompts for Generative AI. It transforms your browser into a local prompt engineering workspace with built-in AI capabilities.
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v2.0.0-blue?logo=googlechrome)](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)
+[![License](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE.md)
 
-## ✨ New in v2.0
+**PromptKeeper** is a privacy-first Chrome Extension that transforms your browser into a local prompt engineering workspace. Save, organize, version, and optimize your AI prompts—with built-in Gemini Nano AI and Google Drive sync.
 
-### ☁️ Google Drive Sync & Backup
-Automatically back up your prompts to your private Google Drive AppData folder.
-*   **Cross-Device Sync**: Access your prompt library on any computer by signing in.
-*   **Privacy First**: Your data stays in your personal Drive; we never see it.
-*   **Offline Support**: Work offline and sync automatically when you reconnect.
+> 🚀 **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)**
 
-### 🧠 Native AI Optimization (Gemini Nano)
-Leverages Chrome's built-in AI (Gemini Nano) to optimize your prompts **locally**—no API keys required, no data leaves your device.
-*   **Magic Enhance**: Instantly rewrite rough notes into structured prompts.
-*   **Formalize / Clarify / Shorten**: Quick-refinement tools for your text.
-*   **Diagnostic Tool**: Built-in checker to verify your local AI availability.
+---
 
-### 🗂️ Workspaces & Projects
-Organize your prompts into **Projects** (e.g., "Work", "Creative", "Coding").
-*   **Drag-and-Drop**: Easily move prompts between workspaces.
-*   **Context Menus**: Right-click to delete prompts or workspaces.
+## ✨ Key Features (v2.0)
 
-### 📜 Version Control
-Never lose an idea. PromptKeeper tracks every save as a new **Version**.
-*   **Linear History**: View all previous iterations in the footer status bar.
-*   **Time Travel**: Restore any previous version with a single click.
+| Feature | Description |
+|---------|-------------|
+| 🧠 **Local AI (Gemini Nano)** | Optimize prompts on-device. No API keys, no data leaves your machine. |
+| ☁️ **Google Drive Sync** | Auto-backup to your private Drive. Access prompts on any device. |
+| 🗂️ **Workspaces** | Organize prompts into Projects with drag-and-drop. |
+| 📜 **Version History** | Every save is versioned. Time-travel to restore any version. |
+| 🖥️ **Full-Screen IDE** | A spacious editor for serious prompt engineering. |
+
+---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-To use the local AI features, you need:
-1.  **Chrome 128+**
-2.  **Gemini Nano** enabled in Chrome.
-    *   Go to `chrome://flags`
-    *   Enable **Enables optimization guide on device** (`#optimization-guide-on-device-model`)
-    *   Enable **Prompt API for Gemini Nano** (`#prompt-api-for-gemini-nano`)
-    *   Relaunch Chrome.
+### Install from Chrome Web Store (Recommended)
+1. Visit the [Chrome Web Store listing](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)
+2. Click **Add to Chrome**
+3. Pin the PromptKeeper icon 📌 to your toolbar
 
-### Installation (Developer Mode)
-1.  Download or clone this repository.
-2.  Open `chrome://extensions/` in Chrome.
-3.  Enable **Developer mode** (top right).
-4.  Click **Load unpacked** and select the extension folder.
-5.  Pin the **PromptKeeper** icon 📌 to your toolbar.
-
-## 📖 Usage Guide
-
-### Full-Screen IDE
-Right-click the extension icon and select **Options** (or click "Manage Prompts" in the popup). This is your main workspace for deep work.
-*   **Left Sidebar**: Manage Workspaces and browse Prompts.
-*   **Center Editor**: Edit your prompt, save versions, and use AI tools.
-*   **Right Panel**: Access AI refinement tools and Google Drive settings.
-*   **Footer**: View version history and storage stats.
-
-### Quick Access Popup
-Click the extension icon for a lightweight editor to:
-*   Quickly view and copy prompts.
-*   Paste prompts directly into web forms (ChatGPT, Claude, etc.) using the **Paste** button.
-
-## 🔒 Privacy & Architecture
-
-*   **Local First**: All data is stored in `chrome.storage.local` by default.
-*   **App-Specific Drive Access**: Google Drive access is limited to a hidden AppData folder. The extension **cannot** read your other Drive files.
-*   **On-Device AI**: AI processing happens entirely on your machine using Chrome's built-in model.
+### Enable Gemini Nano (Optional, for AI features)
+To use local AI optimization, enable Chrome's experimental features:
+1. Go to `chrome://flags`
+2. Enable **Optimization Guide On Device Model** (`#optimization-guide-on-device-model`)
+3. Enable **Prompt API for Gemini Nano** (`#prompt-api-for-gemini-nano`)
+4. Relaunch Chrome
 
 ---
-*Built by Jaroslav Pantsjoha*
 
+## 📖 How It Works
+
+### Full-Screen IDE
+Click **Manage Prompts** in the popup (or right-click → Options):
+- **Left Sidebar**: Workspaces and prompt list
+- **Center**: Rich text editor with live word count
+- **Right Panel**: AI tools and Google Drive settings
+- **Footer**: Version history and storage stats
+
+### Quick Popup
+Click the extension icon for quick access:
+- View and copy prompts instantly
+- **Paste to Page**: Insert prompts directly into ChatGPT, Claude, etc.
+
+---
+
+## 🔒 Privacy & Security
+
+| | |
+|---|---|
+| **Local Storage** | All data stored in `chrome.storage.local` by default |
+| **Drive Isolation** | Google Drive access limited to hidden AppData folder only |
+| **On-Device AI** | Gemini Nano runs entirely on your machine |
+| **No Tracking** | Zero analytics, no third-party services |
+
+---
+
+## 🛠️ Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm run lint
+npm test
+npm run test:e2e
+```
+
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for packaging instructions.
+
+---
+
+## 📄 License
+
+ISC License. See [LICENSE.md](LICENSE.md).
+
+---
+
+**Built with ❤️ by [Jaroslav Pantsjoha](https://github.com/pantsjj)**
