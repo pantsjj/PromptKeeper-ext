@@ -657,7 +657,6 @@
         }
     </style>
 
-
     <!-- Footer Status Bar -->
     <footer id="stats">
         <div style="display:flex; align-items:center; gap:15px; flex:1;">
@@ -665,25 +664,44 @@
             <span id="footer-word-count">Words: 0</span>
             <select id="footer-version-selector" title="View Version History"
                 style="border:none; background:transparent; color:var(--text-color); cursor:pointer; font-size:11px;">
-                <option>v1: 06/12/2025 (Curr)</option>
+                <!-- populated by js -->
             </select>
+            <span class="separator">|</span>
             <span id="footer-storage-used">Size: 0 KB</span>
+            <span class="separator">|</span>
+            <span class="status-dots-container" id="footer-status-dots">
+                <!-- dots injected by js -->
+            </span>
         </div>
-        <div style="display:flex; gap:12px; align-items:center;">
+        <div class="right-stats">
             <a href="#" id="footer-export-link">Export</a>
+            <span class="separator">|</span>
             <a href="#" id="footer-import-link">Import</a>
-            <span style="color:#ddd;">|</span>
-            <span style="color:#999; font-size:11px;">Full Screen IDE</span>
-            <span style="color:#ddd;">|</span>
-            <div id="footer-status-dots" class="status-dots-container">
-                <div class="status-dot"></div>
-                <div class="status-dot warning"></div>
-            </div>
-            <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank">@Jaroslav</a>
+            <input type="file" id="footer-import-file" style="display: none;" accept=".json">
         </div>
-        <input type="file" id="footer-import-file" accept=".json" style="display: none;">
     </footer>
 
+    <!-- Modal Dialog -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal-container">
+            <h3 id="modal-title">New Workspace</h3>
+            <div class="modal-body">
+                <label for="modal-input-name">Workspace Name</label>
+                <input type="text" id="modal-input-name" placeholder="e.g., creative_writing (max 3 words)"
+                    maxlength="64">
+                <div id="modal-error" style="color: #ff3b30; font-size: 12px; height: 16px; margin-top: 4px;"></div>
+                <p style="font-size: 11px; color: #86868b; margin-top: 8px;">
+                    Use underscores for multi-word names (e.g., <code>personal_finance</code>). Max 3 words.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel-btn">Cancel</button>
+                <button id="modal-confirm-btn" class="primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script type="module" src="options.js"></script>
 </body>
 

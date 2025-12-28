@@ -1,4 +1,5 @@
 import StorageService from './services/StorageService.js';
+import GoogleDriveService from './services/GoogleDriveService.js';
 // Note: AI features removed from popup - Gemini Nano doesn't work in extension popups
 // AI features are available in the full-page Manage Prompts screen (options.html)
 
@@ -11,7 +12,17 @@ function init() {
     bindElements();
     setupListeners();
     loadPrompts();
-    // Note: AI status check removed - use full page for AI features
+    initGoogleDrive(); // Check Drive auth state
+
+    // Real-time updates when storage changes (e.g., after restore from Google Drive)
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local') {
+            if (changes['prompts']) {
+                console.log('[Popup] Prompts changed, reloading...');
+                loadPrompts();
+            }
+        }
+    });
 }
 
 function bindElements() {
@@ -26,9 +37,9 @@ function bindElements() {
     els.deleteBtn = document.getElementById('delete-prompt-button');
     els.pasteBtn = document.getElementById('paste-prompt-button');
 
-    // Links
-    els.exportLink = document.getElementById('export-link');
-    els.importLink = document.getElementById('import-link');
+    // Links (Backup/Restore for side panel)
+    els.backupLink = document.getElementById('backup-link');
+    els.restoreLink = document.getElementById('restore-link');
     els.openFullEditorLink = document.getElementById('open-full-editor-link');
 
     // Inputs/Selectors
@@ -38,6 +49,17 @@ function bindElements() {
     // Stats/Status
     els.wordCount = document.getElementById('word-count');
     els.storageUsed = document.getElementById('storage-used');
+
+    // Google Drive elements
+    els.googleSigninBtn = document.getElementById('google-signin-btn');
+    els.googleSignoutBtn = document.getElementById('google-signout-btn');
+    els.driveSignedOut = document.getElementById('drive-signed-out');
+    els.driveSignedIn = document.getElementById('drive-signed-in');
+    els.userEmail = document.getElementById('user-email');
+
+    // Workspace elements
+    els.addProjectBtn = document.getElementById('add-project-btn');
+    els.workspaceList = document.getElementById('workspace-list');
 }
 
 function setupListeners() {
@@ -151,45 +173,28 @@ function setupListeners() {
         }
     });
 
-    // Import/Export
-    els.exportLink.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const prompts = await StorageService.getPrompts();
-        const blob = new Blob([JSON.stringify(prompts, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'promptkeeper-export.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    });
+    // Backup/Restore (Google Drive)
+    if (els.backupLink) {
+        els.backupLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleBackupToDrive();
+        });
+    }
 
-    els.importLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        els.importFile.click();
-    });
+    if (els.restoreLink) {
+        els.restoreLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await handleRestoreFromDrive();
+        });
+    }
 
-    els.importFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const json = JSON.parse(event.target.result);
-                const count = await StorageService.importPrompts(json);
-                alert(`Successfully imported ${count} prompts.`);
-                loadPrompts();
-            } catch (err) {
-                console.error('Import failed:', err);
-                alert('Failed to import prompts. Invalid JSON file.');
-            } finally {
-                e.target.value = '';
-            }
-        };
-        reader.readAsText(file);
-    });
+    // Add Workspace (inline creation)
+    if (els.addProjectBtn && els.workspaceList) {
+        els.addProjectBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent section toggle
+            showInlineWorkspaceInput();
+        });
+    }
 }
 
 // Helpers
@@ -203,6 +208,59 @@ function generateRandomTitle() {
     const object = objects[Math.floor(Math.random() * objects.length)];
     const num = Math.floor(Math.random() * 9000 + 1000);
     return `${adjective}-${animal}-${object}-${num}`;
+}
+
+/**
+ * Show inline input for new workspace creation
+ */
+function showInlineWorkspaceInput() {
+    // Remove existing input if any
+    const existing = document.getElementById('inline-workspace-input');
+    if (existing) existing.remove();
+
+    // Create input element
+    const li = document.createElement('li');
+    li.id = 'inline-workspace-input';
+    li.innerHTML = `
+        <input type="text" placeholder="Workspace name..." 
+               style="width: 100%; padding: 6px 8px; border: 1px solid var(--primary-color); 
+                      border-radius: 4px; font-size: 12px; outline: none;">
+    `;
+
+    // Insert after "All Prompts"
+    const allPromptsItem = els.workspaceList.querySelector('[data-id="all"]');
+    if (allPromptsItem) {
+        allPromptsItem.after(li);
+    } else {
+        els.workspaceList.appendChild(li);
+    }
+
+    const input = li.querySelector('input');
+    input.focus();
+
+    // Handle Enter key
+    input.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+            const name = input.value.trim();
+            if (name) {
+                try {
+                    await StorageService.addProject(name);
+                    li.remove();
+                    loadPrompts(); // Refresh UI
+                } catch (err) {
+                    console.error('Failed to add workspace:', err);
+                    alert('Failed to add workspace: ' + err.message);
+                }
+            }
+        } else if (e.key === 'Escape') {
+            li.remove();
+        }
+    });
+
+    // Handle blur
+    input.addEventListener('blur', () => {
+        setTimeout(() => li.remove(), 200);
+    });
 }
 
 async function loadPrompts() {
@@ -322,6 +380,132 @@ function clearStats() {
     els.wordCount.textContent = 'Words: 0';
     if (els.versionSelect) els.versionSelect.innerHTML = '<option>Rev: 0</option>';
     els.storageUsed.textContent = 'Size: 0 KB';
+}
+
+// ============================================================================
+// Google Drive Functions
+// ============================================================================
+
+/**
+ * Initialize Google Drive state on load
+ */
+async function initGoogleDrive() {
+    if (!els.googleSigninBtn) return;
+
+    // Set up event listeners
+    els.googleSigninBtn.addEventListener('click', handleGoogleSignIn);
+    if (els.googleSignoutBtn) {
+        els.googleSignoutBtn.addEventListener('click', handleGoogleSignOut);
+    }
+
+    try {
+        const { driveConnected, userEmail } =
+            await chrome.storage.local.get(['driveConnected', 'userEmail']);
+
+        if (driveConnected && userEmail && els.driveSignedOut && els.driveSignedIn) {
+            els.driveSignedOut.classList.add('hidden');
+            els.driveSignedIn.classList.remove('hidden');
+            if (els.userEmail) els.userEmail.textContent = userEmail;
+        }
+    } catch (err) {
+        console.error('[GoogleDrive] Init error:', err);
+    }
+}
+
+async function handleGoogleSignIn() {
+    try {
+        const token = await GoogleDriveService.authenticate();
+        const userInfo = await GoogleDriveService.getUserInfo(token);
+
+        if (els.userEmail) els.userEmail.textContent = userInfo.email;
+        if (els.driveSignedOut) els.driveSignedOut.classList.add('hidden');
+        if (els.driveSignedIn) els.driveSignedIn.classList.remove('hidden');
+
+        // Set up 5-minute auto-backup alarm
+        chrome.alarms.create('auto-backup', { periodInMinutes: 5 });
+
+        await chrome.storage.local.set({
+            driveConnected: true,
+            userEmail: userInfo.email,
+            autoSyncEnabled: true
+        });
+
+        console.log('[GoogleDrive] Signed in with 5-min auto-backup:', userInfo.email);
+    } catch (err) {
+        console.error('[GoogleDrive] Sign in failed:', err);
+        alert('Sign in failed: ' + err.message);
+    }
+}
+
+async function handleGoogleSignOut() {
+    if (!confirm('Sign out of Google Drive?')) return;
+
+    try {
+        await GoogleDriveService.signOut();
+
+        if (els.driveSignedOut) els.driveSignedOut.classList.remove('hidden');
+        if (els.driveSignedIn) els.driveSignedIn.classList.add('hidden');
+
+        // Clear auto-backup alarm
+        chrome.alarms.clear('auto-backup');
+
+        await chrome.storage.local.set({ driveConnected: false, userEmail: null, autoSyncEnabled: false });
+        console.log('[GoogleDrive] Signed out');
+    } catch (err) {
+        console.error('[GoogleDrive] Sign out failed:', err);
+        alert('Sign out failed: ' + err.message);
+    }
+}
+
+/**
+ * Backup prompts to Google Drive
+ */
+async function handleBackupToDrive() {
+    try {
+        const { driveConnected } = await chrome.storage.local.get(['driveConnected']);
+        if (!driveConnected) {
+            alert('Please sign in with Google first.');
+            return;
+        }
+
+        const prompts = await StorageService.getPrompts();
+        const projects = await StorageService.getProjects ? await StorageService.getProjects() : [];
+
+        const result = await GoogleDriveService.backupToDrive(prompts, projects);
+
+        await chrome.storage.local.set({ lastBackupTime: result.timestamp });
+
+        alert(`✅ Backed up ${prompts.length} prompts to Google Drive!`);
+        console.log('[GoogleDrive] Backup complete:', result);
+    } catch (err) {
+        console.error('[GoogleDrive] Backup failed:', err);
+        alert('Backup failed: ' + err.message);
+    }
+}
+
+/**
+ * Restore prompts from Google Drive
+ */
+async function handleRestoreFromDrive() {
+    try {
+        const { driveConnected } = await chrome.storage.local.get(['driveConnected']);
+        if (!driveConnected) {
+            alert('Please sign in with Google first.');
+            return;
+        }
+
+        if (!confirm('Merge prompts from Google Drive with local library?')) return;
+
+        const data = await GoogleDriveService.restoreFromDrive();
+        const importedCount = await StorageService.importPrompts(data.prompts);
+
+        alert(`✅ Restored ${importedCount} prompts from Google Drive!`);
+        loadPrompts();
+        console.log('[GoogleDrive] Restore complete');
+    } catch (err) {
+        console.error('[GoogleDrive] Restore failed:', err);
+        alert('Restore failed: ' + err.message);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', init);
