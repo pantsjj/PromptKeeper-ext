@@ -2,30 +2,47 @@
 
 ## Overview
 This document tracks technical debt, temporary workarounds, and areas for code improvement.
+All items are tracked as GitHub issues: https://github.com/pantsjj/PromptKeeper-ext/issues
 
-## active
+---
 
-### 1. Refactor `options.js`
-*   **Severity**: Medium
-*   **Description**: `options.js` has grown large (~800 lines) and contains mixed concerns (UI rendering, Event Handling, Drive logic).
-*   **Plan**: Split into sub-modules: `ui/Editor.js`, `ui/Sidebar.js`, `ui/Footer.js`.
+## Active Issues
 
-### 2. Test Coverage
-*   **Severity**: High
-*   **Description**: Unit tests cover `AIService` and `StorageService`, but UI logic in `options.js` and `popup.js` is largely untested.
-*   **Plan**: Introduce integration tests or E2E tests (Playwright) for critical user flows.
+### 1. Refactor `options.js` [#3](https://github.com/pantsjj/PromptKeeper-ext/issues/3)
+- **Severity**: Medium
+- **Description**: `options.js` is monolithic (~840 lines) and mixes UI, State, and Logic.
+- **Plan**: Execute [`REFACTOR_PLAN.md`](./REFACTOR_PLAN.md). Break into `State/Store.js`, `Components/Sidebar.js`, etc.
 
-### 3. Duplicate CSS
-*   **Severity**: Low
-*   **Description**: formatting styles are duplicated between `popup.html` (embedded styles) and `styles.css`.
-*   **Plan**: Unify all styles into a robust CSS architecture (BEM or utility classes).
+### 2. Test Coverage [#4](https://github.com/pantsjj/PromptKeeper-ext/issues/4)
+- **Severity**: High
+- **Description**: Unit tests cover `AIService` and `StorageService`, but UI logic in `options.js` and `popup.js` is largely untested.
+- **Plan**: Add E2E tests (Playwright) for critical user flows.
 
-### 4. AI Service Error Handling
-*   **Severity**: Medium
-*   **Description**: The "Offscreen Document" workaround for `window.ai` is fragile. If the offscreen document closes unexpectedly, the AI service might hang.
-*   **Plan**: Implement a robust retry mechanism and "keep-alive" heartbeat.
+### 3. Duplicate CSS [#5](https://github.com/pantsjj/PromptKeeper-ext/issues/5)
+- **Severity**: Low
+- **Description**: Formatting styles are duplicated between `popup.html`, `sidepanel.html`, and `styles.css`.
+- **Plan**: Unify all styles into a robust CSS architecture (BEM or utility classes).
+
+### 4. AI Service Error Handling [#6](https://github.com/pantsjj/PromptKeeper-ext/issues/6)
+- **Severity**: Medium
+- **Description**: The "Offscreen Document" workaround for `window.ai` is fragile. If the offscreen document closes unexpectedly, the AI service might hang.
+- **Plan**: Implement a robust retry mechanism and "keep-alive" heartbeat.
+
+---
+
+## Feature Backlog
+
+### Diff View [#7](https://github.com/pantsjj/PromptKeeper-ext/issues/7)
+Visual indicator of text changes between prompt versions (Phase 2 roadmap item).
+
+### Dynamic Variable Injection [#8](https://github.com/pantsjj/PromptKeeper-ext/issues/8)
+Form-based filling of `{{variables}}` in prompts (Future Scope).
+
+---
 
 ## Resolved (v2.0)
 
-*   [x] CSP Violation in `gemini-diagnostic.html` (Fixed by moving inline scripts to `gemini-diagnostic.js`)
-*   [x] Duplicate Status Bar in `options.html` (Fixed by unifying to footer)
+- [x] CSP Violation in `gemini-diagnostic.html` (Fixed by moving inline scripts to `gemini-diagnostic.js`)
+- [x] Duplicate Status Bar in `options.html` (Fixed by unifying to footer)
+- [x] Missing `alarms` permission (Fixed in manifest.json)
+- [x] Unclosed `<select>` tag in `options.html` (Fixed - was causing parse errors)
