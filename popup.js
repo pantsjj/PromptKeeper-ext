@@ -11,6 +11,7 @@ const els = {};
 function init() {
     bindElements();
     setupListeners();
+    setupUI(); // Initialize UI interactions (toggles, resize)
     loadWorkspaces(); // Load workspace list
     loadPrompts();
     initGoogleDrive(); // Check Drive auth state
@@ -64,6 +65,7 @@ function bindElements() {
 
     // Workspace elements
     els.addProjectBtn = document.getElementById('add-project-btn');
+    els.addPromptBtnSidebar = document.getElementById('add-prompt-btn-sidebar');
     els.workspaceList = document.getElementById('workspace-list');
 }
 
@@ -120,12 +122,22 @@ function setupListeners() {
     });
 
     // New
-    els.newBtn.addEventListener('click', () => {
+    const handleNewPrompt = () => {
         currentPromptId = null;
         els.titleInput.value = '';
         els.textArea.value = '';
         clearStats();
-    });
+        // Also scroll to top of editor if needed or focus title
+        if (els.titleInput) els.titleInput.focus();
+    };
+
+    els.newBtn.addEventListener('click', handleNewPrompt);
+    if (els.addPromptBtnSidebar) {
+        els.addPromptBtnSidebar.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent toggling the section
+            handleNewPrompt();
+        });
+    }
 
     // Delete
     els.deleteBtn.addEventListener('click', async () => {
@@ -200,9 +212,57 @@ function setupListeners() {
             showInlineWorkspaceInput();
         });
     }
+
+    // Context Menu Logic
+    initContextMenu();
 }
 
-// Helpers
+
+
+/**
+ * Initialize Context Menu interactions
+ */
+function initContextMenu() {
+    const contextMenu = document.getElementById('context-menu');
+    const deleteOption = document.getElementById('ctx-delete-workspace');
+
+    // Hide menu on any click outside
+    document.addEventListener('click', () => {
+        if (contextMenu) contextMenu.classList.add('hidden');
+    });
+
+    // Handle Delete Option Click
+    if (deleteOption) {
+        deleteOption.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const projectId = contextMenu.dataset.targetId;
+            const projectName = contextMenu.dataset.targetName;
+
+            if (projectId && projectName) {
+                // Confirm Smart Delete
+                const confirmed = confirm(
+                    `Delete workspace '${projectName}'?\n\n` +
+                    `Prompts will NOT be deleted. They will be tagged '${projectName}' ` +
+                    `and moved to "All Prompts".`
+                );
+
+                if (confirmed) {
+                    try {
+                        await StorageService.deleteProject(projectId);
+                        await refreshUI();
+                        // Reset to all prompts if we deleted the current project
+                        const allLi = els.workspaceList.querySelector('[data-id="all"]');
+                        if (allLi) allLi.click();
+                    } catch (err) {
+                        console.error('Failed to delete workspace:', err);
+                        alert('Failed to delete workspace.');
+                    }
+                }
+            }
+            contextMenu.classList.add('hidden');
+        });
+    }
+}
 const adjectives = ['Quick', 'Lazy', 'Charming', 'Diligent', 'Mighty', 'Calm', 'Brave', 'Elegant', 'Fierce', 'Gentle', 'Happy', 'Jolly', 'Kind', 'Lively', 'Nice', 'Proud', 'Quirky', 'Rapid', 'Sharp', 'Vigorous'];
 const animals = ['Fox', 'Horse', 'Lion', 'Panda', 'Eagle', 'Bear', 'Cat', 'Dog', 'Elephant', 'Giraffe', 'Kangaroo', 'Leopard', 'Monkey', 'Otter', 'Penguin', 'Quail', 'Rabbit', 'Snake', 'Tiger', 'Wolf'];
 const objects = ['Pencil', 'Monitor', 'Chair', 'Tablet', 'Camera', 'Book', 'Clock', 'Desk', 'Guitar', 'Hat', 'Igloo', 'Jug', 'Kite', 'Lamp', 'Map', 'Notebook', 'Orange', 'Pillow', 'Quilt', 'Ruler'];
@@ -302,6 +362,27 @@ async function loadWorkspaces() {
             li.classList.add('active');
             loadPrompts(project.id); // Filter prompts by project
         });
+
+        // Context Menu (Right Click)
+        li.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+
+            // Select item visually
+            document.querySelectorAll('#workspace-list .nav-item').forEach(item => item.classList.remove('active'));
+            li.classList.add('active');
+            loadPrompts(project.id);
+
+            // Position and show menu
+            const menu = document.getElementById('context-menu');
+            if (menu) {
+                menu.style.top = `${e.pageY}px`;
+                menu.style.left = `${e.pageX}px`;
+                menu.dataset.targetId = project.id;
+                menu.dataset.targetName = project.name;
+                menu.classList.remove('hidden');
+            }
+        });
+
         // Make workspace a drop target
         setupDropTarget(li, project.id);
         els.workspaceList.appendChild(li);
@@ -394,6 +475,13 @@ async function loadPrompts(filterProjectId = null) {
                 entry.style.display = 'none';
             }
 
+            entry.dataset.id = prompt.id; // Store ID
+
+            // Active state
+            if (currentPromptId === prompt.id) {
+                entry.classList.add('active');
+            }
+
             entry.addEventListener('click', () => selectPrompt(prompt));
             // Make prompt draggable
             setupDragSource(entry, prompt.id);
@@ -403,10 +491,14 @@ async function loadPrompts(filterProjectId = null) {
         // Auto-select logic
         if (!currentPromptId && prompts.length > 0 && !searchTerm) {
             selectPrompt(prompts[0]);
-        } else if (currentPromptId) {
+        } else if (currentPromptId && prompts.length > 0) {
             // keep selection
             const found = prompts.find(p => p.id === currentPromptId);
-            if (found) selectPrompt(found);
+            if (found) {
+                // Ensure visual state is correct if we reloaded but kept ID
+                const item = els.promptList.querySelector(`.prompt-entry[data-id="${currentPromptId}"]`);
+                if (item) item.classList.add('active');
+            }
         }
 
     } catch (err) {
@@ -424,6 +516,13 @@ function selectPrompt(prompt) {
 
     updateStats();
     renderVersionSelector(prompt);
+
+    // Highlight in list
+    const items = els.promptList.querySelectorAll('.prompt-entry');
+    items.forEach(i => i.classList.remove('active'));
+
+    const activeItem = els.promptList.querySelector(`.prompt-entry[data-id="${prompt.id}"]`);
+    if (activeItem) activeItem.classList.add('active');
 }
 
 function renderVersionSelector(prompt) {
@@ -485,6 +584,60 @@ function clearStats() {
 // ============================================================================
 // Google Drive Functions
 // ============================================================================
+
+/**
+ * Setup UI interactions (Toggles, Resize)
+ */
+function setupUI() {
+    // Collapsible section toggle functionality
+    const toggleHeaders = document.querySelectorAll('#workspace-toggle, #prompts-toggle');
+    toggleHeaders.forEach(header => {
+        header.addEventListener('click', (e) => {
+            // Prevent toggling when clicking buttons inside header
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                return;
+            }
+            e.stopPropagation();
+            header.classList.toggle('collapsed');
+            const content = header.nextElementSibling;
+            if (content && content.classList.contains('section-content')) {
+                content.classList.toggle('collapsed');
+            }
+        });
+    });
+
+    // Resize handle functionality
+    const resizeHandle = document.getElementById('resize-handle');
+    const sidebar = document.getElementById('sidebar');
+    if (resizeHandle && sidebar) {
+        let isResizing = false;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            resizeHandle.classList.add('dragging');
+            sidebar.style.transition = 'none';
+            document.body.style.cursor = 'col-resize';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const newWidth = e.clientX;
+            if (newWidth >= 100 && newWidth <= 400) { // Increased max width slightly
+                sidebar.style.width = newWidth + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                resizeHandle.classList.remove('dragging');
+                sidebar.style.transition = '';
+                document.body.style.cursor = '';
+            }
+        });
+    }
+}
 
 /**
  * Initialize Google Drive state on load

@@ -102,23 +102,63 @@ class StorageService {
             createdAt: Date.now()
         };
         projects.push(newProject);
-        
+
         await new Promise((resolve, reject) => {
             this.storage.set({ [STORAGE_KEY_PROJECTS]: projects }, () => {
                 if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
                 resolve();
             });
         });
+
+        // Smart Restore: Adopt prompts with matching tag
+        const prompts = await this.getPrompts();
+        let modified = false;
+        prompts.forEach(p => {
+            if (p.tags && p.tags.some(t => t.toLowerCase() === name.trim().toLowerCase())) {
+                p.projectId = newProject.id;
+                modified = true;
+            }
+        });
+
+        if (modified) {
+            await this.saveAllPrompts(prompts);
+        }
+
         return newProject;
     }
 
     /**
      * Deletes a project. 
-     * Note: Does NOT delete associated prompts (they become orphaned/default).
+     * Smart Delete: Prompts are NOT deleted. They are tagged with the project name and orphaned.
      * @param {string} id 
      */
     async deleteProject(id) {
         const projects = await this.getProjects();
+        const projectToDelete = projects.find(p => p.id === id);
+
+        if (projectToDelete) {
+            // Smart Backup: Tag all prompts in this project with the project name
+            const prompts = await this.getPrompts();
+            let modified = false;
+
+            prompts.forEach(p => {
+                if (p.projectId === id) {
+                    p.projectId = null; // Orphan
+                    if (!p.tags) p.tags = [];
+                    // Add legacy tag if not present
+                    const tagName = projectToDelete.name;
+                    if (!p.tags.includes(tagName)) {
+                        p.tags.push(tagName);
+                    }
+                    modified = true;
+                }
+            });
+
+            if (modified) {
+                await this.saveAllPrompts(prompts);
+            }
+        }
+
         const filtered = projects.filter(p => p.id !== id);
         await new Promise((resolve, reject) => {
             this.storage.set({ [STORAGE_KEY_PROJECTS]: filtered }, () => {
@@ -162,10 +202,10 @@ class StorageService {
         const prompts = await this.getPrompts();
         const index = prompts.findIndex(p => p.id === promptId);
         if (index === -1) throw new Error("Prompt not found");
-        
+
         prompts[index].projectId = projectId;
         prompts[index].updatedAt = Date.now();
-        
+
         await this.saveAllPrompts(prompts);
     }
 
@@ -227,11 +267,11 @@ class StorageService {
         // Update head
         prompt.currentVersionId = newVersionId;
         prompt.updatedAt = timestamp;
-        
+
         // Update title if it was the default "Untitled" or generated from old content
         // (Simple logic: update title if it matches the start of the OLD content)
         // For now, let's keep the title unless user explicitly renames it (future feature).
-        
+
         prompts[index] = prompt;
         await this.saveAllPrompts(prompts);
         return prompt;
@@ -254,7 +294,7 @@ class StorageService {
         const prompt = prompts[index];
         prompt.title = newTitle;
         prompt.updatedAt = Date.now();
-        
+
         prompts[index] = prompt;
         await this.saveAllPrompts(prompts);
         return prompt;
@@ -293,7 +333,7 @@ class StorageService {
 
         const merged = [...uniqueImported, ...existingPrompts];
         await this.saveAllPrompts(merged);
-        
+
         return uniqueImported.length;
     }
 }

@@ -468,7 +468,7 @@
 
             <!-- AI Tools -->
             <div class="panel-section">
-                <div class="ai-panel-card" id="ai-tools-panel">
+                <div class="ai-panel-card hidden" id="ai-tools-panel">
                     <h3>AI Optimization</h3>
                     <div id="ai-status" style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;"></div>
 
@@ -478,6 +478,18 @@
                         <button class="refine-btn" data-type="clarify"><span>🔍</span> Improve Clarity</button>
                         <button class="refine-btn" data-type="summarize"><span>✂️</span> Shorten</button>
                     </div>
+                </div>
+
+            </div>
+
+            <div class="panel-section">
+                <h3>Options</h3>
+                <div class="ai-panel-card" style="padding: 12px;">
+                    <label
+                        style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; color:var(--text-color);">
+                        <input type="checkbox" id="confirm-deletion-checkbox" checked>
+                        Confirm workspace deletion
+                    </label>
                 </div>
             </div>
 
@@ -639,6 +651,7 @@
         .status-dots-container {
             display: flex;
             gap: 4px;
+            cursor: pointer;
         }
 
         .status-dot {
@@ -655,11 +668,27 @@
         .status-dot.error {
             background: #ff3b30;
         }
+
+        /* Footer Columns */
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            /* Pushes right-stats to the end */
+        }
+
+        .right-stats {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
     </style>
 
     <!-- Footer Status Bar -->
     <footer id="stats">
-        <div style="display:flex; align-items:center; gap:15px; flex:1;">
+        <div class="footer-left">
             <strong style="color:#5f6368;">Stats:</strong>
             <span id="footer-word-count">Words: 0</span>
             <select id="footer-version-selector" title="View Version History"
@@ -674,6 +703,8 @@
             </span>
         </div>
         <div class="right-stats">
+            <a href="#" id="footer-docs-link">Docs</a>
+            <span class="separator">|</span>
             <a href="#" id="footer-export-link">Export</a>
             <span class="separator">|</span>
             <a href="#" id="footer-import-link">Import</a>
@@ -699,6 +730,11 @@
                 <button id="modal-confirm-btn" class="primary">Create</button>
             </div>
         </div>
+    </div>
+
+    <!-- Context Menu (Hidden by default) -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="menu-item" id="ctx-delete-workspace">Delete Workspace</div>
     </div>
 
     <!-- Scripts -->

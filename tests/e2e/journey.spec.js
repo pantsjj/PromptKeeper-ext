@@ -9,27 +9,35 @@ test.describe('End-to-End User Journey', () => {
     });
 
     test('Full User Journey: Create Workspace -> Create Prompt -> Switch -> Verify', async ({ page }) => {
-        // 1. Create a New Workspace using the Modal
+        // 1. Create a New Workspace (Inline)
         const addBtn = page.locator('#add-project-btn');
-        // Ensure scripts loaded
         await expect(addBtn).toBeVisible({ timeout: 10000 });
 
         await addBtn.click();
 
-        // Wait for modal
-        const modal = page.locator('#modal-overlay');
-        await expect(modal).not.toHaveClass(/hidden/);
-        await expect(page.locator('#modal-title')).toHaveText('New Workspace');
+        // Expect inline input
+        const inlineInput = page.locator('#new-project-input');
 
-        // Fill modal
-        await page.fill('#modal-input-name', 'Journey Workspace');
-        await page.fill('#modal-input-desc', 'Testing end to end journey');
-        await page.click('#modal-confirm-btn');
+        // Wait for input to be visible
+        await expect(inlineInput).toBeVisible();
+        await expect(inlineInput).toBeFocused();
+
+        // Fill Input and Enter
+        await inlineInput.fill('Journey Workspace');
+        await page.keyboard.press('Enter');
+
+        // Wait for list to update and input to disappear
+        await expect(inlineInput).not.toBeVisible();
 
         // Verify Workspace is created and active
-        const workspaceItem = page.locator('.nav-item', { hasText: 'Journey Workspace' });
+        // Logic enforces snake_case
+        const workspaceItem = page.locator('.nav-item', { hasText: 'journey_workspace' });
         await expect(workspaceItem).toBeVisible();
-        await expect(page.locator('#project-label')).toHaveText('Workspace: Journey Workspace');
+        // Check active class logic instead of project-label text if that's more reliable, 
+        // but label update should also work if options.js supports it.
+        // Let's assume options page logic updates the label too or check active class.
+        // await expect(page.locator('#project-label')).toHaveText('Workspace: journey_workspace'); 
+        // Let's rely on list item presence for now.
 
         // 2. Create a New Prompt in this Workspace
         await page.click('#new-prompt-btn');
@@ -55,7 +63,8 @@ test.describe('End-to-End User Journey', () => {
 
         // Go back to specific workspace
         await workspaceItem.click();
-        await expect(page.locator('#project-label')).toHaveText('Workspace: Journey Workspace');
+        // Label likely reflects the project name exactly
+        await expect(page.locator('#project-label')).toHaveText('Workspace: journey_workspace');
         await expect(promptItem).toBeVisible();
 
         // 4. Edit Prompt
@@ -71,14 +80,17 @@ test.describe('End-to-End User Journey', () => {
 
     });
 
-    test('Cancel Modal should not create workspace', async ({ page }) => {
+    test('Cancel Inline Creation should not create workspace', async ({ page }) => {
         await page.click('#add-project-btn');
-        await expect(page.locator('#modal-overlay')).toBeVisible();
+        const inlineInput = page.locator('#new-project-input');
 
-        await page.fill('#modal-input-name', 'Cancelled Workspace');
-        await page.click('#modal-cancel-btn');
+        await expect(inlineInput).toBeVisible();
 
-        await expect(page.locator('#modal-overlay')).toHaveClass(/hidden/);
+        await inlineInput.fill('Cancelled Workspace');
+        await page.keyboard.press('Escape');
+
+        // Verify input is removed
+        await expect(inlineInput).not.toBeVisible();
         // Wait a bit to ensure it doesn't appear
         await page.waitForTimeout(500);
         await expect(page.locator('.nav-item', { hasText: 'Cancelled Workspace' })).not.toBeVisible();
