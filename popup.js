@@ -11,6 +11,7 @@ const els = {};
 function init() {
     bindElements();
     setupListeners();
+    loadWorkspaces(); // Load workspace list
     loadPrompts();
     initGoogleDrive(); // Check Drive auth state
 
@@ -20,6 +21,10 @@ function init() {
             if (changes['prompts']) {
                 console.log('[Popup] Prompts changed, reloading...');
                 loadPrompts();
+            }
+            if (changes['projects']) {
+                console.log('[Popup] Projects changed, reloading workspaces...');
+                loadWorkspaces();
             }
         }
     });
@@ -246,7 +251,7 @@ function showInlineWorkspaceInput() {
                 try {
                     await StorageService.addProject(name);
                     li.remove();
-                    loadPrompts(); // Refresh UI
+                    loadWorkspaces(); // Refresh workspace list
                 } catch (err) {
                     console.error('Failed to add workspace:', err);
                     alert('Failed to add workspace: ' + err.message);
@@ -263,7 +268,53 @@ function showInlineWorkspaceInput() {
     });
 }
 
-async function loadPrompts() {
+/**
+ * Load and render workspaces list
+ */
+async function loadWorkspaces() {
+    const projects = await StorageService.getProjects();
+
+    // Clear all except "All Prompts"
+    const allPromptsItem = els.workspaceList.querySelector('[data-id="all"]');
+    els.workspaceList.innerHTML = '';
+
+    // Re-add "All Prompts" at top
+    const allLi = document.createElement('li');
+    allLi.className = 'nav-item active';
+    allLi.dataset.id = 'all';
+    allLi.textContent = 'All Prompts';
+    allLi.addEventListener('click', () => {
+        document.querySelectorAll('#workspace-list .nav-item').forEach(item => item.classList.remove('active'));
+        allLi.classList.add('active');
+        loadPrompts(); // Show all prompts
+    });
+    els.workspaceList.appendChild(allLi);
+
+    // Add each project
+    projects.sort((a, b) => a.name.localeCompare(b.name));
+    projects.forEach(project => {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        li.dataset.id = project.id;
+        li.textContent = project.name;
+        li.addEventListener('click', () => {
+            document.querySelectorAll('#workspace-list .nav-item').forEach(item => item.classList.remove('active'));
+            li.classList.add('active');
+            loadPrompts(project.id); // Filter prompts by project
+        });
+        els.workspaceList.appendChild(li);
+    });
+}
+
+/**
+ * Refresh both workspaces and prompts
+ */
+async function refreshUI() {
+    await loadWorkspaces();
+    await loadPrompts();
+}
+
+async function loadPrompts(filterProjectId = null) {
     try {
         const prompts = await StorageService.getPrompts();
         els.promptList.innerHTML = ''; // Clear
@@ -278,6 +329,11 @@ async function loadPrompts() {
         const searchTerm = els.searchInput ? els.searchInput.value.toLowerCase() : '';
 
         prompts.forEach(prompt => {
+            // Filter by project if specified
+            if (filterProjectId && prompt.projectId !== filterProjectId) {
+                return; // Skip prompts not in this project
+            }
+
             const entry = document.createElement('div');
             entry.className = 'prompt-item'; // Match CSS class we expect
             // Can add styling class 'prompt-entry' if that's what styles.css uses, let's use prompt-item to be generic or prompt-entry
