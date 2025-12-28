@@ -112,7 +112,7 @@ class AIService {
             return await this._sendToAIBridge({
                 action: 'getDetailedStatus'
             });
-        } catch (e) {
+        } catch {
             return {
                 prompt: 'no',
                 rewriter: 'no'
