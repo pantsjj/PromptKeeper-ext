@@ -25,6 +25,8 @@ Leverage Chrome's on-device AI to refine your prompts without sending data anywh
 • Formalize, Clarify, Shorten: One-click refinement tools.
 • Zero API Keys: Works offline, completely free.
 
+AI tools live in the full-page PromptKeeper editor so you can iterate deeply on prompts without cluttering your chat window.
+
 ☁️ GOOGLE DRIVE SYNC
 Your prompts, everywhere.
 • Automatic backup to your private Drive AppData folder.
@@ -36,6 +38,8 @@ Organize like a pro.
 • Create named workspaces for Work, Creative, Coding, etc.
 • Drag-and-drop prompts between projects.
 • Right-click context menus for quick actions.
+
+The side panel gives you quick access to this library while you’re in Gmail, Docs, or any other tab—so you can paste polished prompts into AI tools with one click.
 
 📜 VERSION HISTORY
 Never lose an idea.
