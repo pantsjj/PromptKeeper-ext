@@ -10,8 +10,11 @@
  * pass defaults here for clarity and future API changes.
  */
 (function initPKBuiltinAI() {
-  const DEFAULT_LANG_OPTS = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
-  const DEFAULT_CREATE_OPTS = { expectedContext: 'en', outputLanguage: 'en' };
+  // Include expectedOutputLanguage for ALL API calls (availability, capabilities, create)
+  // No arguments for capabilities/availability per reference implementation
+  const DEFAULT_LANG_OPTS = {};
+  // Keep outputLanguage for create() as create() requires it
+  const DEFAULT_CREATE_OPTS = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', monitor: undefined };
   const DEFAULT_SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
   function hasLanguageModel() {
@@ -27,22 +30,17 @@
 
     // Newer API surface (Canary / spec)
     if (hasLanguageModel()) {
-      if (typeof window.LanguageModel.availability === 'function') {
-        try {
-          // Some implementations return 'available'/'unavailable', others return 'readily'/'no'
-          return await window.LanguageModel.availability(langOpts);
-        } catch (e) {
-          return 'no';
-        }
-      }
+      // Prioritize capabilities() as availability() appears to be broken
       if (typeof window.LanguageModel.capabilities === 'function') {
         try {
-          const caps = await window.LanguageModel.capabilities(langOpts);
+          const caps = await window.LanguageModel.capabilities();
           return caps?.available || 'no';
         } catch (e) {
           return 'no';
         }
       }
+      // "Nuclear Option": Skip window.LanguageModel.availability() because it throws "No output language" 
+      // errors wildly on this Chrome version. Optimistically assume available and let create() fail if needed.
       return 'available';
     }
 

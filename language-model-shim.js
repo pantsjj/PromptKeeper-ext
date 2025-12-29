@@ -6,26 +6,34 @@
  * This file should be loaded FIRST in all HTML pages that use the LanguageModel API.
  */
 (function applyLanguageModelShims() {
-    const defaultLangOpts = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
-    const createOpts = { expectedContext: 'en', outputLanguage: 'en' };
+    // capabilities/availability should take NO args, or only what the caller provides
+    const defaultLangOpts = {};
+    // create() usually requires language specifiers
+    const createOpts = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en' };
 
     try {
         // Wrap window.LanguageModel
         if (window.LanguageModel && !window.LanguageModel.__pkShimmed) {
+
             if (typeof window.LanguageModel.availability === 'function') {
                 const orig = window.LanguageModel.availability.bind(window.LanguageModel);
-                window.LanguageModel.availability = (opts = {}) => orig({ ...defaultLangOpts, ...opts });
+                window.LanguageModel.availability = (opts) => {
+                    return orig(opts);
+                };
             }
             if (typeof window.LanguageModel.capabilities === 'function') {
                 const orig = window.LanguageModel.capabilities.bind(window.LanguageModel);
-                window.LanguageModel.capabilities = (opts = {}) => orig({ ...defaultLangOpts, ...opts });
+                window.LanguageModel.capabilities = (opts) => {
+                    return orig(opts);
+                };
             }
             if (typeof window.LanguageModel.create === 'function') {
                 const orig = window.LanguageModel.create.bind(window.LanguageModel);
-                window.LanguageModel.create = (opts = {}) => orig({ ...createOpts, ...opts });
+                window.LanguageModel.create = (opts = {}) => {
+                    return orig({ ...createOpts, ...opts });
+                };
             }
             window.LanguageModel.__pkShimmed = true;
-            // Back-compat with older shim flag used in code
             window.LanguageModel.__pkWrapped = true;
         }
 
@@ -47,4 +55,3 @@
         console.warn('[PromptKeeper] LanguageModel shim failed:', e);
     }
 })();
-

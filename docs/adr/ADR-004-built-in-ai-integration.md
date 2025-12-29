@@ -110,3 +110,23 @@ PromptKeeper employs a Hybrid "Best-Tool-for-the-Job" Strategy, falling back to 
 ## Validation
 - Verified against `chrome-extensions-samples/functional-samples/ai.gemini-on-device`.
 - Validated mechanism via `scripts/launch-gemini-chrome.sh` for developer reproducibility.
+
+### 3.1. Language Model Shims & Bootstrapping (CSP-Safe)
+
+*(Consolidated from ADR-007)*
+
+To address "No output language was specified" warnings and MV3 CSP constraints, we implemented a robust bootstrapping layer.
+
+#### Problem
+Chrome's AI APIs (Gemini Nano) require strictly configured parameters in some versions, and initialization order can be race-prone (`window.ai` injection vs `window.LanguageModel`). MV3 prevents inline `<script>` shims.
+
+#### Solution
+1. **Shared Shim (`language-model-shim.js`)**: A single external script loaded **first** in `sidepanel.html`, `options.html`, and `offscreen.html`.
+   - Ensures `window.LanguageModel` and `window.ai.languageModel` are wrapped.
+   - **Crucially**: Does NOT force default arguments on `capabilities()`/`availability()` (as this causes errors in modern Chrome), but DOES ensure `create()` receives necessary `outputLanguage: 'en'` defaults.
+2. **Race Condition Handling**: `popup.js` and other consumers implement `waitForAIAPI()` polling (up to 2000ms) to ensure the browser has injected the `window.ai` object before access.
+3. **Failsafe**: Application code checks for `__pkShimmed` flags and only re-applies shims if necessary.
+
+#### Refinements (v2.1.1)
+- **Shim Behavior**: We aligned with `web-ai-demos` patterns. `capabilities()` is called with **no arguments** to avoid "invalid argument" rejections.
+- **Boot Sequence**: `waitForAIAPI()` -> `applyLanguageModelShims()` -> `checkAIAvailability()`.

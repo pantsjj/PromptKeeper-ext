@@ -17,19 +17,19 @@ test.describe('Revisions and Markdown Sync', () => {
         await page.locator('#new-prompt-btn').click();
 
         // 1. Version 1
-        await page.fill('#prompt-title', 'Revision Test'); // Correct ID from options.html
-        await page.fill('#prompt-text', 'Version 1 Content'); // Correct ID
-        await page.click('#save-button'); // Correct ID
+        await page.fill('#prompt-title-input', 'Revision Test'); // Correct ID from options.html
+        await page.fill('#prompt-text-area', 'Version 1 Content'); // Correct ID
+        await page.click('#save-btn'); // Correct ID
         await expect(page.locator('#footer-version-selector')).toContainText('v1');
 
         // 2. Version 2
         // Check if in preview mode and toggle if needed
-        const textArea = page.locator('#prompt-text');
+        const textArea = page.locator('#prompt-text-area');
         if (await textArea.isHidden()) {
             await page.click('#toggle-preview-btn');
         }
 
-        await page.fill('#prompt-text', 'Version 2 Content');
+        await page.fill('#prompt-text-area', 'Version 2 Content');
         await page.click('#save-button');
         // Wait for save sync
         await page.waitForTimeout(500);
@@ -64,13 +64,13 @@ test.describe('Revisions and Markdown Sync', () => {
         await page.waitForTimeout(500);
 
         // Verify Content
-        await expect(page.locator('#prompt-text')).toHaveValue('Version 1 Content');
+        await expect(page.locator('#prompt-text-area')).toHaveValue('Version 1 Content');
     });
 
     test('Markdown Preview should update immediately', async ({ page }) => {
         await page.locator('#new-prompt-btn').click();
 
-        await page.fill('#prompt-text', '# Title\n**Bold**'); // Correct ID
+        await page.fill('#prompt-text-area', '# Title\n**Bold**'); // Correct ID
 
         // Toggle Preview
         await page.click('#toggle-preview-btn');
@@ -82,7 +82,7 @@ test.describe('Revisions and Markdown Sync', () => {
 
         // Toggle Edit
         await page.click('#toggle-preview-btn');
-        await expect(page.locator('#prompt-text')).toBeVisible();
+        await expect(page.locator('#prompt-text-area')).toBeVisible();
     });
 
 });

@@ -7,16 +7,21 @@ let currentPromptId = null;
 // DOM Elements Cache
 const els = {};
 
-function init() {
+async function init() {
     bindElements();
-    applyLanguageModelShims();
     setupListeners();
     initFontSize();
     setupUI(); // Initialize UI interactions (toggles, resize)
     loadWorkspaces(); // Load workspace list
     loadPrompts();
     initGoogleDrive(); // Check Drive auth state
-    checkAIAvailability(); // Check if AI buttons should be shown
+
+    // Non-blocking AI Initialization
+    // We start the shim/check process but don't hold up the UI
+    waitForAIAPI().then(() => {
+        applyLanguageModelShims();
+        checkAIAvailability(); // Check if AI buttons should be shown
+    });
 
     // Real-time updates when storage changes (e.g., after restore from Google Drive)
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -39,6 +44,17 @@ function init() {
     });
 }
 
+// Polling helper to wait for window.ai injection
+async function waitForAIAPI(timeoutMs = 2000) {
+    if (window.ai) return true;
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        if (window.ai) return true;
+        await new Promise(r => setTimeout(r, 20)); // Check every 20ms
+    }
+    return false;
+}
+
 function initFontSize() {
     // Apply shared editor font size from options to sidepanel
     chrome.storage.local.get(['editorFontSize'], (result) => {
@@ -49,7 +65,8 @@ function initFontSize() {
 
 function applyLanguageModelShims() {
     // Default language options to prevent Chrome's "No output language was specified" warning
-    const defaultLangOpts = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
+    // capabilities/availability should take NO args by default in this shim
+    const defaultLangOpts = {};
 
     try {
         // If the page already loaded `language-model-shim.js`, do nothing (failsafe only)
@@ -62,24 +79,22 @@ function applyLanguageModelShims() {
             if (typeof window.LanguageModel.create === 'function') {
                 const origCreate = window.LanguageModel.create.bind(window.LanguageModel);
                 window.LanguageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
                     return origCreate(merged);
                 };
             }
             // Wrap availability()
             if (typeof window.LanguageModel.availability === 'function') {
                 const origAvail = window.LanguageModel.availability.bind(window.LanguageModel);
-                window.LanguageModel.availability = (options = {}) => {
-                    const merged = { ...defaultLangOpts, ...options };
-                    return origAvail(merged);
+                window.LanguageModel.availability = (options) => {
+                    return origAvail(options);
                 };
             }
             // Wrap capabilities()
             if (typeof window.LanguageModel.capabilities === 'function') {
                 const origCaps = window.LanguageModel.capabilities.bind(window.LanguageModel);
-                window.LanguageModel.capabilities = (options = {}) => {
-                    const merged = { ...defaultLangOpts, ...options };
-                    return origCaps(merged);
+                window.LanguageModel.capabilities = (options) => {
+                    return origCaps(options);
                 };
             }
             window.LanguageModel.__pkWrapped = true;
@@ -91,7 +106,7 @@ function applyLanguageModelShims() {
             if (typeof window.ai.languageModel.create === 'function') {
                 const origCreate = window.ai.languageModel.create.bind(window.ai.languageModel);
                 window.ai.languageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
                     return origCreate(merged);
                 };
             }
@@ -554,6 +569,7 @@ function showInlineWorkspaceInput() {
  */
 async function loadWorkspaces() {
     const projects = await StorageService.getProjects();
+    if (!els.workspaceList) return; // Guard for popup.html
 
     // Clear all except "All Prompts"
     // const allPromptsItem = els.workspaceList.querySelector('[data-id="all"]'); // Removed unused
@@ -661,6 +677,8 @@ async function refreshUI() {
 async function loadPrompts(filterProjectId = null) {
     try {
         const prompts = await StorageService.getPrompts();
+        if (!els.promptList) return; // Guard against missing list (popup vs sidepanel differences)
+
         els.promptList.innerHTML = ''; // Clear
 
         if (prompts.length === 0) {
