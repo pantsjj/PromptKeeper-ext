@@ -2,7 +2,24 @@
 
 All notable changes to the **PromptKeeper** extension will be documented in this file.
 
-## [2.0.0] - 2025-12-25
+## [2.1.0] - 2025-12-29
+
+### ✨ New Features
+- **Markdown Support**: Prompts now render Bold, Italic, Lists, and Headers.
+- **Click-to-Edit**: Seamlessly toggle between read-only markdown preview and edit mode by clicking the text.
+- **Keyboard Shortcuts**: Added `Cmd+B` (Bold) and `Cmd+I` (Italic) outputting standard markdown syntax.
+- **Rich Paste**: "Paste to Page" automatically strips markdown formatting to ensure clean text insertion into web forms.
+
+### 🐛 Bug Fixes
+- **AI Configuration**: Fixed "Not Supported" error for Gemini Nano by enforcing `expectedContext: 'en'` during session creation.
+- **Side Panel**: Improved layout stability and button visibility logic.
+- **Preview Rendering**: Fixed stale content issue when switching rapidly between prompts.
+
+### 🧪 Technical
+- **E2E Testing**: Added comprehensive test suites for Markdown Support (`markdown.spec.js`) and Regression fixes.
+- **Documentation**: Consolidated detailed test strategies and architectural decisions.
+
+---
 
 ### 🎉 Major Release: The Local AI Prompt IDE
 
