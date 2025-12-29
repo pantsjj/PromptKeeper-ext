@@ -740,7 +740,12 @@ function selectPrompt(prompt) {
 
     // Highlight in list
     const items = els.promptList.querySelectorAll('.prompt-entry');
-    items.forEach(i => i.classList.remove('active'));
+    items.forEach(i => {
+        i.classList.remove('active');
+        if (i.dataset.id === prompt.id) {
+            i.classList.add('active');
+        }
+    });
 
     // Default to Preview Mode
     const previewDiv = document.getElementById('markdown-preview');

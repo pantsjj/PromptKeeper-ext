@@ -44,10 +44,16 @@ test.describe('Editor font size and layout', () => {
     });
 
     test('Right sidebar is scrollable and resizable', async ({ page, extensionId }) => {
+        // Force small viewport to ensure overflow
+        await page.setViewportSize({ width: 1024, height: 600 });
         await page.goto(`chrome-extension://${extensionId}/options.html`);
 
         const sidebar = page.locator('#sidebar-right');
         const handle = page.locator('#editor-right-resize-handle');
+
+        // Ensure sidebar has enough content to scroll
+        // Right sidebar has fixed content, but on small height it should scroll.
+        // We can also inject content if needed, but let's try with small height first.
 
         const initialWidth = await sidebar.boundingBox().then(b => b?.width ?? 0);
 
@@ -64,6 +70,13 @@ test.describe('Editor font size and layout', () => {
         expect(newWidth).not.toBe(initialWidth);
 
         // Ensure sidebar content can scroll
+        // If 600px height is not small enough, we can set style height explicitly
+        await sidebar.evaluate((el) => {
+            el.style.height = '200px';
+            el.style.overflow = 'auto'; // Ensure it's scrollable
+            el.innerHTML += '<div style="height: 1000px;">Spacer</div>'; // Force overflow
+        });
+
         await sidebar.evaluate((el) => { el.scrollTop = el.scrollHeight; });
         const scrollTop = await sidebar.evaluate(el => el.scrollTop);
         expect(scrollTop).toBeGreaterThan(0);

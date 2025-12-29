@@ -148,7 +148,7 @@ async function init() {
                     : 14;
                 applyEditorFontSize(next);
             }
-             if (changes['autoSaveEnabled']) {
+            if (changes['autoSaveEnabled']) {
                 autoSaveEnabled = changes.autoSaveEnabled.newValue !== false;
                 if (els.autoSaveEnabledCheckbox) els.autoSaveEnabledCheckbox.checked = autoSaveEnabled;
                 scheduleAutoSave();
@@ -1085,6 +1085,8 @@ function createNewPrompt() {
         togglePreviewBtn.innerHTML = "👀";
         togglePreviewBtn.classList.remove('active');
     }
+    updateStats();
+    updateFooterStats();
 }
 
 async function deletePrompt() {

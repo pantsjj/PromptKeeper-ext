@@ -2,7 +2,7 @@
 
 ## 🚀 Project Status: v2.1.1 (Release Candidate)
 
-**Date:** 2025-12-29
+**Date:** 2025-12-30
 **Current Version:** 2.1.1
 
 ### ✅ New Features (v2.1)
@@ -45,8 +45,10 @@
   - `sidepanel.spec.js`: Layout, editor interactivity, responsive behavior, collapsible sections, and sidepanel sidebar parity.
   - `workspaces.spec.js`: Inline workspace creation, validation, collapsible sections, and context menu behavior in options page.
   - `regression_fixes.spec.js`: Active prompt highlighting (sidepanel) and footer stats update (options).
+  - `ai_features.spec.js`: Verification of AI buttons and footer status icons.
+  - `revisions.spec.js`: Version increment logic and Markdown preview verification.
   - `smoke.spec.js`: Extension load + popup smoke check.
-  - **Result:** 18/18 tests passing.
+  - **Result:** 42/42 tests passing (Full Suite).
 
 For a detailed breakdown, see `docs/test-strategy.md`.
 
@@ -72,6 +74,8 @@ For a detailed breakdown, see `docs/test-strategy.md`.
 
 ## Recent Updates
 
+- **2025-12-30:** Test Harness Patching: Uplifted all E2E tests for v2.1.1 UI; fixed critical "page closed" errors.
+- **2025-12-30:** Bug Fixes: Resolved editor height cutoff, padding polish, and footer stats reset logic.
 - **2025-12-28:** Added collapsible Workspaces/Prompts sections and `+` parity between sidepanel and options; extended Playwright coverage.
 - **2025-12-28:** Fixed UI regressions (selection highlight, footer stats). Verified with `regression_fixes.spec.js`.
 - **2025-12-28:** Implemented drag‑and‑drop and polished side panel UI.
