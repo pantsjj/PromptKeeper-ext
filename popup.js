@@ -551,7 +551,7 @@ function renderVersionSelector(prompt) {
         const isCurrent = v.id === prompt.currentVersionId;
         const dateStr = new Date(v.timestamp).toLocaleDateString();
 
-        option.textContent = `v${verNum}: ${dateStr} ${isCurrent ? '(Curr)' : ''}`;
+        option.textContent = `v${verNum}: ${dateStr} ${isCurrent ? '(Current)' : ''}`;
         if (isCurrent) option.selected = true;
         selector.appendChild(option);
     });
