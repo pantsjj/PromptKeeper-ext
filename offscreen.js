@@ -37,17 +37,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  * Check if AI is available
  */
 async function checkAIAvailability() {
-    if (!window.ai || !window.ai.languageModel) {
-        return { available: 'no' };
+    // 1. Check Standard window.ai.languageModel
+    if (window.ai && window.ai.languageModel) {
+        try {
+            const caps = await window.ai.languageModel.capabilities();
+            return { available: caps.available || 'no', source: 'window.ai' };
+        } catch (e) {
+            console.warn('[Offscreen] window.ai caps check failed:', e);
+        }
     }
 
-    try {
-        const caps = await window.ai.languageModel.capabilities();
-        return { available: caps.available };
-    } catch (err) {
-        console.error('[Offscreen] Capabilities check failed:', err);
-        return { available: 'no' };
+    // 2. Check Global LanguageModel (Spec)
+    if (window.LanguageModel) {
+        try {
+            const caps = await window.LanguageModel.capabilities();
+            return { available: caps.available || 'no', source: 'LanguageModel' };
+        } catch (e) {
+            console.warn('[Offscreen] LanguageModel caps check failed:', e);
+        }
     }
+
+    return { available: 'no' };
 }
 
 /**
