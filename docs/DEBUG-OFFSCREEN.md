@@ -35,6 +35,15 @@ This means the offscreen document isn't receiving messages from AIService.
    [Offscreen] Ready to handle AI requests
    ```
 
+5. In the DevTools Console for `offscreen.html`, you can also manually verify:
+
+   ```javascript
+   typeof window.ai !== 'undefined'
+   ```
+
+   - If this returns `true`, Chrome is exposing the built‑in AI APIs to the offscreen context.
+   - If it returns `false`, follow `docs/snag-gemini-nano-remediation.md` to debug why `window.ai` is missing.
+
 **If you don't see "Inspect views offscreen.html"**, the offscreen document wasn't created.
 
 ### 3. Check Options Page Console
@@ -109,6 +118,18 @@ Verify `manifest.json` has:
 ## What to Report Back
 
 Please tell me:
-1. **Service worker console**: What do you see when you click "service worker"?
-2. **Offscreen views**: Do you see "Inspect views offscreen.html" link?
 3. **Manual test**: What happens when you run the test code above?
+
+## Local Testing with Stable ID
+
+To test with a consistent Extension ID (required for some OAuth flows and consistent `chrome-extension://` URLs):
+
+1. Ensure `package.json` includes the `key` field pointing to `prompt-keeper-test-local.key-pem`.
+2. Ensure `prompt-keeper-test-local.key-pem` exists in the root directory.
+3. Load the extension in Chrome:
+   - Go to `chrome://extensions`
+   - Enable **Developer Mode**
+   - Click **Load unpacked**
+   - Select the `PromptKeeper-ext` folder
+4. The Extension ID should be stable and match the one derived from the private key.
+

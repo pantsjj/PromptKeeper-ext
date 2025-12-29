@@ -14,6 +14,8 @@ All tests are runnable via:
 - **Unit**: `npm test`
 - **E2E**: `npm run test:e2e`
 
+> **Note**: For local development, `package.json` is configured with a `key` field pointing to `prompt-keeper-test-local.key-pem`. This ensures a stable Extension ID when loading the unpacked extension, which is useful for debugging and consistent URL access.
+
 ---
 
 ## 2. Unit Test Coverage
@@ -130,3 +132,21 @@ Some scenarios remain intentionally manual or partially mocked:
   - Sidepanel quick‑access workflows and collapsible navigation.
 
 
+
+## 6. AI Feature Testing (Gemini Nano)
+Due to the experimental nature of the Chrome Prompt API (Requires specific flags and hardware), our strategy relies heavily on **Manual Validation** supported by a **Diagnostic Tool**.
+
+### 6.1 Diagnostic Tool (`gemini-diagnostic.html`)
+- **Purpose**: Verify `window.ai` availability in both Local and Offscreen contexts.
+- **Coverage**:
+  - Global Object Check.
+  - Capability Check (Prompt, Rewriter, Summarizer).
+  - Functional "Hello World" Test.
+
+### 6.2 Automated E2E
+- **Spec**: `tests/e2e/gemini_nano.spec.js` (Placeholder).
+- **CI Status**: Skipped. Requires custom Chrome launch args `--enable-features=PromptAPIForGeminiNano...`.
+- **Roadmap**: Enable in CI once the API stabilizes (Chrome 143+).
+
+### 6.3 QA Report
+See [QA-REPORT-GEMINI.md](QA-REPORT-GEMINI.md) for current status and manual test cases.
