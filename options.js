@@ -9,6 +9,13 @@ let currentPromptId = null;
 let currentProjectId = null; // null = 'all'
 let searchFilter = '';
 
+// Auto-save / editor state
+let isEditorDirty = false;
+let autoSaveEnabled = true;
+let autoSaveIntervalMinutes = 5;
+let autoSaveOnSwitch = false;
+let autoSaveTimerId = null;
+
 // DOM Elements - will be populated in init()
 const els = {};
 
@@ -39,6 +46,7 @@ async function init() {
     els.saveBtn = document.getElementById('save-btn');
     els.deleteBtn = document.getElementById('delete-btn');
     els.versionSelect = document.getElementById('footer-version-selector');
+    // Legacy right-sidebar stats (now hidden from UI but kept for compatibility)
     els.wordCount = document.getElementById('word-count');
     els.charCount = document.getElementById('char-count');
     els.versionLabel = document.getElementById('version-label');
@@ -53,6 +61,14 @@ async function init() {
     els.restoreBtn = document.getElementById('restore-btn');
     els.autoSyncCheckbox = document.getElementById('auto-sync-checkbox');
     els.confirmDeleteCheckbox = document.getElementById('confirm-deletion-checkbox');
+    // Font size controls
+    els.fontSizeDisplay = document.getElementById('font-size-display');
+    els.fontSizeDecrease = document.getElementById('font-size-decrease');
+    els.fontSizeIncrease = document.getElementById('font-size-increase');
+    els.fontSizePreset = document.getElementById('font-size-preset');
+    els.autoSaveEnabledCheckbox = document.getElementById('autosave-enabled-checkbox');
+    els.autoSaveIntervalSelect = document.getElementById('autosave-interval-select');
+    els.autoSaveOnSwitchCheckbox = document.getElementById('autosave-on-switch-checkbox');
     els.driveSignedOut = document.getElementById('drive-signed-out');
     els.driveSignedIn = document.getElementById('drive-signed-in');
     els.userEmail = document.getElementById('user-email');
@@ -69,6 +85,7 @@ async function init() {
     // Footer status bar elements
     els.footerDocsLink = document.getElementById('footer-docs-link');
     els.footerWordCount = document.getElementById('footer-word-count');
+    els.footerCharCount = document.getElementById('footer-char-count');
     els.footerVersionSelector = document.getElementById('footer-version-selector');
     els.footerStorageUsed = document.getElementById('footer-storage-used');
     els.footerExportLink = document.getElementById('footer-export-link');
@@ -79,15 +96,34 @@ async function init() {
     // Markdown Preview
     els.previewDiv = document.getElementById('markdown-preview');
     els.togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    els.rightResizeHandle = document.getElementById('editor-right-resize-handle');
+    els.localModelStats = document.getElementById('local-model-stats');
 
+    applyLanguageModelShims();
     setupEventListeners();
 
     await initGoogleDrive(); // Check Drive auth state
 
     // Load Settings
-    chrome.storage.local.get(['confirmWorkspaceDeletion'], (result) => {
+    chrome.storage.local.get(['confirmWorkspaceDeletion', 'editorFontSize', 'autoSaveEnabled', 'autoSaveIntervalMinutes', 'autoSaveOnSwitch', 'rightSidebarWidth'], (result) => {
         const confirmDelete = result.confirmWorkspaceDeletion !== false; // Default true
         if (els.confirmDeleteCheckbox) els.confirmDeleteCheckbox.checked = confirmDelete;
+
+        const size = typeof result.editorFontSize === 'number' ? result.editorFontSize : 14;
+        applyEditorFontSize(size);
+        autoSaveEnabled = result.autoSaveEnabled !== false; // default true
+        autoSaveIntervalMinutes = typeof result.autoSaveIntervalMinutes === 'number' ? result.autoSaveIntervalMinutes : 5;
+        autoSaveOnSwitch = result.autoSaveOnSwitch === true;
+
+        if (els.autoSaveEnabledCheckbox) els.autoSaveEnabledCheckbox.checked = autoSaveEnabled;
+        if (els.autoSaveIntervalSelect) els.autoSaveIntervalSelect.value = String(autoSaveIntervalMinutes);
+        if (els.autoSaveOnSwitchCheckbox) els.autoSaveOnSwitchCheckbox.checked = autoSaveOnSwitch;
+
+        if (typeof result.rightSidebarWidth === 'number') {
+            applyRightSidebarWidth(result.rightSidebarWidth);
+        }
+
+        scheduleAutoSave();
     });
 
     try {
@@ -106,11 +142,149 @@ async function init() {
         if (area === 'local') {
             if (changes['prompts']) loadPrompts();
             if (changes['projects']) loadWorkspaces();
+            if (changes['editorFontSize']) {
+                const next = typeof changes.editorFontSize.newValue === 'number'
+                    ? changes.editorFontSize.newValue
+                    : 14;
+                applyEditorFontSize(next);
+            }
+             if (changes['autoSaveEnabled']) {
+                autoSaveEnabled = changes.autoSaveEnabled.newValue !== false;
+                if (els.autoSaveEnabledCheckbox) els.autoSaveEnabledCheckbox.checked = autoSaveEnabled;
+                scheduleAutoSave();
+            }
+            if (changes['autoSaveIntervalMinutes']) {
+                const v = changes.autoSaveIntervalMinutes.newValue;
+                if (typeof v === 'number') {
+                    autoSaveIntervalMinutes = v;
+                    if (els.autoSaveIntervalSelect) els.autoSaveIntervalSelect.value = String(v);
+                    scheduleAutoSave();
+                }
+            }
+            if (changes['autoSaveOnSwitch']) {
+                autoSaveOnSwitch = changes.autoSaveOnSwitch.newValue === true;
+                if (els.autoSaveOnSwitchCheckbox) els.autoSaveOnSwitchCheckbox.checked = autoSaveOnSwitch;
+            }
+            if (changes['rightSidebarWidth']) {
+                const width = typeof changes.rightSidebarWidth.newValue === 'number'
+                    ? changes.rightSidebarWidth.newValue
+                    : undefined;
+                if (width) applyRightSidebarWidth(width);
+            }
         }
     });
 
     // Initial project label
     updateProjectLabel();
+}
+
+function applyLanguageModelShims() {
+    // Default language options to prevent Chrome's "No output language was specified" warning
+    const defaultLangOpts = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
+
+    try {
+        // If the page already loaded `language-model-shim.js`, do nothing (failsafe only)
+        if (window.LanguageModel?.__pkShimmed || window.LanguageModel?.__pkWrapped) return;
+        if (window.ai?.languageModel?.__pkShimmed || window.ai?.languageModel?.__pkWrapped) return;
+
+        // Wrap window.LanguageModel
+        if (window.LanguageModel && !window.LanguageModel.__pkWrapped) {
+            // Wrap create()
+            if (typeof window.LanguageModel.create === 'function') {
+                const origCreate = window.LanguageModel.create.bind(window.LanguageModel);
+                window.LanguageModel.create = (options = {}) => {
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    return origCreate(merged);
+                };
+            }
+            // Wrap availability()
+            if (typeof window.LanguageModel.availability === 'function') {
+                const origAvail = window.LanguageModel.availability.bind(window.LanguageModel);
+                window.LanguageModel.availability = (options = {}) => {
+                    const merged = { ...defaultLangOpts, ...options };
+                    return origAvail(merged);
+                };
+            }
+            // Wrap capabilities()
+            if (typeof window.LanguageModel.capabilities === 'function') {
+                const origCaps = window.LanguageModel.capabilities.bind(window.LanguageModel);
+                window.LanguageModel.capabilities = (options = {}) => {
+                    const merged = { ...defaultLangOpts, ...options };
+                    return origCaps(merged);
+                };
+            }
+            window.LanguageModel.__pkWrapped = true;
+        }
+
+        // Wrap window.ai.languageModel
+        if (window.ai && window.ai.languageModel && !window.ai.languageModel.__pkWrapped) {
+            // Wrap create()
+            if (typeof window.ai.languageModel.create === 'function') {
+                const origCreate = window.ai.languageModel.create.bind(window.ai.languageModel);
+                window.ai.languageModel.create = (options = {}) => {
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    return origCreate(merged);
+                };
+            }
+            // Wrap capabilities()
+            if (typeof window.ai.languageModel.capabilities === 'function') {
+                const origCaps = window.ai.languageModel.capabilities.bind(window.ai.languageModel);
+                window.ai.languageModel.capabilities = (options = {}) => {
+                    const merged = { ...defaultLangOpts, ...options };
+                    return origCaps(merged);
+                };
+            }
+            window.ai.languageModel.__pkWrapped = true;
+        }
+    } catch (e) {
+        console.warn('[Options] Failed to install LanguageModel shims', e);
+    }
+}
+
+function applyEditorFontSize(size) {
+    const clamped = Math.min(22, Math.max(11, size));
+    document.documentElement.style.setProperty('--prompt-font-size', `${clamped}px`);
+    if (els.fontSizeDisplay) {
+        els.fontSizeDisplay.textContent = `${clamped}px`;
+    }
+    if (els.fontSizePreset) {
+        const match = Array.from(els.fontSizePreset.options).find(o => parseInt(o.value, 10) === clamped);
+        if (match) {
+            els.fontSizePreset.value = String(clamped);
+        }
+    }
+}
+
+function applyRightSidebarWidth(width) {
+    const clamped = Math.min(480, Math.max(220, width));
+    document.documentElement.style.setProperty('--right-sidebar-width', `${clamped}px`);
+}
+
+function markEditorDirty() {
+    if (!els.textArea) return;
+    isEditorDirty = true;
+    els.textArea.classList.add('unsaved-glow');
+}
+
+function clearEditorDirty() {
+    isEditorDirty = false;
+    if (els.textArea) {
+        els.textArea.classList.remove('unsaved-glow');
+    }
+}
+
+function scheduleAutoSave() {
+    if (autoSaveTimerId) {
+        clearInterval(autoSaveTimerId);
+        autoSaveTimerId = null;
+    }
+    if (!autoSaveEnabled || !autoSaveIntervalMinutes) return;
+
+    autoSaveTimerId = setInterval(async () => {
+        if (!isEditorDirty) return;
+        await savePrompt();
+        clearEditorDirty();
+    }, autoSaveIntervalMinutes * 60 * 1000);
 }
 
 /**
@@ -151,6 +325,87 @@ function setupEventListeners() {
         els.promptsTitle.addEventListener('click', togglePromptsSection);
     }
 
+    // Font size controls (editor + preview share --prompt-font-size)
+    const changeFontSize = (delta) => {
+        const currentCss = getComputedStyle(document.documentElement).getPropertyValue('--prompt-font-size') || '14px';
+        const current = parseInt(currentCss, 10) || 14;
+        const next = Math.min(22, Math.max(11, current + delta));
+        applyEditorFontSize(next);
+        chrome.storage.local.set({ editorFontSize: next });
+    };
+
+    if (els.fontSizeIncrease) {
+        els.fontSizeIncrease.addEventListener('click', () => changeFontSize(1));
+    }
+    if (els.fontSizeDecrease) {
+        els.fontSizeDecrease.addEventListener('click', () => changeFontSize(-1));
+    }
+    if (els.fontSizePreset) {
+        els.fontSizePreset.addEventListener('change', (e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!Number.isNaN(value)) {
+                const next = Math.min(22, Math.max(11, value));
+                applyEditorFontSize(next);
+                chrome.storage.local.set({ editorFontSize: next });
+            }
+        });
+    }
+
+    // Auto-save controls
+    if (els.autoSaveEnabledCheckbox) {
+        els.autoSaveEnabledCheckbox.addEventListener('change', (e) => {
+            autoSaveEnabled = e.target.checked;
+            chrome.storage.local.set({ autoSaveEnabled });
+            scheduleAutoSave();
+        });
+    }
+    if (els.autoSaveIntervalSelect) {
+        els.autoSaveIntervalSelect.addEventListener('change', (e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!Number.isNaN(value)) {
+                autoSaveIntervalMinutes = value;
+                chrome.storage.local.set({ autoSaveIntervalMinutes: value });
+                scheduleAutoSave();
+            }
+        });
+    }
+    if (els.autoSaveOnSwitchCheckbox) {
+        els.autoSaveOnSwitchCheckbox.addEventListener('change', (e) => {
+            autoSaveOnSwitch = e.target.checked;
+            chrome.storage.local.set({ autoSaveOnSwitch });
+        });
+    }
+
+    // Right sidebar resize
+    if (els.rightResizeHandle) {
+        let isDragging = false;
+
+        const onMouseMove = (event) => {
+            if (!isDragging) return;
+            const rect = document.getElementById('main-layout')?.getBoundingClientRect();
+            if (!rect) return;
+            const totalWidth = rect.width;
+            const offsetX = event.clientX - rect.left;
+            const rightWidth = totalWidth - offsetX;
+            applyRightSidebarWidth(rightWidth);
+            chrome.storage.local.set({ rightSidebarWidth: rightWidth });
+        };
+
+        const onMouseUp = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        els.rightResizeHandle.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            isDragging = true;
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
     // Workspaces
     if (els.addProjectBtn) els.addProjectBtn.addEventListener('click', handleAddProject);
     if (els.workspaceAll) {
@@ -174,6 +429,7 @@ function setupEventListeners() {
     els.textArea.addEventListener('input', () => {
         updateStats();
         updateFooterStats();
+        markEditorDirty();
     });
 
     // Formatting Shortcuts (Cmd+B, Cmd+I)
@@ -337,17 +593,6 @@ function setupEventListeners() {
         });
     }
 
-    // Toggle AI Panel via Footer Status Dots
-    if (els.footerStatusDots) {
-        els.footerStatusDots.addEventListener('click', () => {
-            const aiPanel = document.getElementById('ai-tools-panel');
-            if (aiPanel) {
-                const isHidden = aiPanel.classList.toggle('hidden');
-                chrome.storage.local.set({ aiPanelVisible: !isHidden });
-            }
-        });
-    }
-
     // Restore AI Panel State (or Auto-Enable)
     chrome.storage.local.get(['aiPanelVisible'], async (result) => {
         const aiPanel = document.getElementById('ai-tools-panel');
@@ -408,7 +653,7 @@ function setupEventListeners() {
         els.refineBtns.forEach(btn => {
             btn.addEventListener('click', async () => {
                 const type = btn.dataset.type;
-                await handleRefine(type);
+                await handleRefine(type, btn);
             });
         });
     }
@@ -512,6 +757,7 @@ function updateActiveWorkspaceUI() {
 }
 
 function updateProjectLabel() {
+    if (!els.projectLabel) return;
     if (currentProjectId === null) {
         els.projectLabel.textContent = "Workspace: All Prompts";
     } else {
@@ -747,6 +993,12 @@ function showPreview(content) {
 }
 
 function selectPrompt(prompt) {
+    // Optional auto-save on switch
+    if (autoSaveOnSwitch && isEditorDirty) {
+        // Fire and forget; savePrompt already handles races
+        savePrompt();
+        clearEditorDirty();
+    }
     currentPromptId = prompt.id;
     els.titleInput.value = prompt.title;
 
@@ -795,6 +1047,8 @@ async function savePrompt() {
             }
             currentPromptId = newPrompt.id;
         }
+
+        clearEditorDirty();
 
         // Pulse
         els.textArea.classList.add('pulse-green');
@@ -845,23 +1099,25 @@ async function deletePrompt() {
 
 // Stats & Dropdown
 function updateStats() {
-    const text = els.textArea.value || '';
+    const text = els.textArea?.value || '';
     const words = text.trim().split(/\s+/).filter(Boolean).length;
-    els.wordCount.textContent = `Words: ${words}`;
-    els.charCount.textContent = `Chars: ${text.length}`;
+    if (els.wordCount) els.wordCount.textContent = `Words: ${words}`;
+    if (els.charCount) els.charCount.textContent = `Chars: ${text.length}`;
 
     // Sync footer stats
     updateFooterStats();
 
-    if (currentPromptId) {
-        StorageService.getPrompts().then(prompts => {
-            const p = prompts.find(x => x.id === currentPromptId);
-            if (p) {
-                els.versionLabel.textContent = `Rev: ${p.versions.length}`;
-            }
-        });
-    } else {
-        els.versionLabel.textContent = 'Rev: 0';
+    if (els.versionLabel) {
+        if (currentPromptId) {
+            StorageService.getPrompts().then(prompts => {
+                const p = prompts.find(x => x.id === currentPromptId);
+                if (p) {
+                    els.versionLabel.textContent = `Rev: ${p.versions.length}`;
+                }
+            });
+        } else {
+            els.versionLabel.textContent = 'Rev: 0';
+        }
     }
 }
 
@@ -938,6 +1194,21 @@ function renderHistoryDropdown(prompt) {
             els.textArea.value = v.content;
             updateStats();
             updateFooterStats();
+            // If preview is visible, re-render it so markdown matches selected revision
+            const previewDiv = document.getElementById('markdown-preview');
+            if (previewDiv && !previewDiv.classList.contains('hidden')) {
+                if (window.marked) {
+                    try {
+                        previewDiv.innerHTML = window.marked.parse(v.content);
+                    } catch {
+                        previewDiv.textContent = v.content;
+                    }
+                } else {
+                    previewDiv.textContent = v.content;
+                }
+            }
+            // Selecting an older revision is a change that is not yet saved
+            markEditorDirty();
         }
     }
 }
@@ -989,11 +1260,31 @@ function setupDropTarget(el, targetProjectId) {
 /**
  * AI
  */
-async function handleRefine(type) {
+async function handleRefine(type, sourceBtn) {
     const text = els.textArea.value.trim();
     if (!text) return alert("Enter text.");
 
-    els.saveBtn.textContent = "...";
+    const btn = sourceBtn || els.saveBtn;
+    const originalLabel = btn ? btn.textContent : '';
+    const originalEditorText = els.textArea.value;
+    const originalStatsText = els.localModelStats ? els.localModelStats.textContent : null;
+
+    // Abort/cancel support (web-ai-demos pattern)
+    // If the same button is clicked while an AI request is active, treat it as "Cancel".
+    if (btn && btn.dataset.pkAiCancel === '1') {
+        try { window.__pkAiAbortController?.abort(); } catch { /* ignore */ }
+        return;
+    }
+
+    const abortController = new AbortController();
+    window.__pkAiAbortController = abortController;
+
+    if (btn) {
+        btn.dataset.pkAiCancel = '1';
+        btn.textContent = "Cancel";
+        btn.disabled = false; // allow click again to cancel
+        btn.classList.add('ai-busy');
+    }
     document.body.style.cursor = 'wait';
 
     try {
@@ -1006,15 +1297,72 @@ async function handleRefine(type) {
             }
         }
 
-        const refined = await AIService.refinePrompt(inputCtx, type);
+        // Optional: surface download progress (monitor) to the AI status line
+        const monitor = (m) => {
+            m.addEventListener('downloadprogress', (e) => {
+                if (!els.aiStatus) return;
+                const pct = (typeof e.loaded === 'number' && typeof e.total === 'number' && e.total > 0)
+                    ? Math.round((e.loaded / e.total) * 100)
+                    : undefined;
+                els.aiStatus.textContent = pct !== undefined ? `⬇️ Downloading model… ${pct}%` : '⬇️ Downloading model…';
+                els.aiStatus.style.color = "var(--primary-color)";
+            });
+        };
+
+        const refined = await AIService.refinePrompt(inputCtx, type, {
+            signal: abortController.signal,
+            monitor,
+            preferStreaming: true,
+            // Streaming: update editor progressively but do NOT mark unsaved until completion
+            onChunk: (partial) => {
+                els.textArea.value = partial;
+                const previewDiv = document.getElementById('markdown-preview');
+                if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+                    previewDiv.innerHTML = window.marked.parse(partial);
+                }
+            },
+            onStats: (stats) => {
+                if (!els.localModelStats) return;
+                if (!stats) {
+                    els.localModelStats.textContent = 'Local Model Stats: —';
+                    return;
+                }
+                const usage = typeof stats.inputUsage === 'number' ? stats.inputUsage : undefined;
+                const quota = typeof stats.inputQuota === 'number' ? stats.inputQuota : undefined;
+                if (usage !== undefined && quota !== undefined) {
+                    els.localModelStats.textContent = `Local Model Stats: tokens ${usage}/${quota}`;
+                } else if (usage !== undefined) {
+                    els.localModelStats.textContent = `Local Model Stats: tokens ${usage}`;
+                } else {
+                    els.localModelStats.textContent = 'Local Model Stats: —';
+                }
+            }
+        });
+
         if (refined) {
+            // Ensure final text is set and only now mark as unsaved
             setPromptText(refined);
-            await savePrompt(); // Save as new version
         }
     } catch (e) {
+        // On cancel, revert partial streamed content and exit quietly.
+        if (e?.name === 'AbortError' || String(e?.message || '').toLowerCase().includes('aborted')) {
+            els.textArea.value = originalEditorText;
+            const previewDiv = document.getElementById('markdown-preview');
+            if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+                previewDiv.innerHTML = window.marked.parse(originalEditorText);
+            }
+            if (els.localModelStats && originalStatsText) els.localModelStats.textContent = originalStatsText;
+            return;
+        }
         alert("Refine failed: " + e.message);
     } finally {
-        els.saveBtn.textContent = "Save";
+        if (btn) {
+            delete btn.dataset.pkAiCancel;
+            btn.textContent = originalLabel || "Save";
+            btn.disabled = false;
+            btn.classList.remove('ai-busy');
+        }
+        window.__pkAiAbortController = null;
         document.body.style.cursor = 'default';
         updateStats();
     }
@@ -1028,6 +1376,9 @@ function setPromptText(text) {
     if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
         previewDiv.innerHTML = window.marked.parse(text);
     }
+
+    // AI-generated or programmatic changes should mark the editor as dirty
+    markEditorDirty();
 }
 
 
@@ -1043,7 +1394,7 @@ async function checkAIStatus() {
             els.refineBtns.forEach(b => b.disabled = false);
         } else if (status === 'after-download' || status === 'downloading') {
             els.aiStatus.textContent = "⬇️ Downloading Model...";
-            els.aiStatus.style.color = "#f9ab00";
+            els.aiStatus.style.color = "var(--primary-color)";
             els.refineBtns.forEach(b => b.disabled = true);
         } else {
             // ...
@@ -1108,8 +1459,12 @@ function updateFooterStats() {
 
     const text = els.textArea.value || '';
     const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    const chars = text.length;
 
     els.footerWordCount.textContent = `Words: ${words}`;
+    if (els.footerCharCount) {
+        els.footerCharCount.textContent = `Chars: ${chars}`;
+    }
 
     chrome.storage.local.getBytesInUse(null, (bytes) => {
         const kb = (bytes / 1024).toFixed(1);
@@ -1123,37 +1478,39 @@ async function updateFooterStatusDots() {
 
     els.footerStatusDots.innerHTML = '';
 
+    const normalizeStatusClass = (s) => {
+        if (!s) return 'no';
+        if (s === 'available' || s === 'readily') return 'readily';
+        if (s === 'after-download' || s === 'downloading') return 'after-download';
+        return 'no';
+    };
+
     try {
         const statuses = await AIService.getDetailedStatus();
 
         // Prompt API dot
-        const isPromptReady = statuses.prompt === 'readily' || statuses.prompt === 'available';
-        const isPromptDownload = statuses.prompt === 'after-download' || statuses.prompt === 'downloading';
-
         const dot1 = document.createElement('div');
-        dot1.className = `status-dot ${isPromptReady ? '' : isPromptDownload ? 'warning' : 'error'}`;
+        dot1.className = `status-dot ${normalizeStatusClass(statuses.prompt)}`;
         dot1.title = `Prompt API: ${statuses.prompt}`;
         dot1.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot1);
 
         // Rewriter API dot
-        const isRewriterReady = statuses.rewriter === 'readily' || statuses.rewriter === 'available';
-
         const dot2 = document.createElement('div');
-        dot2.className = `status-dot ${isRewriterReady ? '' : 'error'}`;
+        dot2.className = `status-dot ${normalizeStatusClass(statuses.rewriter)}`;
         dot2.title = `Rewriter API: ${statuses.rewriter}`;
         dot2.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot2);
     } catch {
         // Fallback to error dots if check fails
         const dot1 = document.createElement('div');
-        dot1.className = 'status-dot error';
+        dot1.className = 'status-dot no';
         dot1.title = 'Prompt API: unavailable';
         dot1.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot1);
 
         const dot2 = document.createElement('div');
-        dot2.className = 'status-dot error';
+        dot2.className = 'status-dot no';
         dot2.title = 'Rewriter API: unavailable';
         dot2.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot2);

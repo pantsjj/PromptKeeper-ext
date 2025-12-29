@@ -16,6 +16,15 @@ The project is evolving from a simple clipboard manager to a sophisticated **Pro
 *   **Optimization**: Use built-in AI to "Score" and "Refine" prompts based on industry best practices (Persona, Task, Context, Format).
 *   **Organization**: Move beyond simple lists to structured libraries with tags and variables.
 
+### Key Architectural Decisions (ADR)
+*   **ADR-004: Built-In AI Integration**: `docs/adr/ADR-004-built-in-ai-integration.md`
+*   **ADR-007: LanguageModel Shims + CSP-Safe AI Bootstrap**: `docs/adr/ADR-007-language-model-shims-and-csp-safe-ai-bootstrap.md`
+
+### Quality & Validation
+*   **Prompting Principles**: See `docs/PROMPTING_PRINCIPLES.md` for the framework we use to design and score prompts.
+*   **Test Strategy**: See `docs/TEST_STRATEGY.md` for the full coverage matrix and suite inventory (Unit, E2E, and AI-focused journeys).
+*   **Architecture (HLD)**: See `docs/ARCHITECTURE_HLD.md` for the holistic solution architecture (components, data flow, storage model, and key user journeys).
+
 ## User Persona
 *   **The Power User**: Interacts with multiple AI models (ChatGPT, Claude, Gemini) daily.
 *   **The Developer**: Needs to test prompt variations for applications.

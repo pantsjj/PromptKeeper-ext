@@ -82,7 +82,11 @@ async function attemptOptimize(promptText, rewriteOption, retryCount = 0) {
     const signal = abortController.signal;
 
     // Create a new language model session
-    const session = await window.ai.languageModel.create({ signal });
+    const session = await window.ai.languageModel.create({
+      signal,
+      expectedContext: 'en',
+      outputLanguage: 'en'
+    });
 
     // Map rewriteOption to instructions
     let rewriteInstruction = '';

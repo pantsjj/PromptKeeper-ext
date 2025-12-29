@@ -62,18 +62,21 @@ async function checkFeatureSupport() {
     log('res-caps', "Checking feature support...", "warn");
     let msg = "";
 
+    // Language options to prevent Chrome's "No output language was specified" warning
+    const langOpts = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
+
     // 1. Prompt API
     let promptStatus = "Missing";
     try {
         if (window.ai && window.ai.languageModel) {
-            const caps = await window.ai.languageModel.capabilities();
+            const caps = await window.ai.languageModel.capabilities(langOpts);
             promptStatus = `window.ai: ${caps.available}`;
         } else if (window.LanguageModel) {
             if (window.LanguageModel.capabilities) {
-                const caps = await window.LanguageModel.capabilities();
+                const caps = await window.LanguageModel.capabilities(langOpts);
                 promptStatus = `LanguageModel.caps: ${caps.available}`;
             } else if (window.LanguageModel.availability) {
-                const avail = await window.LanguageModel.availability();
+                const avail = await window.LanguageModel.availability(langOpts);
                 promptStatus = `LanguageModel.avail: ${avail}`;
             } else {
                 promptStatus = `LanguageModel (exists)`;

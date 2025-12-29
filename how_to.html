@@ -148,7 +148,7 @@
             <a href="#workspaces" class="nav-link">Workspaces</a>
             <a href="#prompts" class="nav-link">Managing Prompts</a>
             <a href="#backup" class="nav-link">Google Drive Backup</a>
-            <a href="#ai" class="nav-link">AI Features <span class="feature-tag">BETA</span></a>
+            <a href="#ai" class="nav-link">AI Features <span class="feature-tag">LOCAL AI</span></a>
             <a href="#shortcuts" class="nav-link">Keyboard Shortcuts</a>
         </nav>
     </div>
@@ -162,9 +162,9 @@
             <h3>Why PromptKeeper?</h3>
             <ul>
                 <li><strong>Local & Private:</strong> Data stays on your device unless you choose to back it up.</li>
-                <li><strong>Browser Integrated:</strong> Access your library instantly via the Side Panel.</li>
-                <li><strong>New feature soon:</strong> AI-Optimization. Use local Gemini Nano AI to refine your prompts.
-                </li>
+                <li><strong>Browser Integrated:</strong> Access your library instantly via the Side Panel and full-page editor.</li>
+                <li><strong>Built-in Optimization:</strong> Use on-device Gemini Nano to refine prompts without sending text to external servers.</li>
+                <li><strong>Markdown Aware:</strong> Write in plain text, preview in markdown, and paste clean text into chat tools.</li>
             </ul>
         </section>
 
@@ -194,11 +194,22 @@
 
         <section id="prompts">
             <h2>Managing Prompts</h2>
-            <p>Write, edit, and organize your prompts with a full-featured code editor.</p>
+            <p>Write, edit, and organize your prompts with a full-featured markdown editor.</p>
 
             <h3>Versioning</h3>
             <p>Every time you modify a prompt, PromptKeeper tracks the changes. Use the <strong>Rev: X</strong> dropdown
                 in the footer to start a new version branch or revert to an older one.</p>
+
+            <h3>Markdown & Preview</h3>
+            <p>Use the editor to write in markdown, then toggle the preview to see the rendered result. Click on the
+                preview to jump back into edit mode. The editor and preview always share the same font size for
+                consistency.</p>
+
+            <h3>Saving & Auto-Save</h3>
+            <p>Click <strong>Save</strong> or press <code>Cmd/Ctrl + S</code> to save and create a new version. When
+                auto-save is enabled in the Options panel, PromptKeeper will periodically save any unsaved changes for
+                you, and can optionally save automatically when you switch to another prompt. An orange, pulsing border
+                around the editor indicates there are changes that have not yet been saved.</p>
 
             <h3>Paste-to-Page</h3>
             <p>Click the <strong style="color:#ff9500;">Paste-to-Page</strong> button to instantly insert your active
@@ -218,11 +229,29 @@
 
         <section id="ai">
             <h2>AI Optimization</h2>
-            <p>If your browser supports <strong>Gemini Nano</strong>, you'll see the AI tools panel.</p>
+            <p>If your browser supports <strong>Gemini Nano</strong>, you'll see the AI tools panel in the full editor
+                and side panel.</p>
             <ul>
-                <li><strong>Magic Enhance:</strong> Adds structure and clarity.</li>
-                <li><strong>Formalize:</strong> Adjusts tone for professional contexts.</li>
-                <li><strong>Clarify:</strong> Removes ambiguity.</li>
+                <li><strong>Magic Enhance:</strong> Adds structure and clarity, turning rough ideas into well-formed
+                    prompt templates.</li>
+                <li><strong>Formalize Tone:</strong> Adjusts tone for professional or executive-facing contexts.</li>
+                <li><strong>Improve Clarity:</strong> Removes ambiguity and sharpens instructions.</li>
+                <li><strong>Shorten:</strong> Produces more concise versions while preserving intent.</li>
+            </ul>
+            <p>AI refinements follow safety rules: they avoid inventing personal names or companies, use inline
+                <code>`code`</code> formatting for user-fill sections (e.g. <code>[describe your goals]</code>), and use
+                clear markdown headings when offering multiple options.</p>
+
+            <h3>Streaming, Cancel, and Download Progress</h3>
+            <ul>
+                <li><strong>Streaming output:</strong> On supported Chrome builds, the rewritten prompt may stream into
+                    the editor progressively instead of arriving all at once.</li>
+                <li><strong>Cancel:</strong> While AI is running, the button switches to <strong>Cancel</strong> so you
+                    can abort a long operation.</li>
+                <li><strong>Downloading model:</strong> If Gemini Nano is warming up or downloading, you may see a
+                    <em>Downloading…</em> indicator (when Chrome provides progress events).</li>
+                <li><strong>Unsaved indicator:</strong> The orange unsaved glow appears only after new AI content has
+                    been applied to the editor, reminding you to save.</li>
             </ul>
         </section>
 
@@ -230,7 +259,8 @@
             <h2>Keyboard Shortcuts</h2>
             <ul>
                 <li><code>Cmd/Ctrl + S</code>: Save current prompt</li>
-                <li><code>Cmd/Ctrl + B</code>: Open Side Panel</li>
+                <li><code>Cmd/Ctrl + B</code>: Bold selected text (markdown)</li>
+                <li><code>Cmd/Ctrl + I</code>: Italicise selected text (markdown)</li>
             </ul>
         </section>
     </div>

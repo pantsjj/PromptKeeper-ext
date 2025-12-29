@@ -1,7 +1,6 @@
 {
   "name": "promptkeeper-ext",
-  "version": "2.1.0",
-  "key": "prompt-keeper-test-local.key-pem",
+  "version": "2.1.1",
   "description": "PromptKeeper is designed to help optimise how we interact with generative AI LLMs. It addresses the challenge of managing, fine-tuning, and reusing engineered prompts in a user-friendly and efficient way. It's all about the conversation - The Context and Intent. PromptKeeper helps you create your own library of Intentional and Bespoke assistants in the form of polished and refined Prompts in your library. You can chose to Export and share these with your friends and family.",
   "main": "background.js",
   "directories": {

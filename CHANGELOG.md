@@ -2,6 +2,16 @@
 
 All notable changes to the **PromptKeeper** extension will be documented in this file.
 
+## [2.1.1] - 2025-12-29
+
+### ✨ Improvements
+- **Built-in AI UX**: AI output can stream into the editor (where supported), and AI buttons switch to **Cancel** so you can abort long operations safely.
+- **Model Download Feedback**: Surfaces “Downloading…” progress indicators during Gemini Nano model warm-up/download (when Chrome provides progress events).
+- **Local Model Stats**: Shows a compact “Local Model Stats” line (token usage/quota when available) under the editor in both full editor and side panel.
+
+### 🐛 Fixes
+- **CSP-safe AI bootstrap**: Consolidated AI bootstrap logic via external shims/wrappers to avoid MV3 inline-script CSP violations and reduce duplication.
+
 ## [2.1.0] - 2025-12-29
 
 ### ✨ New Features
@@ -9,14 +19,22 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 - **Click-to-Edit**: Seamlessly toggle between read-only markdown preview and edit mode by clicking the text.
 - **Keyboard Shortcuts**: Added `Cmd+B` (Bold) and `Cmd+I` (Italic) outputting standard markdown syntax.
 - **Rich Paste**: "Paste to Page" automatically strips markdown formatting to ensure clean text insertion into web forms.
+- **Editor Font Controls**: Adjustable editor/preview font size (with presets) shared between full editor and side panel for better readability.
+- **Resizable Layout**: Right-hand options/AI panel is now resizable and independently scrollable, so backup and stats content remains accessible on smaller screens.
+- **Streaming Local AI**: Where supported, AI output streams into the editor progressively instead of waiting for a single final response.
+- **Cancel AI Operations**: AI buttons switch to **Cancel** while running so you can abort long operations safely.
+- **Model Download Progress**: Surfaces “Downloading…” indicators during Gemini Nano model warm-up/download (when Chrome provides progress events).
 
 ### 🐛 Bug Fixes
 - **AI Configuration**: Fixed "Not Supported" error for Gemini Nano by enforcing `expectedContext: 'en'` during session creation.
-- **Side Panel**: Improved layout stability and button visibility logic.
+- **AI Language Safety Warning**: Enforced language options across `create()`, `availability()`, and `capabilities()` without violating MV3 CSP (external shim).
+- **Side Panel**: Improved layout stability, button visibility logic, and ensured the panel can always be reopened from the extension icon even after jumping into full-page management.
 - **Preview Rendering**: Fixed stale content issue when switching rapidly between prompts.
+- **AI Personas**: Tightened AI meta-prompts to avoid invented personal names and ensure placeholders are clearly marked for user input.
 
 ### 🧪 Technical
 - **E2E Testing**: Added comprehensive test suites for Markdown Support (`markdown.spec.js`) and Regression fixes.
+- **Accessibility & Layout Tests**: Added tests covering editor font-size propagation, right-pane resizing/scrolling, and side panel "Manage" behaviour.
 - **Documentation**: Consolidated detailed test strategies and architectural decisions.
 
 ---
