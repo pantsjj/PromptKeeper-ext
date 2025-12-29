@@ -223,9 +223,9 @@ class AIService {
         // Prompt API
         let session;
         if (window.LanguageModel) {
-            session = await window.LanguageModel.create();
+            session = await window.LanguageModel.create({ expectedContext: 'en' });
         } else if (window.ai && window.ai.languageModel) {
-            session = await window.ai.languageModel.create();
+            session = await window.ai.languageModel.create({ expectedContext: 'en' });
         } else {
             throw new Error("Local AI API missing unexpectedly");
         }

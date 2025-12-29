@@ -76,6 +76,10 @@ async function init() {
     els.footerImportFile = document.getElementById('footer-import-file');
     els.footerStatusDots = document.getElementById('footer-status-dots');
 
+    // Markdown Preview
+    els.previewDiv = document.getElementById('markdown-preview');
+    els.togglePreviewBtn = document.getElementById('toggle-preview-btn');
+
     setupEventListeners();
 
     await initGoogleDrive(); // Check Drive auth state
@@ -171,6 +175,109 @@ function setupEventListeners() {
         updateStats();
         updateFooterStats();
     });
+
+    // Formatting Shortcuts (Cmd+B, Cmd+I)
+    els.textArea.addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey) {
+            const start = els.textArea.selectionStart;
+            const end = els.textArea.selectionEnd;
+            const text = els.textArea.value;
+            let inserted = false;
+
+            if (e.key === 'b') { // Bold
+                e.preventDefault();
+                const selection = text.substring(start, end);
+                const replacement = `**${selection}**`;
+                els.textArea.setRangeText(replacement, start, end, 'select');
+                inserted = true;
+            } else if (e.key === 'i') { // Italic
+                e.preventDefault();
+                const selection = text.substring(start, end);
+                const replacement = `*${selection}*`;
+                els.textArea.setRangeText(replacement, start, end, 'select');
+                inserted = true;
+            }
+
+            if (inserted) {
+                // Sync preview immediately
+                if (typeof setPromptText === 'function') {
+                    setPromptText(els.textArea.value);
+                }
+                updateStats();
+            }
+        }
+    });
+
+    // Markdown Preview Logic
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    const previewDiv = document.getElementById('markdown-preview');
+
+    // Helper: Show Editor
+    function showEditor() {
+        if (!previewDiv || !els.textArea) return;
+        previewDiv.classList.add('hidden');
+        els.textArea.classList.remove('hidden');
+        if (togglePreviewBtn) {
+            togglePreviewBtn.innerHTML = "👀"; // Icon to go to preview
+            togglePreviewBtn.title = "View Preview";
+            togglePreviewBtn.classList.remove('active');
+        }
+        els.textArea.focus();
+    }
+
+    // Helper: Show Preview
+    function showPreview(content) {
+        if (!previewDiv || !els.textArea) return;
+        const text = content !== undefined ? content : els.textArea.value;
+
+        // Reset first to avoid stale
+        previewDiv.innerHTML = '';
+
+        // Show container
+        els.textArea.classList.add('hidden');
+        previewDiv.classList.remove('hidden');
+
+        if (window.marked) {
+            try {
+                previewDiv.innerHTML = window.marked.parse(text);
+            } catch (err) {
+                console.error('Markdown parse error:', err);
+                previewDiv.textContent = text; // Fallback
+            }
+        } else {
+            previewDiv.style.whiteSpace = 'pre-wrap';
+            previewDiv.textContent = text;
+        }
+
+        if (togglePreviewBtn) {
+            togglePreviewBtn.innerHTML = "👨‍💻"; // Icon to go to code/edit
+            togglePreviewBtn.title = "Edit Raw Markdown";
+            togglePreviewBtn.classList.add('active');
+        }
+    }
+
+    if (previewDiv) {
+        // Enable Click-to-Edit
+        previewDiv.addEventListener('click', () => {
+            // Only switch if currently visible
+            if (!previewDiv.classList.contains('hidden')) {
+                showEditor();
+            }
+        });
+        // Improve cursor to indicate interactivity
+        previewDiv.style.cursor = 'text';
+    }
+
+    if (togglePreviewBtn) {
+        togglePreviewBtn.addEventListener('click', () => {
+            const isEditing = !els.textArea.classList.contains('hidden');
+            if (isEditing) {
+                showPreview();
+            } else {
+                showEditor();
+            }
+        });
+    }
 
     // Shortcuts
     document.addEventListener('keydown', (e) => {
@@ -596,6 +703,49 @@ function renderPromptList(prompts) {
     });
 }
 
+// Helper: Show Editor (Global)
+// eslint-disable-next-line no-unused-vars
+function showEditor() {
+    if (!els.previewDiv || !els.textArea) return;
+    els.previewDiv.classList.add('hidden');
+    els.textArea.classList.remove('hidden');
+    if (els.togglePreviewBtn) {
+        els.togglePreviewBtn.innerHTML = "👀";
+        els.togglePreviewBtn.title = "View Preview";
+        els.togglePreviewBtn.classList.remove('active');
+    }
+    els.textArea.focus();
+}
+
+// Helper: Show Preview (Global)
+function showPreview(content) {
+    if (!els.previewDiv || !els.textArea) return;
+    const text = content !== undefined ? content : els.textArea.value;
+
+    els.previewDiv.innerHTML = '';
+
+    els.textArea.classList.add('hidden');
+    els.previewDiv.classList.remove('hidden');
+
+    if (window.marked) {
+        try {
+            els.previewDiv.innerHTML = window.marked.parse(text);
+        } catch (err) {
+            console.error('Markdown parse error:', err);
+            els.previewDiv.textContent = text;
+        }
+    } else {
+        els.previewDiv.style.whiteSpace = 'pre-wrap';
+        els.previewDiv.textContent = text;
+    }
+
+    if (els.togglePreviewBtn) {
+        els.togglePreviewBtn.innerHTML = "👨‍💻";
+        els.togglePreviewBtn.title = "Edit Raw Markdown";
+        els.togglePreviewBtn.classList.add('active');
+    }
+}
+
 function selectPrompt(prompt) {
     currentPromptId = prompt.id;
     els.titleInput.value = prompt.title;
@@ -611,6 +761,14 @@ function selectPrompt(prompt) {
     document.querySelectorAll('.nav-item-prompt').forEach(el => el.classList.remove('active'));
     const item = document.querySelector(`.nav-item-prompt[data-id="${prompt.id}"]`);
     if (item) item.classList.add('active');
+
+    // Default to Preview
+    if (typeof showPreview === 'function') {
+        showPreview(els.textArea.value);
+    } else {
+        // Fallback if unavailable
+        els.textArea.classList.remove('hidden');
+    }
 }
 
 /**
@@ -655,8 +813,8 @@ async function savePrompt() {
         }
 
     } catch (err) {
-        console.error('Save error:', err);
-        alert('Failed to save.');
+        console.warn('Save operation failed (likely race condition):', err);
+        // User requested to suppress this popup: alert('Failed to save.');
     }
 }
 
@@ -664,11 +822,15 @@ function createNewPrompt() {
     currentPromptId = null;
     els.titleInput.value = '';
     els.textArea.value = '';
-    if (els.versionSelect) els.versionSelect.innerHTML = '';
-    updateStats();
-
-    document.querySelectorAll('.nav-item-prompt').forEach(el => el.classList.remove('active'));
-    els.titleInput.focus();
+    // Default to Editor Mode depending on previous logic, but let's enforce it here
+    const previewDiv = document.getElementById('markdown-preview');
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    if (previewDiv && togglePreviewBtn) {
+        previewDiv.classList.add('hidden');
+        els.textArea.classList.remove('hidden');
+        togglePreviewBtn.innerHTML = "👀";
+        togglePreviewBtn.classList.remove('active');
+    }
 }
 
 async function deletePrompt() {
@@ -846,7 +1008,7 @@ async function handleRefine(type) {
 
         const refined = await AIService.refinePrompt(inputCtx, type);
         if (refined) {
-            els.textArea.value = refined;
+            setPromptText(refined);
             await savePrompt(); // Save as new version
         }
     } catch (e) {
@@ -855,6 +1017,16 @@ async function handleRefine(type) {
         els.saveBtn.textContent = "Save";
         document.body.style.cursor = 'default';
         updateStats();
+    }
+}
+
+function setPromptText(text) {
+    els.textArea.value = text;
+
+    // Sync Preview if visible
+    const previewDiv = document.getElementById('markdown-preview');
+    if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+        previewDiv.innerHTML = window.marked.parse(text);
     }
 }
 

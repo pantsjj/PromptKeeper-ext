@@ -19,6 +19,11 @@ Save, organize, and optimize your AI prompts locally. Built-in Gemini Nano AI. G
 ```
 PromptKeeper is your private, local AI prompt engineering workspace—right in your browser.
 
+WHAT'S NEW IN v2.1.0
+• **Markdown Support**: Prompts now display as rich text (Bold, Lists, Headers). Click the text to edit instantly.
+• **Keyboard Shortcuts**: Use Cmd+B and Cmd+I to format your prompts faster.
+• **Stability**: Critical fixes for Side Panel loading and AI configuration.
+
 WHAT'S NEW IN v2.0.0
 • Side panel view so you can browse, edit, and paste prompts directly into Claude, Gemini, Perplexity, ChatGPT and other tabs without leaving the page.  
 • Full‑screen Prompt Management view for deep work, with live word count, AI tools, and Google Drive controls in the sidebar.  

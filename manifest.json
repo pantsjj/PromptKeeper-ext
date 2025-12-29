@@ -3,7 +3,8 @@
     "name": "PromptKeeper",
     "description": "Save, organize, and optimize AI prompts. Sync via Google Drive. Local AI with Gemini Nano. Side Panel for easy paste-to-page.",
     "author": "Jaroslav Pantsjoha",
-    "version": "2.0.0",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtIvVYJT/bebjYKUIUh7vJ8OLj46ww2RlOhAcJ8XLdbDbGkVD1imGcPriZsWFhN6J1rCuf8AhbyF2Kq2iY13WAQtKCtE4ZV9mEFhk48yFMzZpasjwgmgFpuuU1Rp2y7ZeClgL9h2xbhvS6o+k+gRwFNcwGvseN1MQkGXs0YmJ3IQKxz5bAG+nALGib0pHNE2vhkjjeFbb7SpKMsaPeK1AsWPU5i3/0gnt4ogUYlomK9DU+lDLjJtye/3SG48QeYb9A80an+k4zbJN0RrJhAdd9uwzKjrhMbBcF6S7rjSmwyuaGnMn41CEMTDF6X4l0Ez+HGy243NGA5ggQWzr5NeJdQIDAQAB",
+    "version": "2.1.0",
     "action": {
         "default_title": "PromptKeeper - Click to open Side Panel",
         "default_icon": {
