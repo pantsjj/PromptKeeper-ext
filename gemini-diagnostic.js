@@ -58,8 +58,8 @@ async function checkGlobals() {
     log('res-globals', msg, statusType);
 }
 
-async function checkCapabilities() {
-    log('res-caps', "Checking capabilities...", "warn");
+async function checkFeatureSupport() {
+    log('res-caps', "Checking feature support...", "warn");
     let msg = "";
 
     // 1. Prompt API
@@ -73,7 +73,6 @@ async function checkCapabilities() {
                 const caps = await window.LanguageModel.capabilities();
                 promptStatus = `LanguageModel.caps: ${caps.available}`;
             } else if (window.LanguageModel.availability) {
-                // Spec style
                 const avail = await window.LanguageModel.availability();
                 promptStatus = `LanguageModel.avail: ${avail}`;
             } else {
@@ -81,45 +80,26 @@ async function checkCapabilities() {
             }
         }
     } catch (e) { promptStatus = `Error: ${e.message}`; }
-
-    msg += `Prompt API: ${promptStatus}\n`;
+    msg += `<b>Prompt API:</b> ${promptStatus}\n`;
 
     // 2. Rewriter API
     let rewriterStatus = "Missing";
     if (window.ai && window.ai.rewriter) rewriterStatus = "window.ai.rewriter";
     if (window.Rewriter) rewriterStatus = "window.Rewriter";
+    msg += `<b>Rewriter API:</b> ${rewriterStatus}\n`;
 
-    msg += `Rewriter API: ${rewriterStatus}`;
+    // 3. Summarizer API
+    let summarizerStatus = "Missing";
+    if (window.ai && window.ai.summarizer) summarizerStatus = "window.ai.summarizer";
+    if (window.Summarizer) summarizerStatus = "window.Summarizer";
+    msg += `<b>Summarizer API:</b> ${summarizerStatus}`;
 
     const type = msg.toLowerCase().includes("readily") || msg.toLowerCase().includes("available") ? "success" : "warn";
     log('res-caps', msg, type);
 }
 
-async function checkRewriter() {
-    log('res-rewriter', "Checking Rewriter...", "warn");
-
-    if (!window.Rewriter && (!window.ai || !window.ai.rewriter)) {
-        return log('res-rewriter', "❌ Rewriter API missing.", "error");
-    }
-
-    try {
-        let rewriter;
-        if (window.Rewriter) {
-            rewriter = await window.Rewriter.create();
-        } else {
-            rewriter = await window.ai.rewriter.create();
-        }
-
-        const result = await rewriter.rewrite("This is a sloppy sentence.");
-        log('res-rewriter', `✅ Success! Output: "${result}"`, "success");
-        rewriter.destroy();
-    } catch (e) {
-        log('res-rewriter', `❌ Error: ${e.message}`, "error");
-    }
-}
-
-async function runTest() {
-    log('res-test', "Creating session...", "warn");
+async function runPromptTest() {
+    log('res-test-prompt', "Creating session...", "warn");
     try {
         let session;
         if (window.ai && window.ai.languageModel) {
@@ -128,22 +108,72 @@ async function runTest() {
             session = await window.LanguageModel.create();
         }
 
-        if (!session) return log('res-test', "API Missing - Cannot create session.", "error");
+        if (!session) return log('res-test-prompt', "API Missing - Cannot create session.", "error");
 
-        log('res-test', "Session created. Generating...", "warn");
+        log('res-test-prompt', "Session created. Generating...", "warn");
         const response = await session.prompt("Say hello!");
-        log('res-test', `✅ Success! Output: "${response}"`, "success");
+        log('res-test-prompt', `✅ Success! Output: "${response}"`, "success");
         session.destroy();
     } catch (err) {
-        log('res-test', `❌ Generation Failed: ${err.message}`, "error");
+        log('res-test-prompt', `❌ Generation Failed: ${err.message}`, "error");
+    }
+}
+
+async function runRewriterTest() {
+    log('res-test-rewriter', "Checking Rewriter...", "warn");
+
+    if (!window.Rewriter && (!window.ai || !window.ai.rewriter)) {
+        return log('res-test-rewriter', "❌ Rewriter API missing.", "error");
+    }
+
+    try {
+        let rewriter;
+        if (window.Rewriter) {
+            // Create with minimal options if needed, or default
+            rewriter = await window.Rewriter.create();
+        } else {
+            rewriter = await window.ai.rewriter.create();
+        }
+
+        const result = await rewriter.rewrite("This is a sloppy sentence.");
+        log('res-test-rewriter', `✅ Success! Output: "${result}"`, "success");
+        rewriter.destroy();
+    } catch (e) {
+        log('res-test-rewriter', `❌ Error: ${e.message}`, "error");
+    }
+}
+
+async function runSummarizerTest() {
+    log('res-test-summarizer', "Checking Summarizer...", "warn");
+
+    if (!window.Summarizer && (!window.ai || !window.ai.summarizer)) {
+        return log('res-test-summarizer', "❌ Summarizer API missing.", "error");
+    }
+
+    try {
+        let summarizer;
+        if (window.Summarizer) {
+            summarizer = await window.Summarizer.create();
+        } else {
+            summarizer = await window.ai.summarizer.create();
+        }
+
+        const input = "Gemini is a family of multimodal AI models developed by Google. It is designed to be efficient and runs on-device.";
+        const result = await summarizer.summarize(input);
+        log('res-test-summarizer', `✅ Success! Output: "${result}"`, "success");
+        summarizer.destroy();
+    } catch (e) {
+        log('res-test-summarizer', `❌ Error: ${e.message}`, "error");
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-globals').addEventListener('click', checkGlobals);
-    document.getElementById('btn-caps').addEventListener('click', checkCapabilities);
-    document.getElementById('btn-rewriter').addEventListener('click', checkRewriter);
-    document.getElementById('btn-test').addEventListener('click', runTest);
+    document.getElementById('btn-caps').addEventListener('click', checkFeatureSupport);
+
+    document.getElementById('btn-test-prompt').addEventListener('click', runPromptTest);
+    document.getElementById('btn-test-rewriter').addEventListener('click', runRewriterTest);
+    document.getElementById('btn-test-summarizer').addEventListener('click', runSummarizerTest);
 
     // Auto-run globals check
     checkGlobals();
