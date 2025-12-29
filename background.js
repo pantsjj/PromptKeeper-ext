@@ -112,20 +112,24 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
           ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
           : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
-        const uploadRes = await fetch(uploadUrl, {
-          method: fileId ? 'PATCH' : 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': `multipart/related; boundary=${boundary}`
-          },
-          body: body
-        });
+        try {
+          const uploadRes = await fetch(uploadUrl, {
+            method: fileId ? 'PATCH' : 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': `multipart/related; boundary=${boundary}`
+            },
+            body: body
+          });
 
-        if (uploadRes.ok) {
-          await chrome.storage.local.set({ lastBackupTime: backupData.timestamp });
-          console.log('[Background] Auto-backup completed at', backupData.timestamp);
-        } else {
-          console.error('[Background] Auto-backup failed:', uploadRes.statusText);
+          if (uploadRes.ok) {
+            await chrome.storage.local.set({ lastBackupTime: backupData.timestamp });
+            console.log('[Background] Auto-backup completed at', backupData.timestamp);
+          } else {
+            console.error('[Background] Auto-backup failed:', uploadRes.statusText);
+          }
+        } catch (netErr) {
+          console.warn('[Background] Auto-backup network error:', netErr.message);
         }
       });
     } catch (err) {
