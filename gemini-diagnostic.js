@@ -62,45 +62,60 @@ async function checkCapabilities() {
     log('res-caps', "Checking capabilities...", "warn");
     let msg = "";
 
-    // 1. Prompt API (window.ai.languageModel or window.LanguageModel)
+    // 1. Prompt API
     let promptStatus = "Missing";
-
     try {
         if (window.ai && window.ai.languageModel) {
             const caps = await window.ai.languageModel.capabilities();
-            promptStatus = `window.ai.languageModel: ${caps.available}`;
+            promptStatus = `window.ai: ${caps.available}`;
         } else if (window.LanguageModel) {
-            // Spec might use capabilities() or availability()
             if (window.LanguageModel.capabilities) {
                 const caps = await window.LanguageModel.capabilities();
-                promptStatus = `window.LanguageModel: ${caps.available}`;
+                promptStatus = `LanguageModel.caps: ${caps.available}`;
+            } else if (window.LanguageModel.availability) {
+                // Spec style
+                const avail = await window.LanguageModel.availability();
+                promptStatus = `LanguageModel.avail: ${avail}`;
             } else {
-                promptStatus = `window.LanguageModel (Caps unknown)`;
+                promptStatus = `LanguageModel (exists)`;
             }
         }
     } catch (e) { promptStatus = `Error: ${e.message}`; }
 
     msg += `Prompt API: ${promptStatus}\n`;
 
-    // 2. Rewriter API (window.ai.rewriter or window.Rewriter)
+    // 2. Rewriter API
     let rewriterStatus = "Missing";
-    try {
-        if (window.ai && window.ai.rewriter) {
-            rewriterStatus = "window.ai.rewriter: Present";
-        } else if (window.Rewriter) {
-            rewriterStatus = "window.Rewriter: Present";
-        }
-    } catch (e) { rewriterStatus = `Error: ${e.message}`; }
+    if (window.ai && window.ai.rewriter) rewriterStatus = "window.ai.rewriter";
+    if (window.Rewriter) rewriterStatus = "window.Rewriter";
 
     msg += `Rewriter API: ${rewriterStatus}`;
 
-    const type = msg.includes("readily") || msg.includes("Present") ? "success" : "warn";
+    const type = msg.toLowerCase().includes("readily") || msg.toLowerCase().includes("available") ? "success" : "warn";
     log('res-caps', msg, type);
 }
 
 async function checkRewriter() {
-    // Legacy button handler, now integrated into capabilities but kept for button
-    await checkCapabilities();
+    log('res-rewriter', "Checking Rewriter...", "warn");
+
+    if (!window.Rewriter && (!window.ai || !window.ai.rewriter)) {
+        return log('res-rewriter', "❌ Rewriter API missing.", "error");
+    }
+
+    try {
+        let rewriter;
+        if (window.Rewriter) {
+            rewriter = await window.Rewriter.create();
+        } else {
+            rewriter = await window.ai.rewriter.create();
+        }
+
+        const result = await rewriter.rewrite("This is a sloppy sentence.");
+        log('res-rewriter', `✅ Success! Output: "${result}"`, "success");
+        rewriter.destroy();
+    } catch (e) {
+        log('res-rewriter', `❌ Error: ${e.message}`, "error");
+    }
 }
 
 async function runTest() {
