@@ -1,7 +1,6 @@
 import StorageService from './services/StorageService.js';
 import GoogleDriveService from './services/GoogleDriveService.js';
-// Note: AI features removed from popup - Gemini Nano doesn't work in extension popups
-// AI features are available in the full-page Manage Prompts screen (options.html)
+import AIService from './services/AIService.js';
 
 let currentPromptId = null;
 
@@ -15,6 +14,7 @@ function init() {
     loadWorkspaces(); // Load workspace list
     loadPrompts();
     initGoogleDrive(); // Check Drive auth state
+    checkAIAvailability(); // Check if AI buttons should be shown
 
     // Real-time updates when storage changes (e.g., after restore from Google Drive)
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -67,6 +67,11 @@ function bindElements() {
     els.addProjectBtn = document.getElementById('add-project-btn');
     els.addPromptBtnSidebar = document.getElementById('add-prompt-btn-sidebar');
     els.workspaceList = document.getElementById('workspace-list');
+
+    // AI Elements
+    els.aiRow = document.getElementById('ai-buttons-row');
+    els.magicBtn = document.getElementById('magic-btn');
+    els.clarityBtn = document.getElementById('clarity-btn');
 }
 
 function setupListeners() {
@@ -769,3 +774,65 @@ async function handleRestoreFromDrive() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/**
+ * AI Logic
+ */
+async function checkAIAvailability() {
+    if (!els.aiRow) return;
+
+    try {
+        const status = await AIService.getAvailability();
+        // User requested: "only if built in AI API is Green and available"
+        if (status === 'readily' || status === 'available') {
+            els.aiRow.classList.remove('hidden');
+            setupAIListeners();
+        } else {
+            els.aiRow.classList.add('hidden');
+        }
+    } catch (e) {
+        console.warn('[Popup] AI check failed:', e);
+        els.aiRow.classList.add('hidden');
+    }
+}
+
+function setupAIListeners() {
+    // Avoid double binding
+    if (els.magicBtn.dataset.bound) return;
+
+    // Magic Enhance
+    els.magicBtn.addEventListener('click', () => handleAI('magic_enhance'));
+    // Improve Clarity
+    els.clarityBtn.addEventListener('click', () => handleAI('clarify'));
+
+    els.magicBtn.dataset.bound = true;
+}
+
+async function handleAI(type) {
+    const text = els.textArea.value.trim();
+    if (!text) return alert("Please enter some text to optimize.");
+
+    // Visual feedback
+    const btn = type === 'magic_enhance' ? els.magicBtn : els.clarityBtn;
+    const originalText = btn.textContent;
+    btn.textContent = "Processing...";
+    btn.disabled = true;
+    document.body.style.cursor = 'wait';
+
+    try {
+        const refined = await AIService.refinePrompt(text, type);
+        if (refined) {
+            els.textArea.value = refined;
+            // Pulse effect to show change
+            els.textArea.classList.add('pulse-green');
+            setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
+            updateStats();
+        }
+    } catch (e) {
+        alert("AI Optimization failed: " + e.message);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        document.body.style.cursor = 'default';
+    }
+}

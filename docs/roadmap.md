@@ -53,6 +53,7 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
     *   **"Magic Enhance"**: Extracts intent from rough notes and formats it (Prompt API).
     *   **"Professional Polish"**: Rewrites for business context (Rewriter API).
 *   [x] **Model Management**: Diagnostic "Traffic Light" UI and Helper Guides for model availability.
+*   [x] **Side Panel Integration**: AI buttons available directly in the quick-edit side panel.
 
 ## Phase 3.5: Offscreen Document for AI Access
 *Goal: Workaround Chrome's limitation where `window.ai` is not available in extension contexts.*
@@ -63,43 +64,18 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [x] **AIService Refactor**: Updated to use message passing instead of direct `window.ai` access.
 *   [x] **Manifest Updates**: Added `offscreen` permission and `background.service_worker` configuration.
 
-**Technical Note**: Chrome only exposes `window.ai` to web page contexts, not extension contexts (popup, options, background). This phase implements the official workaround using Offscreen Documents (Chrome 109+).
+## Phase 6: Editor Experience (New)
+*Goal: Improve the writing and reading experience for complex prompts.*
 
-**Documentation**: See [`docs/phases/phase-3.5-offscreen-document.md`](file:///Users/jp/Library/Mobile%20Documents/com~apple~CloudDocs/Documents/workspaces/PromptKeeper-ext/docs/phases/phase-3.5-offscreen-document.md)
-
----
-
-## Phase 4: Workspaces & Context Management
-*Goal: Structure and coherency through "Project" grouping and shared grounding.*
-
-*   [x] **Project Workspaces**: Group prompts into specific "Projects" (e.g., "Work Image Gen", "Professional Dev").
-*   [x] **System Grounding (Shared Context)**:
-    *   Define a "System Prompt" or "Base Context" at the project level (e.g., "You are a senior brand strategist ensuring consistency with [Brand Guidelines]").
-    *   This grounding context is automatically applied when optimizing prompts within the project or provided as context to the AI model.
-*   [x] **Variable Support**: Support `{{variable_name}}` syntax. (Note: Implemented via manual edit/refine flow for now).
-*   [x] **Tagging System**: Filter prompts by tags. (Covered by Project grouping).
-*   [x] **Export/Import**: JSON export/import for backup or sharing.
-
-## Phase 5: Google Drive Backup & Sync
-*Goal: Enable cross-device access and automatic backup to user's Google account.*
-
-*   [x] **Google Sign-In**: Authenticate users via Chrome Identity API.
-*   [x] **Automatic Backup**: Upload prompts to Google Drive AppData folder on every save.
-*   [x] **Cross-Device Sync**: Download and merge prompts when signing in on a new device.
-*   [x] **Conflict Resolution**: Handle edits made on multiple devices (Last Write Wins strategy).
-*   [x] **Auto-Sync**: Background sync every 5 minutes when changes detected.
-*   [x] **Sync Status UI**: Visual indicators showing sync state and last sync time.
-*   [x] **Opt-Out Support**: Users can remain in local-only mode if preferred.
-
-**Target Version**: v2.0.0 (Released)
-**Estimated Effort**: Completed
-**Documentation**: See [`docs/phases/phase-5-google-drive-sync.md`](file:///Users/jp/Library/Mobile%20Documents/com~apple~CloudDocs/Documents/workspaces/PromptKeeper-ext/docs/phases/phase-5-google-drive-sync.md)
+*   [ ] **Markdown Support**:
+    *   Render specific markdown elements (Bold, Italic, Code Blocks, Lists) in the editor for readability.
+    *   Implement "Strip Markdown" on paste to allow pasting clean text into web forms.
+    *   *Documentation*: See `docs/issues/ISSUE-005-markdown-support.md`.
 
 ---
 
 ## Future Scope / Experimental
 *   **"Score" Action**: Analyze prompts against the 4 Pillars. (Deferred: Gemini Nano lacks sufficient reasoning capability for objective scoring).
-*   **"Image Gen Preset"**: Optimizes for visual models. (Deferred: Requires larger model knowledge base).
 *   **Dynamic Variable Injection**: Form-based filling of `{{variables}}`.
 *   **Diff View**: Visual text comparison between revisions.
 
@@ -107,4 +83,5 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   **Trust**: User data never leaves the device.
 *   **Performance**: AI operations take < 2 seconds (after model load).
 *   **Utility**: Users can "Time Travel" through their prompt versions.
+
 

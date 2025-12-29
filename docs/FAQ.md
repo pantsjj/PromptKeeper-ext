@@ -7,6 +7,12 @@ A: Your prompts are stored **locally** on your device using Chrome's persistent 
 **Q: Is the AI running on my computer?**
 A: Yes! Smart Refinement features use **Gemini Nano**, which runs directly inside your Chrome browser. This ensures zero latency and complete privacy—your text never leaves your machine for processing.
 
+**Q: What AI tools are available?**
+A: When enabled, you get access to local AI tools:
+- **Manage Page**: Magic Enhance, Formalize, Improve Clarity, Shorten.
+- **Side Panel**: Magic Optimize, Improve Clarity.
+These buttons appear automatically when the AI is ready (Green status).
+
 ## Workspaces & Organization
 **Q: How do "Smart Workspaces" work?**
 A: Workspaces help you group prompts. If you delete a workspace, PromptKeeper uses "Smart Delete"—your prompts are **not** deleted. Instead, they are moved to "All Prompts" and tagged with the workspace name. If you create the workspace again later, they will automatically reappear!

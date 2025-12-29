@@ -97,7 +97,7 @@ async function getDetailedStatus() {
  * Get diagnostic string
  */
 async function getDiagnostic() {
-    if (!window.ai) return "API_MISSING (window.ai is undefined)";
+    if (!window.ai && !window.LanguageModel) return "API_MISSING (window.ai & LanguageModel undefined)";
 
     let diag = "";
 

@@ -9,6 +9,9 @@ describe('AIService with Offscreen', () => {
                 lastError: null
             }
         };
+        // Force offscreen/bridge path by disabling local detection
+        delete global.window.LanguageModel;
+        delete global.window.ai;
     });
 
     afterEach(() => {
@@ -51,7 +54,7 @@ describe('AIService with Offscreen', () => {
         });
 
         const diag = await AIService.getDiagnostic();
-        expect(diag).toBe('PromptAPI:readily');
+        expect(diag).toBe(' | Offscreen: PromptAPI:readily');
     });
 
     test('getDetailedStatus returns status object', async () => {

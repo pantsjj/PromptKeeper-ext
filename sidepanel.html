@@ -549,7 +549,11 @@
             font-size: 10px;
             cursor: pointer;
             padding: 0;
-            max-width: 80px;
+            max-width: 120px;
+            /* Widened from 80px to fit dates */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* Responsive: Hide sidebar completely at very narrow widths */
@@ -655,6 +659,17 @@
                     <button id="save-button">Save</button>
                     <button id="delete-prompt-button">Delete</button>
                     <button id="paste-prompt-button">Paste-to-Page</button>
+                </div>
+
+                <!-- AI Buttons (Hidden by default) -->
+                <div id="ai-buttons-row" class="editor-buttons hidden"
+                    style="margin-top: 8px; border-top: 1px dashed var(--border-color); padding-top: 12px;">
+                    <button id="magic-btn"
+                        style="background: linear-gradient(135deg, #34c759, #30b350); color: white; border: none;">✨
+                        Magic Optimize</button>
+                    <button id="clarity-btn"
+                        style="background: var(--bg-color); border: 1px solid var(--border-color);">🔍 Improve
+                        Clarity</button>
                 </div>
             </div>
         </div>

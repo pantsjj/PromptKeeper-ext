@@ -252,35 +252,7 @@ function setupEventListeners() {
         if (typeof shouldShow === 'undefined') {
             try {
                 const status = await AIService.getAvailability();
-                if (status === 'readily' || status === 'after-download') {
-                    console.log('[Auto-Toggle] AI Available, enabling panel by default.');
-                    shouldShow = true;
-                    chrome.storage.local.set({ aiPanelVisible: true });
-                }
-            } catch (e) {
-                console.warn('[Auto-Toggle] Failed to check status:', e);
-            }
-        }
-
-        if (shouldShow) {
-            aiPanel.classList.remove('hidden');
-        } else {
-            aiPanel.classList.add('hidden');
-        }
-    });
-
-    // Restore AI Panel State (or Auto-Enable)
-    chrome.storage.local.get(['aiPanelVisible'], async (result) => {
-        const aiPanel = document.getElementById('ai-tools-panel');
-        if (!aiPanel) return;
-
-        let shouldShow = result.aiPanelVisible;
-
-        // Auto-Enable if undefined (first run) and AI is ready
-        if (typeof shouldShow === 'undefined') {
-            try {
-                const status = await AIService.getAvailability();
-                if (status === 'readily' || status === 'after-download') {
+                if (status === 'readily' || status === 'available' || status === 'after-download') {
                     console.log('[Auto-Toggle] AI Available, enabling panel by default.');
                     shouldShow = true;
                     chrome.storage.local.set({ aiPanelVisible: true });
@@ -716,6 +688,9 @@ function updateStats() {
     els.wordCount.textContent = `Words: ${words}`;
     els.charCount.textContent = `Chars: ${text.length}`;
 
+    // Sync footer stats
+    updateFooterStats();
+
     if (currentPromptId) {
         StorageService.getPrompts().then(prompts => {
             const p = prompts.find(x => x.id === currentPromptId);
@@ -890,13 +865,16 @@ async function checkAIStatus() {
     try {
         const status = await AIService.getAvailability();
 
-        if (status === 'readily') {
+        if (status === 'readily' || status === 'available') {
             els.aiStatus.textContent = "✅ GEMINI ENABLED";
             els.aiStatus.style.color = "var(--primary-color)";
-        } else if (status === 'after-download') {
+            els.refineBtns.forEach(b => b.disabled = false);
+        } else if (status === 'after-download' || status === 'downloading') {
             els.aiStatus.textContent = "⬇️ Downloading Model...";
             els.aiStatus.style.color = "#f9ab00";
+            els.refineBtns.forEach(b => b.disabled = true);
         } else {
+            // ...
             const diag = await AIService.getDiagnostic();
             const helpUrl = chrome.runtime.getURL('gemini-help.html');
             const diagUrl = chrome.runtime.getURL('gemini-diagnostic.html');
@@ -977,15 +955,20 @@ async function updateFooterStatusDots() {
         const statuses = await AIService.getDetailedStatus();
 
         // Prompt API dot
+        const isPromptReady = statuses.prompt === 'readily' || statuses.prompt === 'available';
+        const isPromptDownload = statuses.prompt === 'after-download' || statuses.prompt === 'downloading';
+
         const dot1 = document.createElement('div');
-        dot1.className = `status-dot ${statuses.prompt === 'readily' ? '' : statuses.prompt === 'after-download' ? 'warning' : 'error'}`;
+        dot1.className = `status-dot ${isPromptReady ? '' : isPromptDownload ? 'warning' : 'error'}`;
         dot1.title = `Prompt API: ${statuses.prompt}`;
         dot1.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot1);
 
         // Rewriter API dot
+        const isRewriterReady = statuses.rewriter === 'readily' || statuses.rewriter === 'available';
+
         const dot2 = document.createElement('div');
-        dot2.className = `status-dot ${statuses.rewriter === 'readily' ? '' : statuses.rewriter === 'after-download' ? 'warning' : 'error'}`;
+        dot2.className = `status-dot ${isRewriterReady ? '' : 'error'}`;
         dot2.title = `Rewriter API: ${statuses.rewriter}`;
         dot2.style.cursor = 'help';
         els.footerStatusDots.appendChild(dot2);
