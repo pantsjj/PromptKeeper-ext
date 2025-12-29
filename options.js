@@ -750,7 +750,7 @@ function renderHistoryDropdown(prompt) {
     // Add placeholder if no prompt
     if (!prompt || !prompt.versions || prompt.versions.length === 0) {
         const option = document.createElement('option');
-        option.textContent = 'v1: 06/12/2025 (Curr)';
+        option.textContent = 'v1: 06/12/2025 (Current)';
         els.versionSelect.appendChild(option);
         return;
     }
@@ -765,7 +765,7 @@ function renderHistoryDropdown(prompt) {
         const isCurrent = v.id === prompt.currentVersionId;
         const dateStr = new Date(v.timestamp).toLocaleDateString();
 
-        option.textContent = `v${verNum}: ${dateStr} ${isCurrent ? '(Curr)' : ''}`;
+        option.textContent = `v${verNum}: ${dateStr} ${isCurrent ? '(Current)' : ''}`;
         if (isCurrent) option.selected = true;
         els.versionSelect.appendChild(option);
     });
