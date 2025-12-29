@@ -649,9 +649,16 @@
                     <input type="text" id="prompt-title" placeholder="Enter Prompt Title">
                 </div>
 
-                <div style="flex: 1; display: flex; flex-direction: column;">
-                    <label for="prompt-text">Prompt Text</label>
-                    <textarea id="prompt-text" placeholder="Write your prompt here..."></textarea>
+                <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <label for="prompt-text" style="margin-bottom:0;">Prompt Text</label>
+                        <button id="toggle-preview-btn" class="icon-btn toolbar-btn"
+                            style="font-size:12px; padding:2px 6px; border:1px solid var(--border-color); border-radius:4px;"
+                            title="Toggle Preview">👀</button>
+                    </div>
+                    <textarea id="prompt-text" class="text-area" placeholder="Write your prompt here..."></textarea>
+                    <div id="markdown-preview" class="markdown-preview hidden"
+                        style="flex:1; min-height:150px; overflow-y:auto;"></div>
                 </div>
 
                 <div class="editor-buttons">
@@ -695,6 +702,7 @@
         <input type="file" id="import-file" accept=".json" style="display: none;">
     </footer>
 
+    <script src="libs/marked.min.js"></script>
     <script src="popup.js" type="module"></script>
 
 </body>

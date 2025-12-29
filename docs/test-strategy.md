@@ -107,6 +107,15 @@ All E2E specs live in `tests/e2e/` and run against a real Chromium instance with
 - **`smoke.spec.js`**
   - Extension loads successfully and popup opens without runtime errors.
 
+### 3.5 Markdown Rendering Checks
+- **`markdown.spec.js`**
+  - Toggle between Edit and Preview modes in Options and Side Panel.
+  - Verify rendering of headers, bold, etc.
+- **`sidepanel_markdown.spec.js`**
+  - Verify markdown loads correctly in the Side Panel (regression).
+- **`repro_stale_preview.spec.js`**
+  - Verify preview content updates immediately when switching prompts.
+
 ---
 
 ## 4. Gaps & Manual Checks

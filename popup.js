@@ -138,6 +138,18 @@ function setupListeners() {
         els.titleInput.value = '';
         els.textArea.value = '';
         clearStats();
+
+        // Force Edit Mode
+        const previewDiv = document.getElementById('markdown-preview');
+        const toggleBtn = document.getElementById('toggle-preview-btn');
+        if (previewDiv && toggleBtn) {
+            els.textArea.classList.remove('hidden');
+            previewDiv.classList.add('hidden');
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = "👀";
+            toggleBtn.title = "View Preview";
+        }
+
         // Also scroll to top of editor if needed or focus title
         if (els.titleInput) els.titleInput.focus();
     };
@@ -163,10 +175,57 @@ function setupListeners() {
         }
     });
 
-    // Paste
+    // Formatting Shortcuts (Cmd+B, Cmd+I)
+    els.textArea.addEventListener('keydown', (e) => {
+        if (e.metaKey || e.ctrlKey) {
+            const start = els.textArea.selectionStart;
+            const end = els.textArea.selectionEnd;
+            const text = els.textArea.value;
+            let inserted = false;
+
+            if (e.key === 'b') { // Bold
+                e.preventDefault();
+                const selection = text.substring(start, end);
+                const replacement = `**${selection}**`;
+                els.textArea.setRangeText(replacement, start, end, 'select');
+                inserted = true;
+            } else if (e.key === 'i') { // Italic
+                e.preventDefault();
+                const selection = text.substring(start, end);
+                const replacement = `*${selection}*`;
+                els.textArea.setRangeText(replacement, start, end, 'select');
+                inserted = true;
+            }
+
+            if (inserted) {
+                // Sync preview immediately
+                if (typeof setPromptText === 'function') {
+                    setPromptText(els.textArea.value);
+                }
+                updateStats();
+            }
+        }
+    });
+
+    // Paste (Strip Markdown)
     els.pasteBtn.addEventListener('click', () => {
-        const text = els.textArea.value.trim();
-        if (!text) return;
+        const rawText = els.textArea.value.trim();
+        if (!rawText) return;
+
+        // Strip Markdown
+        let cleanText = rawText;
+        try {
+            if (window.marked) {
+                // Parse to HTML
+                const html = window.marked.parse(rawText);
+                // Create temp element to extract textContent
+                const tempDir = document.createElement('div');
+                tempDir.innerHTML = html;
+                cleanText = tempDir.textContent || tempDir.innerText || "";
+            }
+        } catch (e) {
+            console.warn("Markdown stripping failed, using raw text", e);
+        }
 
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (!tabs[0] || tabs[0].url.startsWith('chrome://')) {
@@ -176,7 +235,7 @@ function setupListeners() {
 
             const tabId = tabs[0].id;
 
-            chrome.tabs.sendMessage(tabId, { action: "pastePrompt", text: text }, (response) => {
+            chrome.tabs.sendMessage(tabId, { action: "pastePrompt", text: cleanText }, (response) => {
                 if (chrome.runtime.lastError || (response && response.status !== 'success')) {
                     // Inject and retry
                     chrome.scripting.executeScript({
@@ -184,7 +243,7 @@ function setupListeners() {
                         files: ['contentScript.js']
                     }, () => {
                         if (chrome.runtime.lastError) return;
-                        chrome.tabs.sendMessage(tabId, { action: "pastePrompt", text: text });
+                        chrome.tabs.sendMessage(tabId, { action: "pastePrompt", text: cleanText });
                     });
                 }
             });
@@ -200,6 +259,56 @@ function setupListeners() {
             window.open(chrome.runtime.getURL('options.html'));
         }
     });
+
+    // Markdown Preview Toggle
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    const previewDiv = document.getElementById('markdown-preview');
+
+    if (togglePreviewBtn && previewDiv) {
+        // Enable Click-to-Edit
+        previewDiv.addEventListener('click', () => {
+            if (!previewDiv.classList.contains('hidden')) {
+                // Switch to Edit Mode
+                previewDiv.classList.add('hidden');
+                els.textArea.classList.remove('hidden');
+
+                togglePreviewBtn.classList.remove('active');
+                togglePreviewBtn.innerHTML = "👀";
+                togglePreviewBtn.title = "View Preview";
+
+                els.textArea.focus();
+            }
+        });
+        previewDiv.style.cursor = 'text'; // Visual cue
+
+        togglePreviewBtn.addEventListener('click', () => {
+            const isEditing = !els.textArea.classList.contains('hidden');
+
+            if (isEditing) {
+                // Switch to Preview
+                els.textArea.classList.add('hidden');
+                previewDiv.classList.remove('hidden');
+
+                // Render Markdown
+                const raw = els.textArea.value;
+                previewDiv.innerHTML = window.marked ? window.marked.parse(raw) : raw;
+
+                togglePreviewBtn.classList.add('active');
+                togglePreviewBtn.innerHTML = "👨‍💻"; // Code icon
+                togglePreviewBtn.title = "Edit Raw Markdown";
+            } else {
+                // Switch to Edit
+                previewDiv.classList.add('hidden');
+                els.textArea.classList.remove('hidden');
+
+                togglePreviewBtn.classList.remove('active');
+                togglePreviewBtn.innerHTML = "👀";
+                togglePreviewBtn.title = "View Preview";
+
+                els.textArea.focus();
+            }
+        });
+    }
 
     // Backup/Restore (Google Drive)
     if (els.backupLink) {
@@ -346,7 +455,7 @@ async function loadWorkspaces() {
     const projects = await StorageService.getProjects();
 
     // Clear all except "All Prompts"
-    const allPromptsItem = els.workspaceList.querySelector('[data-id="all"]');
+    // const allPromptsItem = els.workspaceList.querySelector('[data-id="all"]'); // Removed unused
     els.workspaceList.innerHTML = '';
 
     // Re-add "All Prompts" at top
@@ -532,8 +641,18 @@ function selectPrompt(prompt) {
     const items = els.promptList.querySelectorAll('.prompt-entry');
     items.forEach(i => i.classList.remove('active'));
 
-    const activeItem = els.promptList.querySelector(`.prompt-entry[data-id="${prompt.id}"]`);
-    if (activeItem) activeItem.classList.add('active');
+    // Default to Preview Mode
+    const previewDiv = document.getElementById('markdown-preview');
+    const toggleBtn = document.getElementById('toggle-preview-btn');
+    if (previewDiv && toggleBtn) {
+        els.textArea.classList.add('hidden');
+        previewDiv.classList.remove('hidden');
+        const raw = els.textArea.value;
+        previewDiv.innerHTML = window.marked ? window.marked.parse(raw) : raw;
+
+        toggleBtn.innerHTML = "👨‍💻";
+        toggleBtn.classList.add('active');
+    }
 }
 
 function renderVersionSelector(prompt) {
@@ -822,17 +941,29 @@ async function handleAI(type) {
     try {
         const refined = await AIService.refinePrompt(text, type);
         if (refined) {
-            els.textArea.value = refined;
+            setPromptText(refined);
             // Pulse effect to show change
             els.textArea.classList.add('pulse-green');
             setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
             updateStats();
         }
     } catch (e) {
-        alert("AI Optimization failed: " + e.message);
+        console.error("AI Refine Error:", e);
+        alert("Optimization failed: " + e.message);
     } finally {
         btn.textContent = originalText;
         btn.disabled = false;
         document.body.style.cursor = 'default';
+        delete els.magicBtn.dataset.bound; // Allow re-bind if needed? No, actually remove this line, logic is fine.
+    }
+}
+
+function setPromptText(text) {
+    els.textArea.value = text;
+
+    // Sync Preview if visible
+    const previewDiv = document.getElementById('markdown-preview');
+    if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+        previewDiv.innerHTML = window.marked.parse(text);
     }
 }

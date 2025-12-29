@@ -482,15 +482,25 @@
             <div id="editor-toolbar">
                 <input type="text" id="prompt-title-input" placeholder="Untitled Prompt">
                 <div style="display:flex; gap:8px; align-items: center;">
+
+                    <!-- Markdown Controls -->
+                    <div
+                        style="display:flex; gap:4px; align-items:center; margin-right:8px; border-right:1px solid var(--border-color); padding-right:12px;">
+                        <button id="toggle-preview-btn" class="secondary-btn icon-btn toolbar-btn"
+                            title="Toggle Markdown Preview">👁️</button>
+                    </div>
+
                     <button id="delete-btn" class="secondary-btn"
                         style="color: #ff3b30; border-color: #ff3b3030;">Delete</button>
                     <button id="save-btn" class="primary-btn">Save</button>
                 </div>
             </div>
             <div id="editor-content">
-                <textarea id="prompt-text-area" placeholder="Write your prompt here..."></textarea>
+                <textarea id="prompt-text-area" class="text-area" placeholder="Write your prompt here..."></textarea>
+                <div id="markdown-preview" class="markdown-preview hidden"></div>
             </div>
         </div>
+        <script src="libs/marked.min.js"></script>
 
         <!-- RIGHT SIDEBAR -->
         <div id="sidebar-right" class="sidebar" style="padding: 16px;">

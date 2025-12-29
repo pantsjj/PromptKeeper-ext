@@ -67,7 +67,7 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 ## Phase 6: Editor Experience (New)
 *Goal: Improve the writing and reading experience for complex prompts.*
 
-*   [ ] **Markdown Support**:
+*   [x] **Markdown Support**:
     *   Render specific markdown elements (Bold, Italic, Code Blocks, Lists) in the editor for readability.
     *   Implement "Strip Markdown" on paste to allow pasting clean text into web forms.
     *   *Documentation*: See `docs/issues/ISSUE-005-markdown-support.md`.

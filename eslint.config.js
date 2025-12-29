@@ -20,10 +20,11 @@ module.exports = [
       "no-undef": "error"
     },
     ignores: [
-        "node_modules/",
-        "dist/",
-        "coverage/",
-        "*.min.js"
+      "node_modules/",
+      "dist/",
+      "coverage/",
+      "libs/",
+      "*.min.js"
     ]
   }
 ];

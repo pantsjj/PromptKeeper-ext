@@ -13,6 +13,10 @@ A: When enabled, you get access to local AI tools:
 - **Side Panel**: Magic Optimize, Improve Clarity.
 These buttons appear automatically when the AI is ready (Green status).
 
+## Editing & Usage
+**Q: How do I edit the Markdown preview?**
+A: Just click on the text! The preview is "Click-to-Edit". It will instantly switch you back to the text editor. You can also use the "Code/Eye" icon in the toolbar, or `Cmd+B` / `Cmd+I` shortcuts.
+
 ## Workspaces & Organization
 **Q: How do "Smart Workspaces" work?**
 A: Workspaces help you group prompts. If you delete a workspace, PromptKeeper uses "Smart Delete"—your prompts are **not** deleted. Instead, they are moved to "All Prompts" and tagged with the workspace name. If you create the workspace again later, they will automatically reappear!
