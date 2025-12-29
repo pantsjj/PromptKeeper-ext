@@ -1,19 +1,21 @@
 # PromptKeeper - The Local AI Prompt IDE
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v2.0.0-blue?logo=googlechrome)](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v2.1.0-blue?logo=googlechrome)](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)
 [![License](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE.md)
 
-**PromptKeeper** is a privacy-first Chrome Extension that transforms your browser into a local prompt engineering workspace. Save, organize, version, and (optionally) optimize your AI prompts—with Google Drive sync and upcoming Gemini Nano on-device AI support.
+**PromptKeeper** is a privacy-first Chrome Extension that transforms your browser into a local prompt engineering workspace. Save, organize, version, and (optionally) optimize your AI prompts—with Google Drive sync and built-in Markdown support.
 
 > 🚀 **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)**
 
 ---
 
-## ✨ Key Features (v2.0)
+## ✨ Key Features (v2.1)
 
 | Feature | Description |
 |---------|-------------|
-| 🧠 **Local AI (Gemini Nano)** | On-device optimization using Chrome’s Gemini Nano APIs. Includes **Magic Enhance**, **Formalize**, and more. No API keys needed. |
+| 📝 **Markdown Support** | Rich text preview with **bold**, *italics*, lists, and headers. **Click-to-Edit** explicitly. |
+| ⌨️ **Shortcuts** | Use `Cmd+B` and `Cmd+I` to format quickly. Raw copy vs. stripped "Paste-to-Page". |
+| 🧠 **Local AI (Gemini Nano)** | On-device optimization using Chrome’s Gemini Nano APIs. Includes **Magic Enhance**, **Formalize**. |
 | ☁️ **Google Drive Sync** | Auto-backup to your private Drive. Access prompts on any device. |
 | 🗂️ **Workspaces** | Organize prompts into Projects with drag-and-drop. |
 | 📜 **Version History** | Every save is versioned. Time-travel to restore any version. |
