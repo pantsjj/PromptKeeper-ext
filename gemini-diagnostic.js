@@ -103,9 +103,15 @@ async function runPromptTest() {
     try {
         let session;
         if (window.ai && window.ai.languageModel) {
-            session = await window.ai.languageModel.create();
+            session = await window.ai.languageModel.create({
+                expectedContext: 'en',
+                outputLanguage: 'en'
+            });
         } else if (window.LanguageModel) {
-            session = await window.LanguageModel.create();
+            session = await window.LanguageModel.create({
+                expectedContext: 'en',
+                outputLanguage: 'en'
+            });
         }
 
         if (!session) return log('res-test-prompt', "API Missing - Cannot create session.", "error");

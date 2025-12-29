@@ -171,7 +171,10 @@ Input Text: "${promptText}"
 Rewrite the Input Text following the Instruction. Return ONLY the rewritten text.
 `;
 
-    const session = await window.ai.languageModel.create({ expectedContext: 'en' });
+    const session = await window.ai.languageModel.create({
+        expectedContext: 'en',
+        outputLanguage: 'en'
+    });
     const result = await session.prompt(metaPrompt);
     session.destroy();
 

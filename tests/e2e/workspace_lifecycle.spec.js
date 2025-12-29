@@ -1,6 +1,4 @@
-
-const { test, expect } = require('./fixtures');
-const path = require('path');
+import { test, expect } from './fixtures';
 
 test.describe('Workspace Lifecycle & Smart Deletion', () => {
     test.beforeEach(async ({ page, extensionId }) => {

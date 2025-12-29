@@ -19,12 +19,13 @@ module.exports = [
       "no-console": "off", // It's a CLI/Extension, console is useful
       "no-undef": "error"
     },
+    // Ignore generated artifacts and bundled libraries
     ignores: [
-      "node_modules/",
-      "dist/",
-      "coverage/",
-      "libs/",
-      "*.min.js"
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "**/libs/**",
+      "**/*.min.js"
     ]
   }
 ];

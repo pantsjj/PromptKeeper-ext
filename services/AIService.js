@@ -149,12 +149,12 @@ class AIService {
                 try {
                     const s = await window.LanguageModel.availability();
                     statuses.prompt = s;
-                } catch (e) { /* ignore */ }
+                } catch (_e) { /* ignore */ }
             } else if (window.ai && window.ai.languageModel) {
                 try {
                     const c = await window.ai.languageModel.capabilities();
                     statuses.prompt = c.available;
-                } catch (e) { /* ignore */ }
+                } catch (_e) { /* ignore */ }
             }
         }
 
@@ -223,9 +223,15 @@ class AIService {
         // Prompt API
         let session;
         if (window.LanguageModel) {
-            session = await window.LanguageModel.create({ expectedContext: 'en' });
+            session = await window.LanguageModel.create({
+                expectedContext: 'en',
+                outputLanguage: 'en'
+            });
         } else if (window.ai && window.ai.languageModel) {
-            session = await window.ai.languageModel.create({ expectedContext: 'en' });
+            session = await window.ai.languageModel.create({
+                expectedContext: 'en',
+                outputLanguage: 'en'
+            });
         } else {
             throw new Error("Local AI API missing unexpectedly");
         }
