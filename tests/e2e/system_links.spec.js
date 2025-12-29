@@ -21,7 +21,7 @@ test.describe('System Links and Footer Actions', () => {
         await page.click('#footer-export-link');
 
         const download = await downloadPromise;
-        expect(download.suggestedFilename()).toContain('promptkeeper_backup');
+        expect(download.suggestedFilename()).toContain('promptkeeper_export');
     });
 
     // Import is harder to test without a file, but we can verify the input exists

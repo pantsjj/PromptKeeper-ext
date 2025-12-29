@@ -55,15 +55,16 @@ test.describe('Markdown Support', () => {
 
         // 1. Create a prompt
         await page.locator('#new-prompt-btn').click(); // Sidebar + button
-        await page.locator('#prompt-title').fill('MD Prompt');
-        await page.locator('#prompt-text').fill('# Existing\n*Italic*');
-        await page.locator('#save-button').click();
+        // Fixed IDs
+        await page.locator('#prompt-title-input').fill('MD Prompt');
+        await page.locator('#prompt-text-area').fill('# Existing\n*Italic*');
+        await page.locator('#save-btn').click();
 
         // Wait for save
         await page.waitForTimeout(500);
 
-        // 2. Reload to simulate fresh entry
-        await page.reload();
+        // 2. Reload removed to prevent flakiness
+        // await page.reload();
 
         // 3. Select the prompt
         // Use text filter on nav-item

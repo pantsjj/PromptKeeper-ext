@@ -126,10 +126,15 @@ async function init() {
         scheduleAutoSave();
     });
 
-    try {
-        await checkAIStatus();
-        await updateFooterStatusDots();
-    } catch (err) { console.warn("AI Status Check failed:", err); }
+    // Non-blocking AI Initialization
+    // We wait for injection but let the UI load first
+    waitForAIAPI().then(async () => {
+        try {
+            applyLanguageModelShims(); // Ensure shims are applied if late-injected
+            await checkAIStatus();
+            await updateFooterStatusDots();
+        } catch (err) { console.warn("AI Status Check failed:", err); }
+    });
 
     try {
         await loadWorkspaces();
@@ -178,9 +183,21 @@ async function init() {
     updateProjectLabel();
 }
 
+// Polling helper to wait for window.ai injection
+async function waitForAIAPI(timeoutMs = 2000) {
+    if (window.ai) return true;
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        if (window.ai) return true;
+        await new Promise(r => setTimeout(r, 20));
+    }
+    return false;
+}
+
 function applyLanguageModelShims() {
     // Default language options to prevent Chrome's "No output language was specified" warning
-    const defaultLangOpts = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
+    // capabilities/availability should take NO args by default in this shim
+    const defaultLangOpts = {};
 
     try {
         // If the page already loaded `language-model-shim.js`, do nothing (failsafe only)
@@ -193,24 +210,22 @@ function applyLanguageModelShims() {
             if (typeof window.LanguageModel.create === 'function') {
                 const origCreate = window.LanguageModel.create.bind(window.LanguageModel);
                 window.LanguageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
                     return origCreate(merged);
                 };
             }
             // Wrap availability()
             if (typeof window.LanguageModel.availability === 'function') {
                 const origAvail = window.LanguageModel.availability.bind(window.LanguageModel);
-                window.LanguageModel.availability = (options = {}) => {
-                    const merged = { ...defaultLangOpts, ...options };
-                    return origAvail(merged);
+                window.LanguageModel.availability = (options) => {
+                    return origAvail(options);
                 };
             }
             // Wrap capabilities()
             if (typeof window.LanguageModel.capabilities === 'function') {
                 const origCaps = window.LanguageModel.capabilities.bind(window.LanguageModel);
-                window.LanguageModel.capabilities = (options = {}) => {
-                    const merged = { ...defaultLangOpts, ...options };
-                    return origCaps(merged);
+                window.LanguageModel.capabilities = (options) => {
+                    return origCaps(options);
                 };
             }
             window.LanguageModel.__pkWrapped = true;
@@ -222,7 +237,7 @@ function applyLanguageModelShims() {
             if (typeof window.ai.languageModel.create === 'function') {
                 const origCreate = window.ai.languageModel.create.bind(window.ai.languageModel);
                 window.ai.languageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
                     return origCreate(merged);
                 };
             }
@@ -230,8 +245,7 @@ function applyLanguageModelShims() {
             if (typeof window.ai.languageModel.capabilities === 'function') {
                 const origCaps = window.ai.languageModel.capabilities.bind(window.ai.languageModel);
                 window.ai.languageModel.capabilities = (options = {}) => {
-                    const merged = { ...defaultLangOpts, ...options };
-                    return origCaps(merged);
+                    return origCaps(options);
                 };
             }
             window.ai.languageModel.__pkWrapped = true;

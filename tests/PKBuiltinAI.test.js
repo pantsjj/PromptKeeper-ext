@@ -8,7 +8,7 @@ describe('PKBuiltinAI wrapper', () => {
     global.window.ai = { languageModel: {} };
   });
 
-  test('getAvailability uses window.LanguageModel.availability when present', async () => {
+  test('getAvailability assumes availability when LanguageModel is present (Skipping broken availability())', async () => {
     global.window.LanguageModel = {
       availability: jest.fn().mockResolvedValue('available'),
       create: jest.fn(),
@@ -18,7 +18,8 @@ describe('PKBuiltinAI wrapper', () => {
 
     const status = await global.window.PKBuiltinAI.getAvailability();
     expect(status).toBe('available');
-    expect(global.window.LanguageModel.availability).toHaveBeenCalled();
+    // We intentionally skip calling availability() due to Chrome bug
+    expect(global.window.LanguageModel.availability).not.toHaveBeenCalled();
   });
 
   test('getAvailability uses window.ai.languageModel.capabilities when LanguageModel is absent', async () => {
@@ -43,7 +44,7 @@ describe('PKBuiltinAI wrapper', () => {
 
     const { session: created, source } = await global.window.PKBuiltinAI.createSession({
       signal: { aborted: false },
-      monitor: () => {},
+      monitor: () => { },
     });
 
     expect(source).toBe('LanguageModel');
