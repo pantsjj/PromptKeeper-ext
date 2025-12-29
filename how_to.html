@@ -43,86 +43,109 @@
         }
 
         #doc-sidebar {
-            width: 220px;
+            width: 240px;
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
-            padding: 20px;
+            padding: 30px 20px;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            flex-shrink: 0;
         }
 
-        #doc-content {
+        /* 
+           Layout Fix: The main content area fills the remaining width 
+           and handles its own scrolling. The scrollbar will be on the 
+           far right edge of the window.
+        */
+        #doc-content-wrapper {
             flex: 1;
-            padding: 40px;
+            height: 100vh;
             overflow-y: auto;
+            background-color: var(--bg-color);
+        }
+
+        /* 
+           The inner container centers the text constrained to a 
+           readable width, but creates no new scroll container.
+        */
+        .content-container {
             max-width: 800px;
             margin: 0 auto;
+            padding: 60px 40px 100px 40px;
+            /* More padding at bottom */
         }
 
         h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
+            font-size: 34px;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+            font-weight: 700;
         }
 
         h2 {
-            font-size: 20px;
-            margin-top: 30px;
-            margin-bottom: 10px;
+            font-size: 24px;
+            margin-top: 50px;
+            margin-bottom: 15px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
+            padding-bottom: 10px;
+            font-weight: 600;
         }
 
         h3 {
-            font-size: 16px;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            color: var(--primary-color);
+            font-size: 18px;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+            font-weight: 600;
         }
 
         p,
         li {
-            font-size: 14px;
+            font-size: 16px;
             line-height: 1.6;
             color: var(--text-color);
+            margin-bottom: 16px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
         }
 
         code {
             font-family: var(--code-font);
-            background: var(--bg-color);
-            padding: 2px 4px;
+            background: rgba(127, 127, 127, 0.12);
+            /* Subtle bg works in light/dark */
+            padding: 2px 5px;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 0.9em;
         }
 
         .nav-link {
             display: block;
-            padding: 6px 10px;
+            padding: 8px 12px;
             color: var(--text-secondary);
             text-decoration: none;
             border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 2px;
+            font-size: 14px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
         }
 
         .nav-link:hover,
         .nav-link.active {
-            background: var(--bg-color);
-            color: var(--primary-color);
+            background: rgba(127, 127, 127, 0.1);
+            color: var(--text-color);
         }
 
-        .img-placeholder {
-            width: 100%;
-            height: 150px;
-            background: var(--bg-color);
-            border: 1px dashed var(--border-color);
-            border-radius: var(--radius-md);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            font-size: 12px;
-            margin: 15px 0;
+        .nav-link.active {
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(0, 113, 227, 0.1);
         }
 
         .feature-tag {
@@ -132,9 +155,66 @@
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 10px;
-            font-weight: 600;
+            font-weight: 700;
             vertical-align: middle;
             margin-left: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .highlight-box {
+            background: var(--sidebar-bg);
+            /* Card look */
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .value-prop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        @media (max-width: 700px) {
+            .value-prop-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .prop-card {
+            background: var(--sidebar-bg);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .prop-card h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+
+        .personal-story {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border-color);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .personal-story h3 {
+            font-style: normal;
+            color: var(--text-color);
+        }
+
+        .pro-tip {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            border-left: 2px solid var(--primary-color);
+            padding-left: 12px;
+            margin-left: 4px;
         }
     </style>
 </head>
@@ -142,127 +222,139 @@
 <body>
 
     <div id="doc-sidebar">
-        <h3 style="margin-top:0; color:var(--text-color);">PromptKeeper Guide</h3>
+        <h3 style="margin-top:0; margin-bottom: 20px; color:var(--text-color);">PromptKeeper Guide</h3>
         <nav>
-            <a href="#intro" class="nav-link">Introduction</a>
-            <a href="#workspaces" class="nav-link">Workspaces</a>
-            <a href="#prompts" class="nav-link">Managing Prompts</a>
-            <a href="#backup" class="nav-link">Google Drive Backup</a>
-            <a href="#ai" class="nav-link">AI Features <span class="feature-tag">LOCAL AI</span></a>
-            <a href="#shortcuts" class="nav-link">Keyboard Shortcuts</a>
+            <a href="#intro" class="nav-link">Getting Started</a>
+            <a href="#why" class="nav-link">Why PromptKeeper?</a>
+            <a href="#features" class="nav-link">Key Features</a>
+            <a href="#ai" class="nav-link">Local AI Power <span class="feature-tag">FREE</span></a>
+            <a href="#story" class="nav-link">Why I Built This</a>
         </nav>
     </div>
 
-    <div id="doc-content">
-        <section id="intro">
-            <h1>Getting Started</h1>
-            <p>Welcome to PromptKeeper, your private, local workspace for managing AI prompts directly in your browser.
-                This guide helps you master the features.</p>
+    <!-- Wrapper fills the screen -> Scrollbar on RIGHT edge -->
+    <div id="doc-content-wrapper">
+        <!-- Container centers the text -> Readable width -->
+        <div class="content-container">
 
-            <h3>Why PromptKeeper?</h3>
-            <ul>
-                <li><strong>Local & Private:</strong> Data stays on your device unless you choose to back it up.</li>
-                <li><strong>Browser Integrated:</strong> Access your library instantly via the Side Panel and full-page editor.</li>
-                <li><strong>Built-in Optimization:</strong> Use on-device Gemini Nano to refine prompts without sending text to external servers.</li>
-                <li><strong>Markdown Aware:</strong> Write in plain text, preview in markdown, and paste clean text into chat tools.</li>
-            </ul>
-        </section>
+            <section id="intro">
+                <h1>Welcome to PromptKeeper</h1>
+                <p style="font-size: 1.2em; color: var(--text-secondary);">
+                    Your private, local workspace for mastering AI prompts directly in Chrome.
+                </p>
+            </section>
 
-        <section id="workspaces">
-            <h2>Workspaces</h2>
-            <p>Workspaces allow you to organize your prompts by project, client, or topic (e.g., <code>coding</code>,
-                <code>marketing</code>, <code>personal</code>).
-            </p>
+            <section id="why">
+                <h2>Why PromptKeeper?</h2>
+                <div class="value-prop-grid">
+                    <div class="prop-card">
+                        <h4>🔒&nbsp; Private & Local</h4>
+                        <p style="margin:0; font-size: 0.9em;">
+                            No servers, no API keys, no subscriptions. Your prompts live in your browser (Chrome
+                            Storage) and stay on your device unless you choose to backup to your own Google Drive.
+                        </p>
+                    </div>
+                    <div class="prop-card">
+                        <h4>⚡&nbsp; Chrome Built-in AI</h4>
+                        <p style="margin:0; font-size: 0.9em;">
+                            Leverages <strong>Gemini Nano</strong> built directly into Chrome. Refine, shorten, and
+                            clarify prompts with zero latency and zero cost. The model runs at the edge, on your
+                            machine.
+                        </p>
+                    </div>
+                </div>
+            </section>
 
-            <h3>Creating a Workspace</h3>
-            <p>Click the <strong>+</strong> button in the Workspaces list. Enter a name (max 3 words). Use formatting
-                like <code>my_project</code> or <code>Client X</code>.</p>
+            <section id="features">
+                <h2>Key Features & How to Use</h2>
 
-            <h3>Context Menu (Right-Click)</h3>
-            <p>Right-click any workspace in the list to access options:</p>
-            <ul>
-                <li><strong>Delete Workspace:</strong> Removes the workspace container.</li>
-            </ul>
+                <h3>📂 Workspaces & Organization</h3>
+                <p>Organize chaos into clarity. Create workspaces for different contexts—<code>#coding</code>,
+                    <code>#marketing</code>, <code>#clients</code>.</p>
+                <ul>
+                    <li><strong>Create:</strong> Click the <strong>+</strong> button in the sidebar.</li>
+                    <li><strong>Drag & Drop:</strong> You can drag prompts from one workspace to another in the sidebar
+                        to reorganize them instantly.</li>
+                    <li><strong>Smart Delete:</strong> Deleting a workspace doesn't destroy your prompts—it just
+                        archives them. Re-create the workspace later, and they reappear.</li>
+                </ul>
 
-            <div
-                style="background: var(--bg-color); padding: 12px; border-radius: 8px; border-left: 4px solid var(--primary-color);">
-                <strong>💡 Smart Delete:</strong> When you delete a workspace, your prompts are <em>NOT</em> deleted.
-                They are moved to "All Prompts" and tagged with the deleted workspace's name. If you recreate the
-                workspace with the same name later, the prompts will automatically return!
-            </div>
-        </section>
+                <h3>📝 Professional Editor</h3>
+                <p>A distractions-free environment for crafting perfect instructions.</p>
+                <ul>
+                    <li><strong>Markdown Support:</strong> Write in plain text, preview securely.</li>
+                    <li><strong>Versioning:</strong> Every time you save (Cmd+S or Auto-save), a new timestamped version
+                        is created. The system keeps the last 50 versions, so you can always revert.</li>
+                    <li>
+                        <strong>Paste-to-Page:</strong> The orange button allows you to inject your prompt directly into
+                        any active text field (Claude, ChatGPT, etc.).
+                        <div class="pro-tip">⚠️ Nuance: This button injects <strong>plain text</strong>. Any Markdown
+                            formatting (bold, italics) is stripped out to ensure cleaner input for the chatbot.</div>
+                    </li>
+                </ul>
 
-        <section id="prompts">
-            <h2>Managing Prompts</h2>
-            <p>Write, edit, and organize your prompts with a full-featured markdown editor.</p>
+                <h3>Visual Cues & Defaults</h3>
+                <ul>
+                    <li><strong>Orange Pulse 🟠:</strong> If you see an orange pulsing border around the editor, it
+                        means you have <strong>Unsaved Changes</strong>.</li>
+                    <li><strong>Auto-Save:</strong> Enabled by default. The system saves your work automatically after a
+                        short pause in typing or when switching prompts.</li>
+                </ul>
 
-            <h3>Versioning</h3>
-            <p>Every time you modify a prompt, PromptKeeper tracks the changes. Use the <strong>Rev: X</strong> dropdown
-                in the footer to start a new version branch or revert to an older one.</p>
+                <h3>💾 Backup, Export & Portability</h3>
+                <p>Your data belongs to you. There are two ways to move data:</p>
+                <ol>
+                    <li><strong>Google Drive Sync (Side Panel):</strong> Connect your account to sync an encrypted
+                        snapshot to a hidden private folder (`appDataFolder`) in your Drive. Ideal for backup.</li>
+                    <li><strong>JSON Export (Options Page):</strong> In the full "Manage" view, look for the
+                        <strong>Export | Import</strong> links in the footer. This creates a raw JSON file of your
+                        entire library that you can share or inspect manually.</li>
+                </ol>
+            </section>
 
-            <h3>Markdown & Preview</h3>
-            <p>Use the editor to write in markdown, then toggle the preview to see the rendered result. Click on the
-                preview to jump back into edit mode. The editor and preview always share the same font size for
-                consistency.</p>
+            <section id="ai">
+                <h2>Local AI Capabilities</h2>
+                <div class="highlight-box">
+                    <strong style="color:var(--primary-color)">Powered by Window.AI (Gemini Nano)</strong>
+                    <p>This extension uses the new Chrome AI capabilities to run models locally on your CPU/GPU.</p>
+                </div>
 
-            <h3>Saving & Auto-Save</h3>
-            <p>Click <strong>Save</strong> or press <code>Cmd/Ctrl + S</code> to save and create a new version. When
-                auto-save is enabled in the Options panel, PromptKeeper will periodically save any unsaved changes for
-                you, and can optionally save automatically when you switch to another prompt. An orange, pulsing border
-                around the editor indicates there are changes that have not yet been saved.</p>
+                <h3>Magic Enhancement Tools</h3>
+                <p>Look for the AI toolbar in the editor (or the sidebar):</p>
+                <ul>
+                    <li><strong>✨ Magic Enhance:</strong> Turns a simple thought like "write an email" into a
+                        structured, optimized prompt template.</li>
+                    <li><strong>👁️ Clarity:</strong> Sharpens vague instructions.</li>
+                    <li><strong>👔 Formalize:</strong> Perfect for turning draft notes into executive summaries.</li>
+                </ul>
+                <p><em>Note: If the status dot in the footer is grey, check if Chrome has finished downloading the model
+                        (approx 1.5GB, automatic).</em></p>
+            </section>
 
-            <h3>Paste-to-Page</h3>
-            <p>Click the <strong style="color:#ff9500;">Paste-to-Page</strong> button to instantly insert your active
-                prompt into the current web page's text field (great for ChatGPT, Claude, etc.).</p>
-        </section>
+            <section id="story" class="personal-story">
+                <h3>Why I Built This</h3>
+                <p>
+                    I've been building with LLMs since the early GPT days, facilitating "hands-on" value generation for
+                    enterprises as a technology leader.
+                    I quickly realized that <strong>managing the prompt</strong> is as important as the model itself.
+                </p>
+                <p>
+                    When Google announced <strong>Gemini Nano</strong>—a model running efficiently at the edge within
+                    Chrome—I saw an amazing opportunity to battle-test this technology.
+                    I wanted a tool that was fast, private, and free, without the friction of API keys or cloud
+                    subscriptions.
+                </p>
+                <p>
+                    PromptKeeper started as a personal utility to organize my own library, but it has grown into a
+                    "living, breathing" pet project that I'm proud to share.
+                    As a <strong>Google Developer Expert (GDE)</strong>, I love pushing the boundaries of what's
+                    possible in the browser. I hope it helps you tame the chaos of AI interactions as much as it has
+                    helped me.
+                </p>
+                <p>— JP</p>
+            </section>
 
-        <section id="backup">
-            <h2>Google Drive Backup</h2>
-            <p>Protect your data by syncing with your personal Google Drive.</p>
-            <ul>
-                <li><strong>Auto-Backup:</strong> Enabled by default, runs every 30 minutes.</li>
-                <li><strong>Manual Backup:</strong> Click "Backup Now" in the options panel.</li>
-                <li><strong>Privacy:</strong> Files are stored in a private Application Data folder on your Drive,
-                    visible only to this extension.</li>
-            </ul>
-        </section>
-
-        <section id="ai">
-            <h2>AI Optimization</h2>
-            <p>If your browser supports <strong>Gemini Nano</strong>, you'll see the AI tools panel in the full editor
-                and side panel.</p>
-            <ul>
-                <li><strong>Magic Enhance:</strong> Adds structure and clarity, turning rough ideas into well-formed
-                    prompt templates.</li>
-                <li><strong>Formalize Tone:</strong> Adjusts tone for professional or executive-facing contexts.</li>
-                <li><strong>Improve Clarity:</strong> Removes ambiguity and sharpens instructions.</li>
-                <li><strong>Shorten:</strong> Produces more concise versions while preserving intent.</li>
-            </ul>
-            <p>AI refinements follow safety rules: they avoid inventing personal names or companies, use inline
-                <code>`code`</code> formatting for user-fill sections (e.g. <code>[describe your goals]</code>), and use
-                clear markdown headings when offering multiple options.</p>
-
-            <h3>Streaming, Cancel, and Download Progress</h3>
-            <ul>
-                <li><strong>Streaming output:</strong> On supported Chrome builds, the rewritten prompt may stream into
-                    the editor progressively instead of arriving all at once.</li>
-                <li><strong>Cancel:</strong> While AI is running, the button switches to <strong>Cancel</strong> so you
-                    can abort a long operation.</li>
-                <li><strong>Downloading model:</strong> If Gemini Nano is warming up or downloading, you may see a
-                    <em>Downloading…</em> indicator (when Chrome provides progress events).</li>
-                <li><strong>Unsaved indicator:</strong> The orange unsaved glow appears only after new AI content has
-                    been applied to the editor, reminding you to save.</li>
-            </ul>
-        </section>
-
-        <section id="shortcuts">
-            <h2>Keyboard Shortcuts</h2>
-            <ul>
-                <li><code>Cmd/Ctrl + S</code>: Save current prompt</li>
-                <li><code>Cmd/Ctrl + B</code>: Bold selected text (markdown)</li>
-                <li><code>Cmd/Ctrl + I</code>: Italicise selected text (markdown)</li>
-            </ul>
-        </section>
+        </div>
     </div>
 
 </body>
