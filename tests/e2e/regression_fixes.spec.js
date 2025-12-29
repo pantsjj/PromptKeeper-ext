@@ -68,6 +68,9 @@ test.describe('UI Regression Fixes', () => {
         // Wait for save visual feedback (pulse-green)
         await expect(textIn).toHaveClass(/pulse-green/, { timeout: 5000 });
 
+        // Verify it appears in the list BEFORE reload to ensure save completion
+        await expect(page.locator('.nav-item-prompt', { hasText: 'Stats Test Prompt' })).toBeVisible();
+
         // Reload page to simulate fresh entry and verifying "selection from list"
         await page.reload();
 
