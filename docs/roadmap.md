@@ -64,13 +64,16 @@ This roadmap outlines the strategic development plan to transform PromptKeeper i
 *   [x] **AIService Refactor**: Updated to use message passing instead of direct `window.ai` access.
 *   [x] **Manifest Updates**: Added `offscreen` permission and `background.service_worker` configuration.
 
-## Phase 6: Editor Experience (New)
+## Phase 6: Editor Experience (v2.1 Released)
 *Goal: Improve the writing and reading experience for complex prompts.*
 
 *   [x] **Markdown Support**:
     *   Render specific markdown elements (Bold, Italic, Code Blocks, Lists) in the editor for readability.
+    *   **Click-to-Edit**: Seamless toggling between preview and edit modes.
     *   Implement "Strip Markdown" on paste to allow pasting clean text into web forms.
-    *   *Documentation*: See `docs/issues/ISSUE-005-markdown-support.md`.
+*   [x] **Keyboard Shortcuts**:
+    *   `Cmd+B` / `Cmd+I` for formatting.
+    *   `Cmd+Enter` to save.
 
 ---
 
