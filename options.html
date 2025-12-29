@@ -357,10 +357,12 @@
 
         #editor-content {
             flex: 1;
-            padding: 20px 40px;
+            padding: 6px 10px;
             overflow: hidden;
             background-color: var(--editor-bg);
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         #prompt-text-area {
@@ -656,7 +658,7 @@
                 style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border-color);">
                 <div style="text-align:center; font-size:10px; color:var(--text-secondary);">
                     <div style="margin-bottom:4px; font-weight:600;">PromptKeeper v2.1.1</div>
-                   
+
                     <div style="margin-top:4px;">
                         <a href="https://g.dev/jpantsjoha" target="_blank"
                             style="color:var(--primary-color); text-decoration:none;">
@@ -776,9 +778,11 @@
             0% {
                 box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.6);
             }
+
             70% {
                 box-shadow: 0 0 0 8px rgba(255, 149, 0, 0);
             }
+
             100% {
                 box-shadow: 0 0 0 0 rgba(255, 149, 0, 0);
             }
@@ -840,15 +844,18 @@
         }
 
         .status-dot.readily {
-            background-color: #34a853; /* Green */
+            background-color: #34a853;
+            /* Green */
         }
 
         .status-dot.no {
-            background-color: #ea4335; /* Red */
+            background-color: #ea4335;
+            /* Red */
         }
 
         .status-dot.after-download {
-            background-color: #fbbc04; /* Yellow */
+            background-color: #fbbc04;
+            /* Yellow */
         }
 
         .status-dot:hover::after {

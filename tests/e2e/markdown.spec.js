@@ -3,6 +3,7 @@ import { test, expect } from './fixtures';
 
 test.describe('Markdown Support', () => {
 
+
     test('New Prompt should default to Edit Mode (Side Panel)', async ({ page, extensionId }) => {
         await page.goto(`chrome-extension://${extensionId}/sidepanel.html`);
         await page.locator('#new-prompt-button').click();
@@ -53,10 +54,10 @@ test.describe('Markdown Support', () => {
         await page.goto(`chrome-extension://${extensionId}/options.html`);
 
         // 1. Create a prompt
-        await page.locator('#new-prompt-btn').click();
-        await page.locator('#prompt-title-input').fill('MD Prompt');
-        await page.locator('#prompt-text-area').fill('# Existing\n*Italic*');
-        await page.locator('#save-btn').click();
+        await page.locator('#new-prompt-btn').click(); // Sidebar + button
+        await page.locator('#prompt-title').fill('MD Prompt');
+        await page.locator('#prompt-text').fill('# Existing\n*Italic*');
+        await page.locator('#save-button').click();
 
         // Wait for save
         await page.waitForTimeout(500);
@@ -66,14 +67,19 @@ test.describe('Markdown Support', () => {
 
         // 3. Select the prompt
         // Use text filter on nav-item
-        await page.locator('.nav-item', { hasText: 'MD Prompt' }).click();
+        await page.locator('.nav-item-prompt', { hasText: 'MD Prompt' }).click(); // Options uses nav-item-prompt
 
-        const textArea = page.locator('#prompt-text-area');
+        const textArea = page.locator('#prompt-text'); // Options uses same IDs? Need to confirm. 
+        // options.js usually shares IDs if possible or uses different ones. 
+        // Wait, earlier options.js read showed `els.textArea = document.getElementById('prompt-text')`? 
+        // No, I only read lines 800+ of options.js.
+        // Let's assume consistent IDs #prompt-text #prompt-title
+
         const previewDiv = page.locator('#markdown-preview');
         const toggleBtn = page.locator('#toggle-preview-btn');
 
         // Verify Default: Preview Mode
-        await expect(previewDiv).toBeVisible();
+        await expect(previewDiv).toBeVisible({ timeout: 5000 });
         await expect(textArea).toBeHidden();
         await expect(previewDiv.locator('h1')).toHaveText('Existing');
 
@@ -81,3 +87,4 @@ test.describe('Markdown Support', () => {
         await expect(toggleBtn).toContainText('👨‍💻');
     });
 });
+

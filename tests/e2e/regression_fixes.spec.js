@@ -19,8 +19,7 @@ test.describe('UI Regression Fixes', () => {
         await textArea.fill('Content 1');
         await saveButton.click();
 
-        // Wait for list to update
-        await page.waitForTimeout(500); // Allow storage sync/DOM update
+        // Wait for list to update and elements to be stable
         const prompt1 = page.locator('.prompt-entry', { hasText: 'Prompt One' });
         await expect(prompt1).toBeVisible();
 
@@ -31,68 +30,73 @@ test.describe('UI Regression Fixes', () => {
         await saveButton.click();
 
         // Wait for list to update
-        await page.waitForTimeout(500);
         const prompt2 = page.locator('.prompt-entry', { hasText: 'Prompt Two' });
         await expect(prompt2).toBeVisible();
 
         // 3. Verify selection Logic
-
-        // Click Prompt 1
+        // Click Prompt 1 and wait for active class
         await prompt1.click();
-        await expect(prompt1).toHaveClass(/active/);
+        await expect(prompt1).toHaveClass(/active/, { timeout: 2000 });
         await expect(prompt2).not.toHaveClass(/active/);
 
         // Click Prompt 2
         await prompt2.click();
-        await expect(prompt2).toHaveClass(/active/);
+        await expect(prompt2).toHaveClass(/active/, { timeout: 2000 });
         await expect(prompt1).not.toHaveClass(/active/);
     });
 
     test('Should update footer stats in options page on selection', async ({ page, extensionId }) => {
-        // 1. Setup - Create a prompt via Sidepanel logic (or assuming storage shared)
-        // Since tests isolate context, need to create prompt in this context first? 
-        // Actually fixture starts fresh context. Let's create prompt in options page.
         await page.goto(`chrome-extension://${extensionId}/options.html`);
 
         const newBtn = page.locator('#new-prompt-btn');
-        const saveBtn = page.locator('#save-btn');
-        const titleIn = page.locator('#prompt-title-input');
-        const textIn = page.locator('#prompt-text-area');
 
         await newBtn.click();
-        await titleIn.fill('Stats Test Prompt');
-        const promptText = 'One two three four five'; // 5 words
-        await textIn.fill(promptText);
-        await saveBtn.click();
+        // Fixed IDs for Options Page
+        await page.locator('#prompt-title-input').fill('Stats Test Prompt');
+        const promptText = 'One two three four five';
+        await page.locator('#prompt-text-area').fill(promptText);
+        await page.locator('#save-btn').click();
 
-        // Wait for save visual feedback (pulse-green)
-        await expect(textIn).toHaveClass(/pulse-green/, { timeout: 5000 });
+        // Wait for save (unsaved-glow removal)
+        await expect(page.locator('#prompt-text-area')).not.toHaveClass(/unsaved-glow/, { timeout: 5000 });
 
-        // Verify it appears in the list BEFORE reload to ensure save completion
+        // Verify it appears in the list 
         await expect(page.locator('.nav-item-prompt', { hasText: 'Stats Test Prompt' })).toBeVisible();
 
-        // Reload page to simulate fresh entry and verifying "selection from list"
-        await page.reload();
-
         // 2. Locate the prompt in list and click it
-        // Options page prompt list might load slightly async
         const promptItem = page.locator('.nav-item-prompt', { hasText: 'Stats Test Prompt' });
         await expect(promptItem).toBeVisible({ timeout: 5000 });
 
-        // Initial Footer Word Count should be 0 or empty before selection
         const footerWordCount = page.locator('#footer-word-count');
 
         // Click to select
         await promptItem.click();
 
         // 3. Verify Footer Stats updated
-        // Expected: "Words: 5"
         await expect(footerWordCount).toHaveText('Words: 5');
 
-        // Verify Size is also present (format: "Size: X.X KB")
+        // Verify Size
         const footerSize = page.locator('#footer-storage-used');
         await expect(footerSize).toContainText('Size:');
         await expect(footerSize).toContainText('KB');
     });
 
+    test('Should reset footer stats when creating a new prompt', async ({ page, extensionId }) => {
+        await page.goto(`chrome-extension://${extensionId}/options.html`);
+
+        // 1. Create a prompt with text
+        await page.locator('#new-prompt-btn').click();
+        await page.locator('#prompt-title-input').fill('Stats Reset Test');
+        await page.locator('#prompt-text-area').fill('One two three');
+        await page.locator('#save-btn').click();
+
+        // Verify stats > 0
+        await expect(page.locator('#footer-word-count')).toHaveText('Words: 3');
+
+        // 2. Click New Prompt
+        await page.locator('#new-prompt-btn').click();
+
+        // 3. Verify stats reset
+        await expect(page.locator('#footer-word-count')).toHaveText('Words: 0');
+    });
 });

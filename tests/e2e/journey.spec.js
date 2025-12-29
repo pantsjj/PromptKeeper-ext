@@ -31,13 +31,10 @@ test.describe('End-to-End User Journey', () => {
 
         // Verify Workspace is created and active
         // Logic enforces snake_case
+        // Check active class logic to verify workspace switch
         const workspaceItem = page.locator('.nav-item', { hasText: 'journey_workspace' });
         await expect(workspaceItem).toBeVisible();
-        // Check active class logic instead of project-label text if that's more reliable, 
-        // but label update should also work if options.js supports it.
-        // Let's assume options page logic updates the label too or check active class.
-        // await expect(page.locator('#project-label')).toHaveText('Workspace: journey_workspace'); 
-        // Let's rely on list item presence for now.
+        await expect(workspaceItem).toHaveClass(/active/);
 
         // 2. Create a New Prompt in this Workspace
         await page.click('#new-prompt-btn');
@@ -57,26 +54,33 @@ test.describe('End-to-End User Journey', () => {
 
         // 3. Switch Workspaces (go to All then back)
         await page.click('#workspace-all');
-        await expect(page.locator('#project-label')).toHaveText('Workspace: All Prompts');
+        await expect(page.locator('#workspace-all')).toHaveClass(/active/);
         // Prompt should still be visible because All shows all
         await expect(promptItem).toBeVisible();
 
         // Go back to specific workspace
         await workspaceItem.click();
-        // Label likely reflects the project name exactly
-        await expect(page.locator('#project-label')).toHaveText('Workspace: journey_workspace');
+        await expect(workspaceItem).toHaveClass(/active/);
         await expect(promptItem).toBeVisible();
 
         // 4. Edit Prompt
         await promptItem.click();
-        await page.fill('#prompt-text-area', 'Updated content for my prompt.');
+
+        // Check if in preview mode (hidden textarea) and toggle if needed
+        const textArea = page.locator('#prompt-text-area');
+        if (await textArea.isHidden()) {
+            await page.locator('#toggle-preview-btn').click();
+        }
+        await expect(textArea).toBeVisible();
+
+        await textArea.fill('Updated content for my prompt.');
 
         // Keyboard shortcut save (Meta+S)
         await page.keyboard.press('Meta+s');
 
         // Check word count update to verify logic ran
         // "Updated content for my prompt." = 5 words
-        await expect(page.locator('#word-count')).toContainText('Words: 5');
+        await expect(page.locator('#footer-word-count')).toContainText('Words: 5');
 
     });
 
