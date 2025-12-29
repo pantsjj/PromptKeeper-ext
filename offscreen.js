@@ -50,10 +50,18 @@ async function checkAIAvailability() {
     // 2. Check Global LanguageModel (Spec)
     if (window.LanguageModel) {
         try {
-            const caps = await window.LanguageModel.capabilities();
-            return { available: caps.available || 'no', source: 'LanguageModel' };
+            if (window.LanguageModel.capabilities) {
+                const caps = await window.LanguageModel.capabilities();
+                return { available: caps.available || 'no', source: 'LanguageModel.caps' };
+            }
+            if (window.LanguageModel.availability) {
+                const avail = await window.LanguageModel.availability();
+                return { available: avail || 'no', source: 'LanguageModel.avail' };
+            }
+            // Fallback: If it exists, assume downloadable or available?
+            return { available: 'readily', source: 'LanguageModel.exists' };
         } catch (e) {
-            console.warn('[Offscreen] LanguageModel caps check failed:', e);
+            console.warn('[Offscreen] LanguageModel check failed:', e);
         }
     }
 
