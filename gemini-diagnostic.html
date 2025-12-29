@@ -82,24 +82,31 @@
     </div>
 
     <div class="card">
-        <h3>2. Capabilities Check (Prompt API)</h3>
-        <p>Checks if the Language Model is ready to use.</p>
-        <button id="btn-caps">Check Availability</button>
+        <h3>2. Feature Support Check</h3>
+        <p>Verifies if the specific AI features required by PromptKeeper are available.</p>
+        <button id="btn-caps">Check Support</button>
         <div id="res-caps" class="result">Waiting...</div>
     </div>
 
     <div class="card">
-        <h3>3. Rewriter API Check</h3>
-        <p>Checks if the specialized Rewriter API is active.</p>
-        <button id="btn-rewriter">Check Rewriter</button>
-        <div id="res-rewriter" class="result">Waiting...</div>
+        <h3>3. Prompt API Test (Core)</h3>
+        <p>Tests the base model ("Hello World"). Required for general instruction following.</p>
+        <button id="btn-test-prompt">Run Prompt Test</button>
+        <div id="res-test-prompt" class="result">Waiting...</div>
     </div>
 
     <div class="card">
-        <h3>4. Functional Test (Hello World)</h3>
-        <p>Attempts to generate text. <strong>Note:</strong> Takes time if model is cold.</p>
-        <button id="btn-test">Run Test Prompt</button>
-        <div id="res-test" class="result">Waiting...</div>
+        <h3>4. Rewriter API Test (Formalize)</h3>
+        <p>Tests the specialized Rewriter model. Used for "Formalize" feature.</p>
+        <button id="btn-test-rewriter">Run Rewriter Test</button>
+        <div id="res-test-rewriter" class="result">Waiting...</div>
+    </div>
+
+    <div class="card">
+        <h3>5. Summarizer API Test (Shorten)</h3>
+        <p>Tests the specialized Summarizer model. Used for "Summarize" feature.</p>
+        <button id="btn-test-summarizer">Run Summarizer Test</button>
+        <div id="res-test-summarizer" class="result">Waiting...</div>
     </div>
 
     <script src="gemini-diagnostic.js"></script>
