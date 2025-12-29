@@ -1,31 +1,60 @@
 import { test, expect } from './fixtures';
 
 test.describe('Side Panel AI Features', () => {
-    test('AI buttons should appear when API is available', async ({ page, extensionId }) => {
+    test('Magic Optimize and Improve Clarity use local AI and mark content as unsaved', async ({ page, extensionId }) => {
         const extensionUrl = `chrome-extension://${extensionId}/sidepanel.html`;
 
-        // Mock window.LanguageModel availability
+        // Mock local LanguageModel so AIService detects availability and returns a deterministic value
         await page.addInitScript(() => {
             window.LanguageModel = {
-                availability: async () => 'readily'
+                availability: async () => 'readily',
+                create: async () => ({
+                    // Streaming mock (new behavior)
+                    promptStreaming: async function* (_input, opts) {
+                        const signal = opts?.signal;
+                        const chunks = ['AI-', 'REFINED ', 'PROMPT'];
+                        for (const c of chunks) {
+                            if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+                            // small delay to simulate streaming
+                            await new Promise(r => setTimeout(r, 25));
+                            yield c;
+                        }
+                    },
+                    prompt: async () => 'AI-REFINED PROMPT',
+                    destroy: () => { }
+                })
             };
         });
 
-        // Reload to let init() pick up the mock? 
-        // Reloading clears the mock.
-
-        // Better Approach: We can use the fact that AIService checks window.ai or window.LanguageModel.
-        // We can try to set it via a preload script or just hope the "AIService" in popup.js 
-        // picks up the environment. 
-
-        // Actually, let's just inspect the DOM. If the logic is "if (status === 'readily')", 
-        // and our test environment doesn't have it, it will be hidden.
-        // We need a way to force 'readily' for the test.
-
-        // NOTE: In previous tests, we might have mocked this. 
-        // For now, just ensure the sidepanel can load without error.
         await page.goto(extensionUrl);
         await page.waitForLoadState('domcontentloaded');
-        await expect(page).toHaveURL(extensionUrl);
+
+        const textArea = page.locator('#prompt-text');
+        await expect(textArea).toBeVisible();
+        await textArea.fill('Original prompt text');
+
+        // Wait for AI row to become visible once availability resolves
+        const aiRow = page.locator('#ai-buttons-row');
+        await aiRow.waitFor({ state: 'visible', timeout: 10000 });
+
+        const magicBtn = page.locator('#magic-btn');
+        const clarityBtn = page.locator('#clarity-btn');
+        await expect(magicBtn).toBeVisible();
+        await expect(clarityBtn).toBeVisible();
+
+        // Click Magic Optimize and wait for refinement to land
+        await magicBtn.click();
+        await expect(textArea).toHaveValue(/AI-REFINED PROMPT/);
+        await expect(textArea).toHaveClass(/unsaved-glow/);
+
+        // Then click Improve Clarity and ensure the flow still works without errors
+        await clarityBtn.click();
+
+        // Content should still be non-empty and considered unsaved
+        const after = await textArea.inputValue();
+        await expect(after.length).toBeGreaterThan(0);
+        await expect(textArea).toHaveClass(/unsaved-glow/);
     });
 });
+
+

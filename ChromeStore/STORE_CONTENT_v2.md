@@ -19,10 +19,16 @@ Save, organize, and optimize your AI prompts locally. Built-in Gemini Nano AI. G
 ```
 PromptKeeper is your private, local AI prompt engineering workspace—right in your browser.
 
+WHAT'S NEW IN v2.1.1
+• **Streaming + Cancel AI**: On supported Chrome builds, AI output can stream into the editor progressively. While running, buttons switch to **Cancel** so you can abort long operations.
+• **Model Download Progress**: If Gemini Nano is warming up/downloading, PromptKeeper shows a “Downloading…” indicator when Chrome provides progress events.
+• **Local Model Stats**: A compact “Local Model Stats” line shows token usage/quota (when available) under the editor.
+
 WHAT'S NEW IN v2.1.0
 • **Markdown Support**: Prompts now display as rich text (Bold, Lists, Headers). Click the text to edit instantly.
 • **Keyboard Shortcuts**: Use Cmd+B and Cmd+I to format your prompts faster.
-• **Stability**: Critical fixes for Side Panel loading and AI configuration.
+• **Editor Tuning**: Shared font-size controls for editor and preview, resizable right-hand panel, and improved side panel / full-editor flow.
+• **Safety & Autosave**: Stronger AI prompting (no invented personas, clearer placeholders) plus optional auto-save and auto-save-on-switch so you don’t lose changes.
 
 WHAT'S NEW IN v2.0.0
 • Side panel view so you can browse, edit, and paste prompts directly into Claude, Gemini, Perplexity, ChatGPT and other tabs without leaving the page.  
@@ -30,13 +36,13 @@ WHAT'S NEW IN v2.0.0
 • Workspaces & Projects: group prompts by topic (Work, Creative, Coding, etc.), drag‑and‑drop between projects, and use right‑click context menus for smart deletion.  
 • Google Drive Sync: backup and restore your entire library (prompts + workspaces) via your private Drive AppData folder.  
 • Version History: every save creates a new revision; quickly time‑travel across the latest 50 changes per prompt.  
-• Optional on‑device Gemini Nano tools (coming as Chrome rolls out support) so you can refine prompts locally without API keys.
+• Optional on‑device Gemini Nano tools (where supported) so you can refine prompts locally without API keys.
 
-🧠 BUILT-IN Optional AI OPTIMIZATION (Gemini Nano. Coming Soon)
-Leverage Chrome's on-device AI to refine your prompts without sending data anywhere.
+🧠 BUILT-IN Optional AI OPTIMIZATION (Gemini Nano, on-device)
+Leverage Chrome's on-device AI (when available) to refine your prompts without sending data anywhere.
 • Magic Enhance: Turn rough notes into structured prompts instantly.
-• Formalize, Clarify, Shorten: One-click refinement tools.
-• Zero API Keys: Works offline, completely free.
+• Formalize, Clarify, Shorten: One-click refinement tools to adjust tone and clarity.
+• Zero API Keys: Uses Chrome's local Gemini Nano model; when the model is available, everything runs on-device.
 
 AI tools live in the full-page PromptKeeper editor so you can iterate deeply on prompts without cluttering your chat window.
 

@@ -15,15 +15,17 @@ We transform the browser from a passive consumption tool into an active, privacy
 *   **[STATUS.md](./STATUS.md)**: The single source of truth for current version, features, and maturity.
 *   **[Roadmap](./docs/roadmap.md)**: Strategic vision and phased delivery plan.
 *   **[Technical Debt](./docs/TECHNICAL-DEBT.md)**: Known issues and refactoring backlog.
+*   **[Architecture (HLD)](./docs/ARCHITECTURE_HLD.md)**: Holistic solution architecture (components, data flow, storage model, and key user journeys).
 
 ### **Key Architectural Decisions (ADR)**
 *   **[ADR-002: Side Panel Migration](./docs/adr/ADR-002-migration-to-side-panel.md)**: The shift to a master-detail layout.
 *   **[ADR-004: Built-In AI Integration](./docs/adr/004-built-in-ai-integration.md)**: The generic "Offscreen Bridge" + Hybrid API strategy.
 *   **[ADR-005: Markdown Rendering](./docs/adr/005-markdown-rendering.md)**: The "Click-to-Edit" rich text approach.
+*   **[ADR-007: LanguageModel Shims + CSP-Safe AI Bootstrap](./docs/adr/ADR-007-language-model-shims-and-csp-safe-ai-bootstrap.md)**: A single shared shim to enforce language options across AI API calls without violating MV3 CSP.
 
-### **Logic & Intelligence**
+### **Logic, Intelligence & Quality**
 *   **[Prompting Principles](./docs/PROMPTING_PRINCIPLES.md)**: The "4 Pillars" framework (Persona, Task, Context, Format) used for AI optimization.
-*   **[Test Strategy](./docs/test-strategy.md)**: Coverage matrix for Unit and E2E layers.
+*   **[Test Strategy](./docs/TEST_STRATEGY.md)**: Coverage matrix and suite inventory for Unit, E2E, and AI-specific journeys.
 
 ## 🛠 Active Focus (v2.1)
 *   **Polish**: Ensuring "Apple-like" fit and finish (Markdown rendering, Shortcuts, Smooth D&D).

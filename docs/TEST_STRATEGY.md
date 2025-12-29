@@ -1,6 +1,6 @@
 # PromptKeeper Testing Strategy (v2.1)
 
-**Status**: Active for v2.1.0  
+**Status**: Active for v2.1.1  
 **Scope**: Unit, E2E, Regression, and User Experience Validation.
 
 ---
@@ -11,22 +11,24 @@ We employ a "Testing Pyramid" approach, relying on Unit Tests for logic and Play
 
 | Component | Type | Validation Layer | Coverage |
 | :--- | :--- | :--- | :--- | 
-| **Core Services**<br>(`AIService.js`, `StorageService.js`, `GoogleDriveService.js`) | Logic | **Unit (Jest)** | ✅ **High**<br>Covers detailed logic, error handling, and migrations. |
-| **Options Page**<br>(`options.js`, Full IDE) | UI | **E2E (Playwright)** | ✅ **High**<br>Covered by `journey.spec` and `workspaces.spec`. |
-| **Side Panel**<br>(`sidepanel.js`, Companion) | UI | **E2E (Playwright)** | ✅ **High**<br>Covered by `sidepanel.spec` and `sidepanel_markdown.spec`. |
-| **Markdown Rendering**<br>(`marked.js` Integration) | Feature | **E2E + Manual** | ✅ **High**<br>Covered by `markdown.spec` and visual checks. |
-| **AI Integration**<br>(Gemini Nano Bridge) | Feature | **Manual + Unit** | 🟡 **Mixed**<br>Unit tests verify *logic*; Validation relies on `gemini-diagnostic.html`. |
+| **Core Services**<br>`AIService.js`, `StorageService.js`, `GoogleDriveService.js` | Logic | **Unit (Jest)** | ✅ **High** – Detailed logic, retries, error handling, and migrations. |
+| **Options Page**<br>`options.js`, full IDE | UI | **E2E (Playwright)** | ✅ **High** – `journey.spec`, `workspaces.spec`, `font_and_layout.spec`, `user_journey_ai_and_settings.spec`. |
+| **Side Panel**<br>`sidepanel.html` + `popup.js` | UI | **E2E (Playwright)** | ✅ **High** – `sidepanel.spec`, `sidepanel_markdown.spec`, `sidepanel_ai.spec`. |
+| **Markdown Rendering**<br>`libs/marked.min.js` integration | Feature | **E2E + Manual** | ✅ **High** – `markdown.spec`, `repro_stale_preview.spec` plus visual checks. |
+| **AI Integration**<br>Gemini Nano / Prompt API | Feature | **Unit + E2E + Manual** | 🟢 **Improved** – Unit tests for bridge logic and meta-prompts, E2E for AI buttons in options & sidepanel, manual verification via `gemini-diagnostic.html`. |
 
 ---
 
 ## 2. Unit Test Perspective (Logic & State)
 *Goal: Verify business logic in isolation without browser dependencies.*
 
-### covered
+### Covered
 *   **Prompt CRUD**: Creating, reading, updating (pushing versions), and deleting prompts.
 *   **Migrations**: Ensuring legacy string-array data converts to v2 object format.
 *   **Google Drive Auth**: Handling token flow checks and error states (Simulated).
 *   **AI Service Availability**: Parsing complicated capability states (`readily` vs `after-download`).
+*   **AI Meta-Prompts**: Ensuring system prompts forbid personal names, use inline `code` placeholders, and format options with headings.
+*   **Builtin AI Wrapper**: `PKBuiltinAI` tests cover availability branching and session creation/caching semantics.
 
 ### Not Covered
 *   **DOM Manipulation**: `popup.js` and `options.js` event listeners are NOT unit tested.
@@ -67,10 +69,15 @@ We employ a "Testing Pyramid" approach, relying on Unit Tests for logic and Play
     3.  Context Menu functionality.
 
 ### Journey C: The "Optimizer" (AI)
-*   **Flow**: Select Prompt -> Click "Magic Enhance" -> Review Output.
-*   **Validation**: **Manual** (due to API experimental nature).
-    *   Uses `gemini-diagnostic.html` for environment check.
-    *   Uses "Golden Path" manual checklist in `QA-REPORT-GEMINI.md`.
+*   **Flow** (Options IDE): Select Prompt -> Click AI buttons (Magic Enhance, Formalize, Improve Clarity, Shorten) -> Review output -> Save.
+*   **Validation (Automated + Manual)**:
+    * **Automated**: `user_journey_ai_and_settings.spec.js` (full editor) and `sidepanel_ai.spec.js` (side panel) using mocked `LanguageModel` to keep tests deterministic.
+    * **Manual**: `gemini-diagnostic.html` for environment check and `QA-REPORT-GEMINI.md` golden-path checklist for real Gemini Nano runs.
+
+### Streaming + Cancel (New in v2.1.x)
+*   **Flow**: Click AI -> output streams into editor -> click **Cancel** to abort -> editor reverts to original -> no unsaved glow.
+*   **Validation**:
+    * **Automated**: `ai_cancel_and_streaming.spec.js` with a mocked `promptStreaming()` async iterator + AbortController semantics.
 
 ---
 
@@ -81,6 +88,10 @@ Run the full suite before any release:
 # 1. Run Logic Tests
 npm test
 
-# 2. Run User Journey & Regression Tests
-npm run test:e2e
+# 2. Run User Journey & Regression Tests (full E2E)
+npx playwright test
+
+# 3. Focused AI Journeys (optional, faster)
+npx playwright test tests/e2e/user_journey_ai_and_settings.spec.js tests/e2e/sidepanel_ai.spec.js tests/e2e/ai_cancel_and_streaming.spec.js
 ```
+

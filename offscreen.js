@@ -6,6 +6,21 @@
 console.log('[Offscreen] Document loaded');
 console.log('[Offscreen] window.ai available:', typeof window.ai !== 'undefined');
 
+// Track in-flight requests so we can cancel (AbortController pattern)
+const inFlight = new Map(); // requestId -> AbortController
+
+function sendChunkUpdate(requestId, partial, stats) {
+    if (!requestId) return;
+    try {
+        chrome.runtime.sendMessage({
+            action: 'refinePromptChunk',
+            requestId,
+            partial,
+            stats
+        });
+    } catch { /* ignore */ }
+}
+
 // Listen for messages from extension pages
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('[Offscreen] Received message:', request.action);
@@ -21,9 +36,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request.action === 'refinePrompt') {
-        refinePrompt(request.promptText, request.refinementType)
-            .then(result => sendResponse({ success: true, result }))
+        refinePrompt(request.promptText, request.refinementType, request.requestId)
+            .then(({ result, stats }) => sendResponse({ success: true, result, stats }))
             .catch(error => sendResponse({ success: false, error: error.message }));
+        return true;
+    }
+
+    if (request.action === 'cancelRefinePrompt') {
+        try {
+            const controller = request.requestId ? inFlight.get(request.requestId) : null;
+            if (controller) controller.abort();
+        } finally {
+            sendResponse({ success: true });
+        }
         return true;
     }
 
@@ -37,35 +62,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  * Check if AI is available
  */
 async function checkAIAvailability() {
-    // 1. Check Standard window.ai.languageModel
-    if (window.ai && window.ai.languageModel) {
-        try {
-            const caps = await window.ai.languageModel.capabilities();
-            return { available: caps.available || 'no', source: 'window.ai' };
-        } catch (e) {
-            console.warn('[Offscreen] window.ai caps check failed:', e);
+    try {
+        if (window.PKBuiltinAI) {
+            const available = await window.PKBuiltinAI.getAvailability();
+            return { available: available || 'no', source: 'PKBuiltinAI' };
         }
+    } catch (e) {
+        console.warn('[Offscreen] PKBuiltinAI availability check failed:', e);
     }
 
-    // 2. Check Global LanguageModel (Spec)
-    if (window.LanguageModel) {
-        try {
-            if (window.LanguageModel.capabilities) {
-                const caps = await window.LanguageModel.capabilities();
-                return { available: caps.available || 'no', source: 'LanguageModel.caps' };
-            }
-            if (window.LanguageModel.availability) {
-                const avail = await window.LanguageModel.availability();
-                return { available: avail || 'no', source: 'LanguageModel.avail' };
-            }
-            // Fallback: If it exists, assume downloadable or available?
-            return { available: 'readily', source: 'LanguageModel.exists' };
-        } catch (e) {
-            console.warn('[Offscreen] LanguageModel check failed:', e);
-        }
-    }
-
-    return { available: 'no' };
+    return { available: 'no', source: 'missing' };
 }
 
 /**
@@ -78,10 +84,9 @@ async function getDetailedStatus() {
         summarizer: 'no'
     };
 
-    if (window.ai && window.ai.languageModel) {
+    if (window.PKBuiltinAI) {
         try {
-            const caps = await window.ai.languageModel.capabilities();
-            statuses.prompt = caps.available;
+            statuses.prompt = await window.PKBuiltinAI.getAvailability();
         } catch {
             statuses.prompt = 'no';
         }
@@ -101,16 +106,14 @@ async function getDiagnostic() {
 
     let diag = "";
 
-    if (window.ai.languageModel) {
+    if (window.PKBuiltinAI) {
         try {
-            const caps = await window.ai.languageModel.capabilities();
-            diag += `PromptAPI:${caps.available} `;
+            const avail = await window.PKBuiltinAI.getAvailability();
+            diag += `PromptAPI:${avail} `;
         } catch (e) {
             diag += `PromptAPI:Error(${e.message}) `;
         }
-    } else {
-        diag += "PromptAPI:Missing ";
-    }
+    } else diag += "PromptAPI:Missing ";
 
     diag += window.ai.rewriter ? "RewriterAPI:Present " : "RewriterAPI:Missing ";
     diag += window.ai.summarizer ? "SummarizerAPI:Present " : "SummarizerAPI:Missing ";
@@ -121,10 +124,9 @@ async function getDiagnostic() {
 /**
  * Refine a prompt using AI
  */
-async function refinePrompt(promptText, refinementType) {
-    if (!window.ai || !window.ai.languageModel) {
-        throw new Error('AI not available');
-    }
+async function refinePrompt(promptText, refinementType, requestId) {
+    const controller = new AbortController();
+    if (requestId) inFlight.set(requestId, controller);
 
     // Try specialized APIs first
     if (refinementType === 'summarize' && window.ai.summarizer) {
@@ -132,6 +134,7 @@ async function refinePrompt(promptText, refinementType) {
         const summarizer = await window.ai.summarizer.create();
         const result = await summarizer.summarize(promptText);
         summarizer.destroy();
+        if (requestId) inFlight.delete(requestId);
         return result;
     }
 
@@ -140,6 +143,7 @@ async function refinePrompt(promptText, refinementType) {
         const rewriter = await window.ai.rewriter.create({ tone: 'more-formal' });
         const result = await rewriter.rewrite(promptText);
         rewriter.destroy();
+        if (requestId) inFlight.delete(requestId);
         return result;
     }
 
@@ -149,36 +153,74 @@ async function refinePrompt(promptText, refinementType) {
     let instruction = '';
     switch (refinementType) {
         case 'formalize':
-            instruction = 'Rewrite this prompt to be more professional and corporate. Remove slang.';
+            instruction = 'Rewrite this prompt to be more professional and clear. Remove slang, keep the user\'s intent.';
             break;
         case 'clarify':
-            instruction = 'Make the Task in this prompt clearer and more active. Use strong verbs.';
+            instruction = 'Improve clarity and structure of this prompt without changing its intent.';
             break;
         case 'summarize':
-            instruction = 'Shorten this prompt while keeping the core intent. Aim for ~21 words.';
+            instruction = 'Shorten this prompt while keeping the core intent. Aim for a more concise version.';
             break;
         case 'magic_enhance':
-            instruction = 'Rewrite this prompt to include a defined Persona, Task, Context, and Format. Extrapolate missing details reasonably.';
+            instruction = 'Rewrite this prompt to include a clear Persona (role only, no personal names), Task, Context, and Format, but do NOT invent character names or companies.';
             break;
         default:
-            instruction = 'Improve this prompt.';
+            instruction = 'Improve this prompt while preserving its meaning.';
     }
 
     const metaPrompt = `
-Instruction: ${instruction}
-Input Text: "${promptText}"
+You are refining a user-written prompt for a prompt library.
 
-Rewrite the Input Text following the Instruction. Return ONLY the rewritten text.
+${instruction}
+
+Formatting rules you MUST follow:
+- Do NOT invent or include any personal names (e.g. "Anya Sharma") or fictional company names. If you use a persona, keep it generic, like "You are a senior marketing strategist".
+- When the user must fill in details (e.g. [describe your goals]), wrap that placeholder text in single backticks so it renders as inline code in markdown, for example: \`[briefly describe your current running level]\`.
+- If you present multiple prompt options, format each option as a level-1 markdown heading, for example: "# Option 1 (Most concise):".
+- Keep the output as plain markdown text only. No extra commentary or explanation around it.
+
+Input Text:
+"${promptText}"
+
+Return ONLY the rewritten prompt text in markdown, following the rules above. Do not add any explanation outside the prompt.
 `;
 
-    const session = await window.ai.languageModel.create({
-        expectedContext: 'en',
-        outputLanguage: 'en'
-    });
-    const result = await session.prompt(metaPrompt);
-    session.destroy();
+    let session;
+    try {
+        if (!window.PKBuiltinAI) throw new Error('PKBuiltinAI missing');
+        const created = await window.PKBuiltinAI.createSession({
+            signal: controller.signal
+        });
+        session = created.session;
 
-    return result;
+        // Prefer streaming to allow cancellation + to stream partial output back to UI
+        const stats = window.PKBuiltinAI?.getTokenStats ? window.PKBuiltinAI.getTokenStats(session) : null;
+
+        if (typeof session.promptStreaming === 'function') {
+            const stream = session.promptStreaming(metaPrompt, { signal: controller.signal });
+            let full = '';
+            for await (const chunk of stream) {
+                full += chunk;
+                sendChunkUpdate(requestId, full, window.PKBuiltinAI?.getTokenStats ? window.PKBuiltinAI.getTokenStats(session) : stats);
+            }
+            // Final push (ensures UI gets final text even if last chunk is empty)
+            sendChunkUpdate(requestId, full, window.PKBuiltinAI?.getTokenStats ? window.PKBuiltinAI.getTokenStats(session) : stats);
+            return { result: full, stats };
+        }
+
+        // Fallback to non-streaming (best-effort cancellation)
+        if (typeof session.prompt === 'function') {
+            const out = await session.prompt(metaPrompt, { signal: controller.signal });
+            sendChunkUpdate(requestId, out, stats);
+            return { result: out, stats };
+        }
+        const out = await session.prompt(metaPrompt);
+        sendChunkUpdate(requestId, out, stats);
+        return { result: out, stats };
+    } finally {
+        try { session?.destroy?.(); } catch { /* ignore */ }
+        if (requestId) inFlight.delete(requestId);
+    }
 }
 
 console.log('[Offscreen] Ready to handle AI requests');

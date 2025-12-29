@@ -1,9 +1,9 @@
 # PromptKeeper Extension Status
 
-## 🚀 Project Status: v2.1.0 (Released)
+## 🚀 Project Status: v2.1.1 (Release Candidate)
 
 **Date:** 2025-12-29
-**Current Version:** 2.1.0
+**Current Version:** 2.1.1
 
 ### ✅ New Features (v2.1)
 - **Markdown Support**: Read-only preview with "Click-to-Edit" UX.

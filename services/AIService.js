@@ -6,6 +6,8 @@
 class AIService {
     constructor() {
         this.session = null;
+        this._activeBridgeRequests = new Map(); // requestId -> abort handler
+        this._bridgeStreamListeners = new Map(); // requestId -> listener fn
     }
 
     /**
@@ -82,22 +84,14 @@ class AIService {
      * @returns {Promise<string>} 'readily', 'available', 'after-download', or 'no'
      */
     async getAvailability() {
-        // 1. Check Local Availability (if in Tab/SidePanel)
-        if (typeof window !== 'undefined') {
-            if (window.LanguageModel) {
-                try {
-                    if (window.LanguageModel.availability) {
-                        const status = await window.LanguageModel.availability();
-                        if (status !== 'no') return status; // 'readily', 'available', etc.
-                    }
-                } catch (e) { console.warn("Local LanguageModel check failed", e); }
+        // 1. Check local availability using the shared Built-in AI wrapper (web-ai-demos pattern)
+        try {
+            if (typeof window !== 'undefined' && window.PKBuiltinAI) {
+                const status = await window.PKBuiltinAI.getAvailability();
+                if (status && status !== 'no') return status;
             }
-            if (window.ai && window.ai.languageModel) {
-                try {
-                    const caps = await window.ai.languageModel.capabilities();
-                    if (caps.available !== 'no') return caps.available;
-                } catch (e) { console.warn("Local window.ai check failed", e); }
-            }
+        } catch (e) {
+            console.warn("Local Built-in AI check failed", e);
         }
 
         // 2. Bridge Fallback
@@ -145,16 +139,11 @@ class AIService {
             // Local Check
             if (window.Rewriter || (window.ai && window.ai.rewriter)) statuses.rewriter = 'readily';
 
-            if (window.LanguageModel) {
+            if (window.PKBuiltinAI) {
                 try {
-                    const s = await window.LanguageModel.availability();
-                    statuses.prompt = s;
-                } catch (_e) { /* ignore */ }
-            } else if (window.ai && window.ai.languageModel) {
-                try {
-                    const c = await window.ai.languageModel.capabilities();
-                    statuses.prompt = c.available;
-                } catch (_e) { /* ignore */ }
+                    const s = await window.PKBuiltinAI.getAvailability();
+                    statuses.prompt = s || 'no';
+                } catch { /* ignore */ }
             }
         }
 
@@ -172,20 +161,58 @@ class AIService {
     /**
      * Refines a prompt.
      */
-    async refinePrompt(promptText, refinementType) {
+    async refinePrompt(promptText, refinementType, opts = {}) {
         // 1. Local Execution Preference
         if (this._canRunLocally()) {
             console.log('[AIService] Running locally');
-            return this._runLocally(promptText, refinementType);
+            return this._runLocally(promptText, refinementType, opts);
         }
 
         // 2. Bridge Fallback
+        let requestId;
         try {
+            requestId = opts?.requestId || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `req_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+
+            // If caller wants streaming updates, listen for offscreen chunk events (best-effort)
+            if (typeof opts?.onChunk === 'function' || typeof opts?.onStats === 'function') {
+                const listener = (msg) => {
+                    if (!msg || msg.action !== 'refinePromptChunk') return;
+                    if (msg.requestId !== requestId) return;
+                    if (typeof opts.onChunk === 'function' && typeof msg.partial === 'string') {
+                        opts.onChunk(msg.partial);
+                    }
+                    if (typeof opts.onStats === 'function') {
+                        opts.onStats(msg.stats || null);
+                    }
+                };
+                try {
+                    chrome.runtime.onMessage.addListener(listener);
+                    this._bridgeStreamListeners.set(requestId, listener);
+                } catch { /* ignore */ }
+            }
+
+            // If caller aborts, try to cancel the request in offscreen (best-effort)
+            if (opts?.signal && typeof opts.signal.addEventListener === 'function') {
+                const onAbort = () => {
+                    // Fire-and-forget cancel
+                    this.cancelRefinePrompt(requestId).catch(() => {});
+                };
+                this._activeBridgeRequests.set(requestId, onAbort);
+                opts.signal.addEventListener('abort', onAbort, { once: true });
+            }
+
             const response = await this._sendToAIBridge({
                 action: 'refinePrompt',
+                requestId,
                 promptText,
-                refinementType
+                refinementType,
+                // Hint to offscreen to stream chunks back if possible
+                stream: typeof opts?.onChunk === 'function' || typeof opts?.onStats === 'function'
             });
+
+            if (typeof opts?.onStats === 'function') {
+                try { opts.onStats(response.stats || null); } catch { /* ignore */ }
+            }
 
             if (!response.success) {
                 throw new Error(response.error || 'AI refinement failed');
@@ -194,7 +221,26 @@ class AIService {
         } catch (err) {
             console.error('Refine prompt failed:', err);
             throw err;
+        } finally {
+            // Cleanup abort listeners (if any)
+            const onAbort = requestId ? this._activeBridgeRequests.get(requestId) : null;
+            if (requestId && onAbort && opts?.signal?.removeEventListener) {
+                opts.signal.removeEventListener('abort', onAbort);
+                this._activeBridgeRequests.delete(requestId);
+            }
+
+            // Cleanup streaming listeners (if any)
+            const streamListener = requestId ? this._bridgeStreamListeners.get(requestId) : null;
+            if (requestId && streamListener) {
+                try { chrome.runtime.onMessage.removeListener(streamListener); } catch { /* ignore */ }
+                this._bridgeStreamListeners.delete(requestId);
+            }
         }
+    }
+
+    async cancelRefinePrompt(requestId) {
+        if (!requestId) return;
+        await this._sendToAIBridge({ action: 'cancelRefinePrompt', requestId });
     }
 
     _canRunLocally() {
@@ -203,16 +249,18 @@ class AIService {
         return !!(window.LanguageModel || (window.ai && window.ai.languageModel));
     }
 
-    async _runLocally(promptText, refinementType) {
-        // Specialized APIs
-        if (refinementType === 'summarize' && (window.Summarizer || (window.ai && window.ai.summarizer))) {
+    async _runLocally(promptText, refinementType, opts = {}) {
+        const preferStreaming = opts?.preferStreaming === true && typeof opts.onChunk === 'function';
+
+        // Specialized APIs (use only when we are NOT trying to stream)
+        if (!preferStreaming && refinementType === 'summarize' && (window.Summarizer || (window.ai && window.ai.summarizer))) {
             const factory = window.Summarizer || window.ai.summarizer;
             const summarizer = await factory.create();
             const res = await summarizer.summarize(promptText);
             summarizer.destroy();
             return res;
         }
-        if (refinementType === 'formalize' && (window.Rewriter || (window.ai && window.ai.rewriter))) {
+        if (!preferStreaming && refinementType === 'formalize' && (window.Rewriter || (window.ai && window.ai.rewriter))) {
             const factory = window.Rewriter || window.ai.rewriter;
             const rewriter = await factory.create({ tone: 'more-formal' });
             const res = await rewriter.rewrite(promptText);
@@ -222,33 +270,86 @@ class AIService {
 
         // Prompt API
         let session;
-        if (window.LanguageModel) {
-            session = await window.LanguageModel.create({
-                expectedContext: 'en',
-                outputLanguage: 'en'
+        if (window.PKBuiltinAI) {
+            const created = await window.PKBuiltinAI.getCachedSession({
+                signal: opts.signal,
+                monitor: opts.monitor
             });
+            session = created.session;
+        } else if (window.LanguageModel) {
+            session = await window.LanguageModel.create({ expectedContext: 'en', outputLanguage: 'en' });
         } else if (window.ai && window.ai.languageModel) {
-            session = await window.ai.languageModel.create({
-                expectedContext: 'en',
-                outputLanguage: 'en'
-            });
-        } else {
-            throw new Error("Local AI API missing unexpectedly");
-        }
+            session = await window.ai.languageModel.create({ expectedContext: 'en', outputLanguage: 'en' });
+        } else throw new Error("Local AI API missing unexpectedly");
 
         let instruction = '';
         switch (refinementType) {
-            case 'formalize': instruction = 'Rewrite this prompt to be more professional.'; break;
-            case 'clarify': instruction = 'Make this prompt clearer.'; break;
-            case 'summarize': instruction = 'Shorten this prompt.'; break;
-            case 'magic_enhance': instruction = 'Rewrite this prompt to include Persona, Task, Context.'; break;
-            default: instruction = 'Improve this prompt.';
+            case 'formalize':
+                instruction = 'Rewrite this prompt to be more professional and clear. Remove slang, keep the user\'s intent.';
+                break;
+            case 'clarify':
+                instruction = 'Improve clarity and structure of this prompt without changing its intent.';
+                break;
+            case 'summarize':
+                instruction = 'Shorten this prompt while keeping the core intent. Aim for a more concise version.';
+                break;
+            case 'magic_enhance':
+                instruction = 'Rewrite this prompt to include a clear Persona (role only, no personal names), Task, Context, and Format, but do NOT invent character names or companies.';
+                break;
+            default:
+                instruction = 'Improve this prompt while preserving its meaning.';
         }
 
-        const metaPrompt = `Instruction: ${instruction}\nInput: "${promptText}"\nRewrite the Input.`;
-        const res = await session.prompt(metaPrompt);
-        session.destroy();
-        return res;
+        const metaPrompt = `
+You are refining a user-written prompt for a prompt library.
+
+${instruction}
+
+Formatting rules you MUST follow:
+- Do NOT invent or include any personal names (e.g. "Anya Sharma") or fictional company names. If you use a persona, keep it generic, like "You are a senior marketing strategist".
+- When the user must fill in details (e.g. [describe your goals]), wrap that placeholder text in single backticks so it renders as inline code in markdown, for example: \`[briefly describe your current running level]\`.
+- If you present multiple prompt options, format each option as a level-1 markdown heading, for example: "# Option 1 (Most concise):".
+- Keep the output as plain markdown text only. No extra commentary or explanation around it.
+
+Input Text:
+"${promptText}"
+
+Return ONLY the rewritten prompt text in markdown, following the rules above. Do not add any explanation outside the prompt.
+`;
+        try {
+            // Prefer streaming (web-ai-demos pattern) when available
+            const emitStats = () => {
+                if (typeof opts.onStats !== 'function') return;
+                const stats = window.PKBuiltinAI?.getTokenStats ? window.PKBuiltinAI.getTokenStats(session) : null;
+                opts.onStats(stats);
+            };
+
+            if (typeof session.promptStreaming === 'function') {
+                const stream = session.promptStreaming(metaPrompt, opts.signal ? { signal: opts.signal } : undefined);
+                let full = '';
+                for await (const chunk of stream) {
+                    full += chunk;
+                    if (typeof opts.onChunk === 'function') opts.onChunk(full);
+                    emitStats();
+                }
+                emitStats();
+                return full;
+            }
+
+            // Fallback: non-streaming
+            const res = typeof session.prompt === 'function'
+                ? await session.prompt(metaPrompt, opts.signal ? { signal: opts.signal } : undefined)
+                : await session.prompt(metaPrompt);
+
+            if (typeof opts.onChunk === 'function') opts.onChunk(res);
+            emitStats();
+            return res;
+        } finally {
+            // If we're using the cached session, we do not destroy it here.
+            if (!window.PKBuiltinAI) {
+                try { session.destroy(); } catch { /* ignore */ }
+            }
+        }
     }
 }
 

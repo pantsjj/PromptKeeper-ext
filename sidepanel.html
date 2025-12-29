@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PromptKeeper</title>
+    <!-- Early LanguageModel shim - must load before any AI API calls -->
+    <script src="language-model-shim.js"></script>
+    <!-- Built-in AI wrapper (shared best-practice bootstrap) -->
+    <script src="builtin-ai.js"></script>
     <link rel="stylesheet" type="text/css" href="styles.css">
     <style>
         :root {
@@ -22,6 +26,7 @@
             --radius-lg: 12px;
             --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --code-font: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+            --prompt-font-size: 13px;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -413,7 +418,7 @@
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             font-family: var(--code-font);
-            font-size: 13px;
+            font-size: var(--prompt-font-size);
             line-height: 1.5;
             background: var(--bg-color);
             color: var(--text-color);
@@ -659,6 +664,10 @@
                     <textarea id="prompt-text" class="text-area" placeholder="Write your prompt here..."></textarea>
                     <div id="markdown-preview" class="markdown-preview hidden"
                         style="flex:1; min-height:150px; overflow-y:auto;"></div>
+                    <div id="local-model-stats"
+                        style="margin-top:6px; font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        Local Model Stats: —
+                    </div>
                 </div>
 
                 <div class="editor-buttons">
@@ -686,6 +695,7 @@
     <footer id="stats">
         <div class="left-stats">
             <span id="word-count">Words: 0</span>
+                    <span id="ai-progress" class="hidden" style="color:var(--primary-color); white-space:nowrap;">⬇️ Downloading…</span>
             <select id="version-selector" title="View Version History"></select>
             <span id="storage-used">0 KB</span>
         </div>

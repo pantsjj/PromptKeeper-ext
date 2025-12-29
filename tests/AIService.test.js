@@ -82,11 +82,13 @@ describe('AIService with Offscreen', () => {
 
         expect(result).toBe('Refined prompt text');
         expect(global.chrome.runtime.sendMessage).toHaveBeenCalledWith(
-            {
+            expect.objectContaining({
                 action: 'refinePrompt',
                 promptText: 'test prompt',
-                refinementType: 'formalize'
-            },
+                refinementType: 'formalize',
+                requestId: expect.any(String),
+                stream: false
+            }),
             expect.any(Function)
         );
     });

@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>PromptKeeper AI Bridge</title>
+    <!-- Early LanguageModel shim - must load before any AI API calls -->
+    <script src="language-model-shim.js"></script>
+    <!-- Built-in AI wrapper (shared best-practice bootstrap) -->
+    <script src="builtin-ai.js"></script>
 </head>
 <body>
     <!-- This page runs in a context where window.ai IS available -->

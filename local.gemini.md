@@ -21,9 +21,9 @@ We transform the browser from a passive consumption tool into an active, privacy
 *   **[ADR-004: Built-In AI Integration](./docs/adr/004-built-in-ai-integration.md)**: The generic "Offscreen Bridge" + Hybrid API strategy.
 *   **[ADR-005: Markdown Rendering](./docs/adr/005-markdown-rendering.md)**: The "Click-to-Edit" rich text approach.
 
-### **Logic & Intelligence**
+### **Logic, Intelligence & Quality**
 *   **[Prompting Principles](./docs/PROMPTING_PRINCIPLES.md)**: The "4 Pillars" framework (Persona, Task, Context, Format) used for AI optimization.
-*   **[Test Strategy](./docs/test-strategy.md)**: Coverage matrix for Unit and E2E layers.
+*   **[Test Strategy](./docs/TEST_STRATEGY.md)**: Coverage matrix and suite inventory for Unit, E2E, and AI-specific journeys.
 
 ## 🛠 Active Focus (v2.1)
 *   **Polish**: Ensuring "Apple-like" fit and finish (Markdown rendering, Shortcuts, Smooth D&D).

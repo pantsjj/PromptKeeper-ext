@@ -28,6 +28,25 @@ We also align with the structure defined in [WebAI Demos](https://github.com/Goo
 ## Decision
 We will integrate Gemini Nano using a **Centralized Offscreen Bridge** architecture to ensure ubiquitous availability across the extension (Options Page, Content Scripts, Background, Side Panel).
 
+### 0. Built-in AI API Optimisation (v2.1+)
+We will adopt best practices from `web-ai-demos` to reduce duplication and improve UX:
+
+- **Central wrapper**: introduce a single `createLanguageModel(options)` / “Builtin AI Bootstrap” wrapper used by `AIService` and `offscreen.js` to handle:
+  - API shape differences (`window.LanguageModel` vs `window.ai.languageModel`)
+  - availability gating
+  - session creation options (languages, monitor, abort signal)
+  - session reuse / token usage (where available)
+- **Streaming + Cancel**: use `promptStreaming()` with `AbortController` where supported, with safe fallback to `prompt()`.
+- **Download progress**: use `monitor(downloadprogress)` to show model warm-up / download status in UI.
+
+**Implemented (v2.1.x):**
+- `language-model-shim.js` (CSP-safe external) ensures required language options are always set.
+- `builtin-ai.js` exposes `window.PKBuiltinAI` (central API-shape wrapper + session helpers).
+- Options + Side Panel AI buttons support streaming updates + Cancel (AbortController).
+- Offscreen supports best-effort cancellation (`cancelRefinePrompt`) for bridge-based operations.
+
+See `built-in-AI-API-optimisation-plan.md` for the plan, status, and remaining hardening items.
+
 ### 1. Specification & Configuration
 - **Model**: Gemini Nano (via Chrome Prompt API).
 - **Minimum Version**: Chrome 143+ (Dev/Canary recommended for dev, 138+ for stable eventually).
@@ -81,6 +100,8 @@ PromptKeeper employs a Hybrid "Best-Tool-for-the-Job" Strategy, falling back to 
     - Zero cost for inference.
     - Data never leaves the device (Enterprise-ready).
     - Consistent API access via `AIService` abstraction.
+    - Reduced code duplication and drift via a single Builtin AI wrapper.
+    - Improved UX via streaming, cancel, and download progress reporting.
 - **Negative**:
     - High user friction for setup (Flags/Download).
     - Large initial download (~2GB model).

@@ -4,6 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <title>PromptKeeper - Editor</title>
+    <!-- Early LanguageModel shim - must load before any AI API calls -->
+    <script src="language-model-shim.js"></script>
+    <!-- Built-in AI wrapper (shared best-practice bootstrap) -->
+    <script src="builtin-ai.js"></script>
     <style>
         :root {
             --bg-color: #f5f5f7;
@@ -20,6 +24,7 @@
             --radius-lg: 12px;
             --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --code-font: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+            --prompt-font-size: 14px;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -108,8 +113,8 @@
         /* --- Main Layout --- */
         #main-layout {
             display: grid;
-            grid-template-columns: 240px 1fr 280px;
-            /* Right sidebar: 260px -> 280px */
+            grid-template-columns: 240px 1fr 6px var(--right-sidebar-width, 280px);
+            /* Left sidebar | editor | resize handle | right sidebar */
             flex: 1;
             overflow: hidden;
         }
@@ -179,6 +184,8 @@
         #sidebar-right {
             border-left: 1px solid var(--border-color);
             border-right: none;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .sidebar-section {
@@ -364,7 +371,7 @@
             background: transparent;
             color: var(--text-color);
             font-family: var(--code-font);
-            font-size: 14px;
+            font-size: var(--prompt-font-size);
             line-height: 1.6;
             outline: none;
         }
@@ -498,23 +505,17 @@
             <div id="editor-content">
                 <textarea id="prompt-text-area" class="text-area" placeholder="Write your prompt here..."></textarea>
                 <div id="markdown-preview" class="markdown-preview hidden"></div>
+                <div id="local-model-stats"
+                    style="margin-top:6px; font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    Local Model Stats: —
+                </div>
             </div>
         </div>
         <script src="libs/marked.min.js"></script>
 
         <!-- RIGHT SIDEBAR -->
+        <div id="editor-right-resize-handle"></div>
         <div id="sidebar-right" class="sidebar" style="padding: 16px;">
-            <!-- Stats -->
-            <div class="panel-section">
-                <h3>Details</h3>
-                <div class="stats-grid">
-                    <div id="word-count">Words: 0</div>
-                    <div id="char-count">Chars: 0</div>
-                    <div id="version-label">Rev: 1</div>
-                    <div id="project-label" title="Current Workspace"
-                        style="grid-column: span 2; margin-top:4px; color:var(--text-color);">No Workspace</div>
-                </div>
-            </div>
 
             <!-- AI Tools -->
             <div class="panel-section">
@@ -534,12 +535,51 @@
 
             <div class="panel-section">
                 <h3>Options</h3>
-                <div class="ai-panel-card" style="padding: 12px;">
+                <div class="ai-panel-card" style="padding: 12px; display:flex; flex-direction:column; gap:12px;">
                     <label
                         style="display:flex; align-items:center; gap:8px; font-size:11px; cursor:pointer; color:var(--text-color);">
                         <input type="checkbox" id="confirm-deletion-checkbox" checked>
                         Confirm workspace deletion
                     </label>
+
+                    <div id="font-size-controls"
+                        style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--text-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Editor font size</span>
+                            <span id="font-size-display">14px</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button id="font-size-decrease" class="secondary-btn"
+                                style="padding:2px 6px; font-size:11px;">−</button>
+                            <button id="font-size-increase" class="secondary-btn"
+                                style="padding:2px 6px; font-size:11px;">+</button>
+                            <select id="font-size-preset" class="secondary-btn"
+                                style="padding:2px 6px; font-size:11px; flex:1;">
+                                <option value="13">Small (13px)</option>
+                                <option value="14" selected>Default (14px)</option>
+                                <option value="16">Large (16px)</option>
+                                <option value="18">Extra Large (18px)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="autosave-controls"
+                        style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--text-color);">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="autosave-enabled-checkbox" checked>
+                            Auto-save prompts every
+                            <select id="autosave-interval-select"
+                                style="border:none; background:transparent; font-size:11px; cursor:pointer;">
+                                <option value="1">1 min</option>
+                                <option value="5" selected>5 min</option>
+                                <option value="10">10 min</option>
+                            </select>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="autosave-on-switch-checkbox">
+                            Auto-save when switching prompts
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -615,13 +655,12 @@
             <div class="panel-section"
                 style="margin-top:auto; padding-top:20px; border-top:1px solid var(--border-color);">
                 <div style="text-align:center; font-size:10px; color:var(--text-secondary);">
-                    <div style="margin-bottom:4px; font-weight:600;">PromptKeeper</div>
-                    <div>v2.0.0</div>
-                    <div style="margin-top:8px;">@author <strong>jpantsjoha</strong></div>
+                    <div style="margin-bottom:4px; font-weight:600;">PromptKeeper v2.1.1</div>
+                   
                     <div style="margin-top:4px;">
-                        <a href="https://github.com/jpantsjoha/PromptKeeper-ext" target="_blank"
+                        <a href="https://g.dev/jpantsjoha" target="_blank"
                             style="color:var(--primary-color); text-decoration:none;">
-                            GitHub ↗
+                            @author <strong>jpantsjoha ↗
                         </a>
                     </div>
                 </div>
@@ -698,27 +737,6 @@
             font-weight: 500;
         }
 
-        .status-dots-container {
-            display: flex;
-            gap: 4px;
-            cursor: pointer;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #34c759;
-        }
-
-        .status-dot.warning {
-            background: #ff9500;
-        }
-
-        .status-dot.error {
-            background: #ff3b30;
-        }
-
         /* Footer Columns */
         .footer-left {
             display: flex;
@@ -728,11 +746,52 @@
             /* Pushes right-stats to the end */
         }
 
+        /* Right sidebar resize handle */
+        #editor-right-resize-handle {
+            width: 6px;
+            cursor: col-resize;
+            background: transparent;
+        }
+
+        #editor-right-resize-handle:hover {
+            background: var(--border-color);
+        }
+
         .right-stats {
             display: flex;
             align-items: center;
             gap: 5px;
             white-space: nowrap;
+        }
+
+        #footer-version-selector {
+            min-width: 180px;
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Unsaved change glow for full editor */
+        @keyframes editor-unsaved-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(255, 149, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 149, 0, 0);
+            }
+        }
+
+        .unsaved-glow {
+            animation: editor-unsaved-glow 1.2s ease-in-out infinite;
+        }
+
+        /* Markdown preview in full editor should share font size with editor */
+        #markdown-preview {
+            font-size: var(--prompt-font-size);
+            line-height: 1.6;
         }
 
         /* Context Menu (options page only) */
@@ -761,23 +820,69 @@
         .menu-item:hover {
             background-color: var(--accent-color);
         }
+
+        /* Footer AI Status Dots (traffic lights) */
+        .status-dots-container {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+            cursor: help;
+            position: relative;
+        }
+
+        .status-dot.readily {
+            background-color: #34a853; /* Green */
+        }
+
+        .status-dot.no {
+            background-color: #ea4335; /* Red */
+        }
+
+        .status-dot.after-download {
+            background-color: #fbbc04; /* Yellow */
+        }
+
+        .status-dot:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+            z-index: 10;
+        }
     </style>
 
     <!-- Footer Status Bar -->
     <footer id="stats">
         <div class="footer-left">
             <strong style="color:#5f6368;">Stats:</strong>
+            <span id="footer-status-dots" class="status-dots-container" title="AI status"></span>
             <span id="footer-word-count">Words: 0</span>
+            <span class="separator">|</span>
+            <span id="footer-char-count">Chars: 0</span>
+            <span class="separator">|</span>
             <select id="footer-version-selector" title="View Version History"
                 style="border:none; background:transparent; color:var(--text-color); cursor:pointer; font-size:11px;">
                 <!-- populated by js -->
             </select>
             <span class="separator">|</span>
             <span id="footer-storage-used">Size: 0 KB</span>
-            <span class="separator">|</span>
-            <span class="status-dots-container" id="footer-status-dots">
-                <!-- dots injected by js -->
-            </span>
         </div>
         <div class="right-stats">
             <a href="#" id="footer-docs-link">Docs</a>

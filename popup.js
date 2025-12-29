@@ -9,7 +9,9 @@ const els = {};
 
 function init() {
     bindElements();
+    applyLanguageModelShims();
     setupListeners();
+    initFontSize();
     setupUI(); // Initialize UI interactions (toggles, resize)
     loadWorkspaces(); // Load workspace list
     loadPrompts();
@@ -27,8 +29,85 @@ function init() {
                 console.log('[Popup] Projects changed, reloading workspaces...');
                 loadWorkspaces();
             }
+            if (changes['editorFontSize']) {
+                const next = typeof changes.editorFontSize.newValue === 'number'
+                    ? changes.editorFontSize.newValue
+                    : 13;
+                document.documentElement.style.setProperty('--prompt-font-size', `${next}px`);
+            }
         }
     });
+}
+
+function initFontSize() {
+    // Apply shared editor font size from options to sidepanel
+    chrome.storage.local.get(['editorFontSize'], (result) => {
+        const size = typeof result.editorFontSize === 'number' ? result.editorFontSize : 13;
+        document.documentElement.style.setProperty('--prompt-font-size', `${size}px`);
+    });
+}
+
+function applyLanguageModelShims() {
+    // Default language options to prevent Chrome's "No output language was specified" warning
+    const defaultLangOpts = { expectedInputLanguages: ['en'], expectedOutputLanguages: ['en'] };
+
+    try {
+        // If the page already loaded `language-model-shim.js`, do nothing (failsafe only)
+        if (window.LanguageModel?.__pkShimmed || window.LanguageModel?.__pkWrapped) return;
+        if (window.ai?.languageModel?.__pkShimmed || window.ai?.languageModel?.__pkWrapped) return;
+
+        // Wrap window.LanguageModel
+        if (window.LanguageModel && !window.LanguageModel.__pkWrapped) {
+            // Wrap create()
+            if (typeof window.LanguageModel.create === 'function') {
+                const origCreate = window.LanguageModel.create.bind(window.LanguageModel);
+                window.LanguageModel.create = (options = {}) => {
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    return origCreate(merged);
+                };
+            }
+            // Wrap availability()
+            if (typeof window.LanguageModel.availability === 'function') {
+                const origAvail = window.LanguageModel.availability.bind(window.LanguageModel);
+                window.LanguageModel.availability = (options = {}) => {
+                    const merged = { ...defaultLangOpts, ...options };
+                    return origAvail(merged);
+                };
+            }
+            // Wrap capabilities()
+            if (typeof window.LanguageModel.capabilities === 'function') {
+                const origCaps = window.LanguageModel.capabilities.bind(window.LanguageModel);
+                window.LanguageModel.capabilities = (options = {}) => {
+                    const merged = { ...defaultLangOpts, ...options };
+                    return origCaps(merged);
+                };
+            }
+            window.LanguageModel.__pkWrapped = true;
+        }
+
+        // Wrap window.ai.languageModel
+        if (window.ai && window.ai.languageModel && !window.ai.languageModel.__pkWrapped) {
+            // Wrap create()
+            if (typeof window.ai.languageModel.create === 'function') {
+                const origCreate = window.ai.languageModel.create.bind(window.ai.languageModel);
+                window.ai.languageModel.create = (options = {}) => {
+                    const merged = { expectedContext: 'en', outputLanguage: 'en', ...options };
+                    return origCreate(merged);
+                };
+            }
+            // Wrap capabilities()
+            if (typeof window.ai.languageModel.capabilities === 'function') {
+                const origCaps = window.ai.languageModel.capabilities.bind(window.ai.languageModel);
+                window.ai.languageModel.capabilities = (options = {}) => {
+                    const merged = { ...defaultLangOpts, ...options };
+                    return origCaps(merged);
+                };
+            }
+            window.ai.languageModel.__pkWrapped = true;
+        }
+    } catch (e) {
+        console.warn('[Popup] Failed to install LanguageModel shims', e);
+    }
 }
 
 function bindElements() {
@@ -55,6 +134,8 @@ function bindElements() {
     // Stats/Status
     els.wordCount = document.getElementById('word-count');
     els.storageUsed = document.getElementById('storage-used');
+    els.aiProgress = document.getElementById('ai-progress');
+    els.localModelStats = document.getElementById('local-model-stats');
 
     // Google Drive elements
     els.googleSigninBtn = document.getElementById('google-signin-btn');
@@ -123,7 +204,8 @@ function setupListeners() {
                 const updated = prompts.find(p => p.id === currentPromptId);
                 if (updated) selectPrompt(updated);
             }
-            // Pulse
+            // Clear unsaved state + pulse
+            els.textArea.classList.remove('unsaved-glow');
             els.textArea.classList.add('pulse-green');
             setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
         } catch (err) {
@@ -132,12 +214,18 @@ function setupListeners() {
         }
     });
 
+    // Mark editor dirty on changes
+    els.textArea.addEventListener('input', () => {
+        els.textArea.classList.add('unsaved-glow');
+    });
+
     // New
     const handleNewPrompt = () => {
         currentPromptId = null;
         els.titleInput.value = '';
         els.textArea.value = '';
         clearStats();
+        els.textArea.classList.remove('unsaved-glow');
 
         // Force Edit Mode
         const previewDiv = document.getElementById('markdown-preview');
@@ -175,35 +263,42 @@ function setupListeners() {
         }
     });
 
-    // Formatting Shortcuts (Cmd+B, Cmd+I)
+    // Formatting & Save Shortcuts (Cmd+B, Cmd+I, Cmd+S)
     els.textArea.addEventListener('keydown', (e) => {
-        if (e.metaKey || e.ctrlKey) {
-            const start = els.textArea.selectionStart;
-            const end = els.textArea.selectionEnd;
-            const text = els.textArea.value;
-            let inserted = false;
+        if (!(e.metaKey || e.ctrlKey)) return;
 
-            if (e.key === 'b') { // Bold
-                e.preventDefault();
-                const selection = text.substring(start, end);
-                const replacement = `**${selection}**`;
-                els.textArea.setRangeText(replacement, start, end, 'select');
-                inserted = true;
-            } else if (e.key === 'i') { // Italic
-                e.preventDefault();
-                const selection = text.substring(start, end);
-                const replacement = `*${selection}*`;
-                els.textArea.setRangeText(replacement, start, end, 'select');
-                inserted = true;
-            }
+        // Save (Cmd/Ctrl+S) should save the current prompt instead of page save
+        if (e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            els.saveBtn?.click();
+            return;
+        }
 
-            if (inserted) {
-                // Sync preview immediately
-                if (typeof setPromptText === 'function') {
-                    setPromptText(els.textArea.value);
-                }
-                updateStats();
+        const start = els.textArea.selectionStart;
+        const end = els.textArea.selectionEnd;
+        const text = els.textArea.value;
+        let inserted = false;
+
+        if (e.key === 'b' || e.key === 'B') { // Bold
+            e.preventDefault();
+            const selection = text.substring(start, end);
+            const replacement = `**${selection}**`;
+            els.textArea.setRangeText(replacement, start, end, 'select');
+            inserted = true;
+        } else if (e.key === 'i' || e.key === 'I') { // Italic
+            e.preventDefault();
+            const selection = text.substring(start, end);
+            const replacement = `*${selection}*`;
+            els.textArea.setRangeText(replacement, start, end, 'select');
+            inserted = true;
+        }
+
+        if (inserted) {
+            // Sync preview immediately
+            if (typeof setPromptText === 'function') {
+                setPromptText(els.textArea.value);
             }
+            updateStats();
         }
     });
 
@@ -257,6 +352,12 @@ function setupListeners() {
             chrome.runtime.openOptionsPage();
         } else {
             window.open(chrome.runtime.getURL('options.html'));
+        }
+        // Close just this side panel window so the icon can still reopen it later
+        try {
+            window.close();
+        } catch (err) {
+            console.warn('[Popup] Failed to close side panel window:', err);
         }
     });
 
@@ -681,6 +782,21 @@ function renderVersionSelector(prompt) {
         if (version) {
             els.textArea.value = version.content;
             updateStats(false);
+            // If preview is visible, re-render markdown so it matches selected revision
+            const previewDiv = document.getElementById('markdown-preview');
+            if (previewDiv && !previewDiv.classList.contains('hidden')) {
+                if (window.marked) {
+                    try {
+                        previewDiv.innerHTML = window.marked.parse(version.content);
+                    } catch {
+                        previewDiv.textContent = version.content;
+                    }
+                } else {
+                    previewDiv.textContent = version.content;
+                }
+            }
+            // Selecting a past revision is unsaved until user clicks Save
+            els.textArea.classList.add('unsaved-glow');
         }
     };
 }
@@ -934,27 +1050,95 @@ async function handleAI(type) {
     // Visual feedback
     const btn = type === 'magic_enhance' ? els.magicBtn : els.clarityBtn;
     const originalText = btn.textContent;
-    btn.textContent = "Processing...";
-    btn.disabled = true;
+    const originalEditorText = els.textArea.value;
+    const originalStatsText = els.localModelStats ? els.localModelStats.textContent : null;
+    // Abort/cancel support (web-ai-demos pattern)
+    if (btn.dataset.pkAiCancel === '1') {
+        try { window.__pkAiAbortController?.abort(); } catch { /* ignore */ }
+        return;
+    }
+
+    const abortController = new AbortController();
+    window.__pkAiAbortController = abortController;
+
+    btn.dataset.pkAiCancel = '1';
+    btn.textContent = "Cancel";
+    btn.disabled = false; // allow click again to cancel
+    btn.classList.add('ai-busy');
     document.body.style.cursor = 'wait';
 
     try {
-        const refined = await AIService.refinePrompt(text, type);
+        // Download progress (monitor) – best-effort, only for API surfaces that support it.
+        const monitor = (m) => {
+            m.addEventListener('downloadprogress', (e) => {
+                if (!els.aiProgress) return;
+                const pct = (typeof e.loaded === 'number' && typeof e.total === 'number' && e.total > 0)
+                    ? Math.round((e.loaded / e.total) * 100)
+                    : undefined;
+                els.aiProgress.textContent = pct !== undefined ? `⬇️ Downloading… ${pct}%` : '⬇️ Downloading…';
+                els.aiProgress.classList.remove('hidden');
+            });
+        };
+
+        const refined = await AIService.refinePrompt(text, type, {
+            signal: abortController.signal,
+            monitor,
+            preferStreaming: true,
+            // Streaming: update progressively but do NOT mark unsaved until completion
+            onChunk: (partial) => {
+                els.textArea.value = partial;
+                const previewDiv = document.getElementById('markdown-preview');
+                if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+                    previewDiv.innerHTML = window.marked.parse(partial);
+                }
+            },
+            onStats: (stats) => {
+                if (!els.localModelStats) return;
+                if (!stats) {
+                    els.localModelStats.textContent = 'Local Model Stats: —';
+                    return;
+                }
+                const usage = typeof stats.inputUsage === 'number' ? stats.inputUsage : undefined;
+                const quota = typeof stats.inputQuota === 'number' ? stats.inputQuota : undefined;
+                if (usage !== undefined && quota !== undefined) {
+                    els.localModelStats.textContent = `Local Model Stats: tokens ${usage}/${quota}`;
+                } else if (usage !== undefined) {
+                    els.localModelStats.textContent = `Local Model Stats: tokens ${usage}`;
+                } else {
+                    els.localModelStats.textContent = 'Local Model Stats: —';
+                }
+            }
+        });
         if (refined) {
             setPromptText(refined);
             // Pulse effect to show change
+            els.textArea.classList.add('unsaved-glow');
             els.textArea.classList.add('pulse-green');
             setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
             updateStats();
         }
     } catch (e) {
+        // On cancel, revert partial streamed content and exit quietly.
+        if (e?.name === 'AbortError' || String(e?.message || '').toLowerCase().includes('aborted')) {
+            els.textArea.value = originalEditorText;
+            const previewDiv = document.getElementById('markdown-preview');
+            if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+                previewDiv.innerHTML = window.marked.parse(originalEditorText);
+            }
+            // Restore stats if we had any
+            if (els.localModelStats && originalStatsText) els.localModelStats.textContent = originalStatsText;
+            return;
+        }
         console.error("AI Refine Error:", e);
         alert("Optimization failed: " + e.message);
     } finally {
         btn.textContent = originalText;
         btn.disabled = false;
+        delete btn.dataset.pkAiCancel;
+        btn.classList.remove('ai-busy');
+        window.__pkAiAbortController = null;
         document.body.style.cursor = 'default';
-        delete els.magicBtn.dataset.bound; // Allow re-bind if needed? No, actually remove this line, logic is fine.
+        if (els.aiProgress) els.aiProgress.classList.add('hidden');
     }
 }
 
