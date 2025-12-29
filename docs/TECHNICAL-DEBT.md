@@ -25,7 +25,8 @@ All items are tracked as GitHub issues: https://github.com/pantsjj/PromptKeeper-
 
 ### 4. AI Service Error Handling [#6](https://github.com/pantsjj/PromptKeeper-ext/issues/6)
 - **Severity**: Medium
-- **Description**: The "Offscreen Document" workaround for `window.ai` is fragile. If the offscreen document closes unexpectedly, the AI service might hang.
+- **Description**: The "Offscreen Document" workaround for `window.ai` is fragile.
+- **Update (v2.1)**: Fixed critical "Not Supported" error via config context. Retry mechanism still recommended for connection loss.
 - **Plan**: Implement a robust retry mechanism and "keep-alive" heartbeat.
 
 ---
@@ -34,18 +35,22 @@ All items are tracked as GitHub issues: https://github.com/pantsjj/PromptKeeper-
 
 ### Diff View [#7](https://github.com/pantsjj/PromptKeeper-ext/issues/7)
 Visual indicator of text changes between prompt versions (Phase 2 roadmap item).  
-With ADR‑003 we now cap the visible history dropdown at the most recent 50 revisions; the diff view should compare the current head version against any selected historical version and present a GitHub‑style colour scheme (green additions, red deletions).
+With ADR‑003 we limit history to 50 items. Diff view should compare Head vs Selected.
 
 ### Dynamic Variable Injection [#8](https://github.com/pantsjj/PromptKeeper-ext/issues/8)
 Form-based filling of `{{variables}}` in prompts (Future Scope).
 
-### Markdown Support [#9](https://github.com/pantsjj/PromptKeeper-ext/issues/9)
-- [x] **Description**: Render standard markdown (Bold, Italic, Tables) in the editor for better readability, with option to strip formatting on paste.
-- **Reference**: `docs/issues/ISSUE-005-markdown-support.md` (Resolved in v2.1.0)
-
 ---
 
-## Resolved (v2.0)
+## Resolved (v2.1) - Released Dec 29, 2025
+
+- [x] **Markdown Support** [#9](https://github.com/pantsjj/PromptKeeper-ext/issues/9)
+    - **Description**: Render standard markdown (Bold, Italic, Tables) in Editor and Side Panel.
+    - **Resolution**: Implemented with "Click-to-Edit" and implicit strip-on-paste.
+- [x] **Test Coverage Gap (Partial)** [#4](https://github.com/pantsjj/PromptKeeper-ext/issues/4)
+    - **Resolution**: Added `markdown.spec.js`, `sidepanel_markdown.spec.js`, and `repro_stale_preview.spec.js` covering critical UI flows.
+
+## Resolved (v2.0) - Released Dec 06, 2025
 
 - [x] CSP Violation in `gemini-diagnostic.html` (Fixed by moving inline scripts to `gemini-diagnostic.js`)
 - [x] Duplicate Status Bar in `options.html` (Fixed by unifying to footer)
