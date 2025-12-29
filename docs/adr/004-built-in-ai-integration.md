@@ -62,12 +62,19 @@ To support this integration and manage the "experimental" nature, we implemented
 - **Help Page** (`gemini-help.html`): Self-service guide for users to enable flags and force-download components (`chrome://components`).
 - **Advanced Trigger**: Diagnostics page includes a "Fix" link and console commands (`await window.ai.createTextSession()`) to unblock stuck downloads.
 
-#### C. User Features
-- **Magic Enhance Toggle**: UI switch to enable/disable local processing.
-- **Prompt Power-Ups**:
-    - `Formalize`: Rewriter API (or meta-prompt).
-    - `Summarize`: Summarizer API (or meta-prompt).
-    - `Expand`: Language Model prompt.
+#### C. Workflow & API Strategy
+PromptKeeper employs a Hybrid "Best-Tool-for-the-Job" Strategy, falling back to the general Prompt API if specialized APIs are unavailable.
+
+**1. Options Page (Full IDE)**:
+*   **Magic Enhance** (Prompt API): Creative expansion using "Persona, Task, Context" framework.
+*   **Formalize Tone** (Rewriter API > Prompt API): Rewrite to be more professional.
+*   **Improve Clarity** (Rewriter API > Prompt API): Rewrite to be clearer/concise.
+*   **Shorten** (Summarizer API > Prompt API): Condense text.
+
+**2. Side Panel (Quick Edit)**:
+*   **✨ Magic Optimize**: Corresponds to "Magic Enhance".
+*   **🔍 Improve Clarity**: Corresponds to "Improve Clarity".
+*   *Constraint*: Only shown when AI is fully available (Green status).
 
 ## Consequences
 - **Positive**:

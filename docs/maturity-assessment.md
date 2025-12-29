@@ -1,6 +1,6 @@
 # Maturity Self-Assessment
 
-## Current Status: "v2.0 – Focused, Production-Ready for Power Users"
+## Current Status: "v2.1 – Polished & Production-Ready for Power Users"
 
 ### Strengths (Competitive Advantage)
 *   **Privacy-First**: All prompts are stored locally in `chrome.storage` with optional backup to the user’s own Google Drive AppData. No third-party servers, no API keys.
@@ -14,10 +14,10 @@
 *   **Templating**: No first‑class variables (`{{name}}`) UI; advanced templating still requires manual editing.
 *   **Collaboration**: Google Drive sync covers backup and multi‑device use for a single user, but there is no shared library or team workspace model.
 *   **AI Dependency on Chrome**: Gemini Nano availability depends on Chrome flags / rollout; when missing, PromptKeeper is “prompt library only” (no AI optimization).
-*   **UI Polish**: v2 brings a much more refined UI (Apple‑style theming, collapsible sidebars, drag‑and‑drop, context menus), but still lacks rich text, inline diff view, or analytics dashboards common in heavier SaaS tools.
+*   **UI Polish**: v2.1 brings a refined UI (Apple‑style theming, collapsible sidebars, drag‑and‑drop, context menus) and **Rich Markdown Support**, but lacks inline diff view or analytics dashboards common in heavier SaaS tools.
 
 ### Peer Comparison
-| Feature | PromptKeeper v2.0 | Market Standard (e.g., AIPRM, PromptGenius) |
+| Feature | PromptKeeper v2.1 | Market Standard (e.g., AIPRM, PromptGenius) |
 | :--- | :--- | :--- |
 | **Storage** | Local (Chrome Storage) + optional Google Drive backup | Cloud / Hosted Sync |
 | **AI** | **Native (Gemini Nano)**, on‑device | External API Keys (OpenAI/Anthropic) |
@@ -27,7 +27,7 @@
 | **Community** | No | Public Libraries / Sharing |
 
 ## Verdict
-PromptKeeper v2.0 is **production‑ready for individual power users** who value privacy, local‑first storage, and on‑device AI, and who do not need multi‑user collaboration yet.  
+PromptKeeper v2.1 is **production‑ready for individual power users** who value privacy, local‑first storage, and on‑device AI, and who do not need multi‑user collaboration yet.  
 We are competitive on **privacy, cost, and core workflow** (workspaces, versioning, sidepanel + IDE), but intentionally lean on advanced SaaS features like templating UIs, team sharing, and analytics.  
 Next maturity steps should focus on: (1) richer organization (tags/nesting), (2) ergonomic templating, and (3) optional sharing/export flows that still respect the privacy‑first positioning.
 

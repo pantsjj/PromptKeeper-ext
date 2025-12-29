@@ -41,6 +41,7 @@ Since automated E2E is fragile for this feature, we rely on a robust Manual Veri
 |-------|--------|------------|
 | **"Waiting..." on Diagnostics** | **FIXED** | Fixed by updating Offscreen Reason to `DOM_SCRAPING`. |
 | **"API Missing" (Red Circles)** | **FIXED** | Fixed by moving from `chrome.tabs` to `chrome.offscreen`. |
+| **"Not Supported" Error** | **FIXED (v2.1)** | Fixed by adding `{ expectedContext: 'en' }` to `window.ai.languageModel.create()`. |
 | **Model Download Stuck** | **External (Chrome)** | Use `await window.ai.createTextSession()` in console to kickstart. |
 | **Hardware Incompatibility** | **External** | Use `OptimizationGuideOnDeviceModel:BypassPerfRequirement` flag. |
 

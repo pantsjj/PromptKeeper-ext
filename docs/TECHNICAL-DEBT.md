@@ -40,8 +40,8 @@ With ADR‑003 we now cap the visible history dropdown at the most recent 50 rev
 Form-based filling of `{{variables}}` in prompts (Future Scope).
 
 ### Markdown Support [#9](https://github.com/pantsjj/PromptKeeper-ext/issues/9)
-- **Description**: Render standard markdown (Bold, Italic, Tables) in the editor for better readability, with option to strip formatting on paste.
-- **Reference**: `docs/issues/ISSUE-005-markdown-support.md`
+- [x] **Description**: Render standard markdown (Bold, Italic, Tables) in the editor for better readability, with option to strip formatting on paste.
+- **Reference**: `docs/issues/ISSUE-005-markdown-support.md` (Resolved in v2.1.0)
 
 ---
 
