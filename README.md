@@ -13,7 +13,7 @@
 
 | Feature | Description |
 |---------|-------------|
-| 🧠 **Optional Local AI (Gemini Nano)** | Planned on-device optimization using Chrome’s Gemini Nano APIs (behind flags / rollout). No API keys. |
+| 🧠 **Local AI (Gemini Nano)** | On-device optimization using Chrome’s Gemini Nano APIs. Includes **Magic Enhance**, **Formalize**, and more. No API keys needed. |
 | ☁️ **Google Drive Sync** | Auto-backup to your private Drive. Access prompts on any device. |
 | 🗂️ **Workspaces** | Organize prompts into Projects with drag-and-drop. |
 | 📜 **Version History** | Every save is versioned. Time-travel to restore any version. |
@@ -28,14 +28,15 @@
 2. Click **Add to Chrome**
 3. Pin the PromptKeeper icon 📌 to your toolbar
 
-### Enable Gemini Nano (Optional, for AI features – experimental / rolling out)
-When Chrome’s Gemini Nano APIs are available on your browser, you can enable local AI optimization by turning on the experimental flags:
+### Enable Gemini Nano (Local AI Features)
+PromptKeeper supports Chrome's built-in **Gemini Nano** for private, local prompt optimization.
+
 1. Go to `chrome://flags`
 2. Enable **Optimization Guide On Device Model** (`#optimization-guide-on-device-model`)
 3. Enable **Prompt API for Gemini Nano** (`#prompt-api-for-gemini-nano`)
 4. Relaunch Chrome
 
-> Note: Gemini Nano availability is controlled by Chrome and may not be present on all channels/devices yet. PromptKeeper works fully as a prompt library even without AI features.
+**Note**: Once valid, the **"AI Optimization"** tile in the Manage Page and the **"Magic Optimize"** buttons in the Side Panel will appear automatically.
 
 ---
 

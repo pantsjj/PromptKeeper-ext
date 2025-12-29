@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 /**
  * Gemini Nano E2E Test (Placeholder)
@@ -8,7 +8,7 @@ const { test, expect } = require('@playwright/test');
  * 
  * Currently skipped in standard CI until the environment supports these flags.
  */
-test.describe.skip('Gemini Nano Integration', () => {
+test.describe('Gemini Nano Integration', () => {
 
     test('Diagnostic page should load and check AI status', async ({ page, extensionId }) => {
         // Navigate to diagnostic page
