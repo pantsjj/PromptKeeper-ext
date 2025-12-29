@@ -1,23 +1,54 @@
 function log(id, msg, type = '') {
     const el = document.getElementById(id);
     if (!el) return;
-    el.textContent = msg;
+    el.innerHTML = msg; // Allows HTML links
     el.className = 'result ' + type;
 }
 
 async function checkGlobals() {
     let msg = "";
-    let type = "success";
 
-    if (window.ai) msg += "✅ window.ai is PRESENT\n";
-    else { msg += "❌ window.ai is MISSING\n"; type = "error"; }
+    // 1. Local Check (Diagnostic Page Context)
+    const localHasAI = !!window.ai;
+    msg += `<b>Local Context:</b> ${localHasAI ? "✅ Present" : "❌ Missing"}\n`;
+
+    // 2. Remote Check (Offscreen Context)
+    msg += `<b>Offscreen Context:</b> `;
+    try {
+        // We use runtime.sendMessage directly to bypass AIService if needed, 
+        // to test the raw connection to offscreen.
+        // We use runtime.sendMessage directly to bypass AIService if needed.
+        // Race with a timeout so we don't wait forever.
+        const response = await Promise.race([
+            chrome.runtime.sendMessage({ action: 'checkAIAvailability' }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+        ]);
+
+        if (response && response.available) {
+            const status = response.available;
+            if (status === 'no') msg += "❌ API says 'no' (flags/model missing)\n";
+            else msg += `✅ ${status.toUpperCase()}\n`;
+        } else {
+            msg += "❓ No response / Unknown\n";
+        }
+    } catch (e) {
+        msg += `❌ Connection Failed (${e.message})\n`;
+    }
+
+    if (!localHasAI) {
+        msg += "\n👉 <a href='gemini-help.html' target='_blank'>Click here for Fix Instructions</a>";
+    }
 
     // Check new namespace structure if applicable
     try {
         if (typeof ai !== 'undefined') msg += "✅ global 'ai' var is PRESENT\n";
     } catch { msg += "⚠️ global 'ai' var is UNDEFINED\n"; }
 
-    log('res-globals', msg, type);
+    // Determine overall status type
+    const isSuccess = localHasAI || msg.includes('✅ READILY');
+    const statusType = isSuccess ? 'success' : 'warning';
+
+    log('res-globals', msg, statusType);
 }
 
 async function checkCapabilities() {

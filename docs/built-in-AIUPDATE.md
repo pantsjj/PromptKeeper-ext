@@ -17,7 +17,7 @@ No "Manual" Enable Needed: Users do not need to manually install the "Optimizati
 The "catch" (Model Download): The first time your extension attempts to use the API on a user's device, the browser must download the Gemini Nano model. This is likely the "manual" friction you are observing. The API will report its status as after-download rather than readily.
 
 3. How to Upgrade Your Extension (Checklist)
-To ensure your extension works without asking users to toggle settings, follow these steps:
+To ensure your extension works without asking users to toggle settings, follow these steps (and see also [`docs/snag-gemini-nano-remediation.md`](snag-gemini-nano-remediation.md) for a full end-to-end environment check):
 
 Remove Origin Trial Permissions: If your manifest.json still contains "permissions": ["aiLanguageModelOriginTrial"], remove it. This is no longer needed for Chrome 138+.
 

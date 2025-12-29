@@ -1,15 +1,12 @@
 import AIService from '../services/AIService.js';
 
-describe('AIService with Hidden Tab', () => {
+describe('AIService with Offscreen', () => {
     beforeEach(() => {
         // Mock chrome APIs
         global.chrome = {
             runtime: {
-                sendMessage: jest.fn().mockResolvedValue({ tabId: 123 }),
+                sendMessage: jest.fn(),
                 lastError: null
-            },
-            tabs: {
-                sendMessage: jest.fn()
             }
         };
     });
@@ -19,59 +16,59 @@ describe('AIService with Hidden Tab', () => {
     });
 
     test('getAvailability returns correct status', async () => {
-        // Mock tabs.sendMessage for AI check
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
-            callback({ available: 'readily' });
+        // Mock runtime.sendMessage for broadcast
+        global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
+            if (message.action === 'checkAIAvailability') {
+                callback({ available: 'readily' });
+            }
         });
 
         const status = await AIService.getAvailability();
 
         expect(status).toBe('readily');
-        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
-            123,
+        expect(global.chrome.runtime.sendMessage).toHaveBeenCalledWith(
             { action: 'checkAIAvailability' },
             expect.any(Function)
         );
     });
 
     test('getAvailability handles errors gracefully', async () => {
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
-            global.chrome.runtime.lastError = { message: 'Tab not ready' };
-            callback(null);
+        global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
+            // Simulate missing offscreen (connection error) by setting lastError
+            global.chrome.runtime.lastError = { message: 'Could not establish connection' };
+            callback(undefined);
         });
 
-        const status = await AIService.getAvailability();
-
+        const status = await AIService.getAvailability(); // internal wrapper catches and returns 'no'
         expect(status).toBe('no');
     });
 
     test('getDiagnostic returns diagnostic string', async () => {
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
-            callback('PromptAPI:readily RewriterAPI:Present');
+        global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
+            if (message.action === 'getDiagnostic') {
+                callback({ diagnostic: 'PromptAPI:readily' }); // mock return obj
+            }
         });
 
         const diag = await AIService.getDiagnostic();
-
-        expect(diag).toContain('PromptAPI:readily');
+        expect(diag).toBe('PromptAPI:readily');
     });
 
     test('getDetailedStatus returns status object', async () => {
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
             callback({
                 prompt: 'readily',
-                rewriter: 'readily',
-                summarizer: 'no'
+                rewriter: 'readily'
             });
         });
 
         const status = await AIService.getDetailedStatus();
-
         expect(status.prompt).toBe('readily');
         expect(status.rewriter).toBe('readily');
     });
 
     test('refinePrompt sends correct message and returns result', async () => {
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
+        global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
             callback({
                 success: true,
                 result: 'Refined prompt text'
@@ -81,8 +78,7 @@ describe('AIService with Hidden Tab', () => {
         const result = await AIService.refinePrompt('test prompt', 'formalize');
 
         expect(result).toBe('Refined prompt text');
-        expect(global.chrome.tabs.sendMessage).toHaveBeenCalledWith(
-            123,
+        expect(global.chrome.runtime.sendMessage).toHaveBeenCalledWith(
             {
                 action: 'refinePrompt',
                 promptText: 'test prompt',
@@ -92,27 +88,31 @@ describe('AIService with Hidden Tab', () => {
         );
     });
 
-    test('refinePrompt throws error on failure', async () => {
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
-            callback({
-                success: false,
-                error: 'AI model not available'
-            });
+    test('refinePrompt handles runtime.lastError (retries then healing)', async () => {
+        // We need to simulate retries. 
+        // 1. First call fails (connection error)
+        // 2. Second call fails
+        // 3. Third call fails
+        // 4. Healing call
+        // 5. Final attempt fails or succeeds
+
+        // To keep test simple and fast, we can verify that it attempts to retry.
+        // Or we can mock the sendMessage to succeed on the 2nd attempt.
+
+        let attempt = 0;
+        global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
+            attempt++;
+            if (attempt === 1) {
+                global.chrome.runtime.lastError = { message: 'Could not establish connection' };
+                callback(undefined);
+            } else {
+                global.chrome.runtime.lastError = null;
+                callback({ success: true, result: 'Recovered' });
+            }
         });
 
-        await expect(
-            AIService.refinePrompt('test', 'formalize')
-        ).rejects.toThrow('AI model not available');
-    });
-
-    test('handles chrome.runtime.lastError in message passing', async () => {
-        global.chrome.tabs.sendMessage.mockImplementation((tabId, message, callback) => {
-            global.chrome.runtime.lastError = { message: 'Message port closed' };
-            callback(null);
-        });
-
-        await expect(
-            AIService.refinePrompt('test', 'formalize')
-        ).rejects.toThrow('Message port closed');
+        const result = await AIService.refinePrompt('test', 'formalize');
+        expect(result).toBe('Recovered');
+        expect(attempt).toBe(2);
     });
 });

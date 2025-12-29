@@ -4,111 +4,56 @@
  * Enables Side Panel for right-docked prompt access
  */
 
-let aiBridgeTabId = null;
-
-// Create AI bridge tab on extension startup
-chrome.runtime.onStartup.addListener(setupAIBridge);
-chrome.runtime.onInstalled.addListener(() => {
-  setupAIBridge();
-  // Enable side panel to open when clicking extension icon
-  if (chrome.sidePanel) {
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => { });
-  }
-});
+const OFFSCREEN_PATH = 'offscreen.html';
 
 async function setupAIBridge() {
-  console.log('[Background] Setting up AI bridge tab');
+  console.log('[Background] Setting up AI bridge via Offscreen API');
 
-  // Check if tab already exists
-  if (aiBridgeTabId) {
-    try {
-      await chrome.tabs.get(aiBridgeTabId);
-      console.log('[Background] AI bridge tab already exists');
-      return;
-    } catch {
-      // Tab doesn't exist, create new one
-      aiBridgeTabId = null;
-    }
+  // Check if an offscreen document already exists
+  const existingContexts = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'],
+    documentUrls: [chrome.runtime.getURL(OFFSCREEN_PATH)]
+  });
+
+  if (existingContexts.length > 0) {
+    console.log('[Background] Offscreen document already exists');
+    return;
   }
 
-  // Create hidden tab
+  // Create the offscreen document
   try {
-    const tab = await chrome.tabs.create({
-      url: chrome.runtime.getURL('ai-bridge.html'),
-      active: false,
-      pinned: true
+    await chrome.offscreen.createDocument({
+      url: OFFSCREEN_PATH,
+      reasons: ['DOM_SCRAPING'], // Valid reason for accessing window/DOM APIs
+      justification: 'Hosting Gemini Nano AI processing for PromptKeeper'
     });
-
-    aiBridgeTabId = tab.id;
-    console.log('[Background] AI bridge tab created:', aiBridgeTabId);
-
-    // Try to minimize/hide the tab
-    setTimeout(async () => {
-      try {
-        await chrome.tabs.update(aiBridgeTabId, { active: false });
-      } catch {
-        // Ignore errors
-      }
-    }, 500);
+    console.log('[Background] Offscreen document created successfully');
   } catch (err) {
-    console.error('[Background] Failed to create AI bridge tab:', err);
+    console.error('[Background] Failed to create offscreen document:', err);
   }
 }
 
-// Clean up if tab is closed
-chrome.tabs.onRemoved.addListener((tabId) => {
-  if (tabId === aiBridgeTabId) {
-    console.log('[Background] AI bridge tab closed, will recreate');
-    aiBridgeTabId = null;
-    setupAIBridge();
+// Since offscreen docs don't have tab IDs like tabs, we adjust message passing 
+// Initial setup
+chrome.runtime.onStartup.addListener(setupAIBridge);
+chrome.runtime.onInstalled.addListener(() => {
+  setupAIBridge();
+  if (chrome.sidePanel) {
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((err) => {
+      console.log("SidePanel behavior error (ignorable):", err);
+    });
   }
 });
 
+// We no longer need 'getAIBridgeTabId' because we will use runtime.sendMessage
+// But we should keep a listener to re-init if requested
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  if (request.action === 'getAIBridgeTabId') {
-    console.log('[Background] Tab ID requested, current ID:', aiBridgeTabId);
-
-    // Ensure tab exists and is ready before responding
-    if (!aiBridgeTabId) {
-      console.log('[Background] Tab not ready, creating now...');
-      setupAIBridge().then(() => {
-        // Wait a bit for tab to fully load
-        setTimeout(() => {
-          console.log('[Background] Tab created, sending ID:', aiBridgeTabId);
-          sendResponse({ tabId: aiBridgeTabId });
-        }, 1000); // Give tab time to load
-      }).catch((err) => {
-        console.error('[Background] Failed to create tab:', err);
-        sendResponse({ tabId: null });
-      });
-    } else {
-      // Verify tab still exists
-      chrome.tabs.get(aiBridgeTabId).then(() => {
-        console.log('[Background] Tab verified, sending ID:', aiBridgeTabId);
-        sendResponse({ tabId: aiBridgeTabId });
-      }).catch(() => {
-        console.log('[Background] Tab lost, recreating...');
-        aiBridgeTabId = null;
-        setupAIBridge().then(() => {
-          setTimeout(() => {
-            sendResponse({ tabId: aiBridgeTabId });
-          }, 1000);
-        });
-      });
-    }
-    return true; // Async response
-  }
-
   if (request.action === 'reinitializeAIBridge') {
-    console.log('[Background] Reinitialization requested');
-    // Close existing if any
-    if (aiBridgeTabId) {
-      chrome.tabs.remove(aiBridgeTabId).catch(() => { });
-      aiBridgeTabId = null;
-    }
-    setupAIBridge().then(() => {
-      sendResponse({ success: true, tabId: aiBridgeTabId });
-    });
+    console.log('[Background] Re-creating offscreen document...');
+    chrome.offscreen.closeDocument()
+      .catch(() => { }) // Ignore if none exists
+      .then(() => setupAIBridge())
+      .then(() => sendResponse({ success: true }));
     return true;
   }
 });

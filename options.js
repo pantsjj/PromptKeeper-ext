@@ -234,9 +234,68 @@ function setupEventListeners() {
     if (els.footerStatusDots) {
         els.footerStatusDots.addEventListener('click', () => {
             const aiPanel = document.getElementById('ai-tools-panel');
-            if (aiPanel) aiPanel.classList.toggle('hidden');
+            if (aiPanel) {
+                const isHidden = aiPanel.classList.toggle('hidden');
+                chrome.storage.local.set({ aiPanelVisible: !isHidden });
+            }
         });
     }
+
+    // Restore AI Panel State (or Auto-Enable)
+    chrome.storage.local.get(['aiPanelVisible'], async (result) => {
+        const aiPanel = document.getElementById('ai-tools-panel');
+        if (!aiPanel) return;
+
+        let shouldShow = result.aiPanelVisible;
+
+        // Auto-Enable if undefined (first run) and AI is ready
+        if (typeof shouldShow === 'undefined') {
+            try {
+                const status = await AIService.getAvailability();
+                if (status === 'readily' || status === 'after-download') {
+                    console.log('[Auto-Toggle] AI Available, enabling panel by default.');
+                    shouldShow = true;
+                    chrome.storage.local.set({ aiPanelVisible: true });
+                }
+            } catch (e) {
+                console.warn('[Auto-Toggle] Failed to check status:', e);
+            }
+        }
+
+        if (shouldShow) {
+            aiPanel.classList.remove('hidden');
+        } else {
+            aiPanel.classList.add('hidden');
+        }
+    });
+
+    // Restore AI Panel State (or Auto-Enable)
+    chrome.storage.local.get(['aiPanelVisible'], async (result) => {
+        const aiPanel = document.getElementById('ai-tools-panel');
+        if (!aiPanel) return;
+
+        let shouldShow = result.aiPanelVisible;
+
+        // Auto-Enable if undefined (first run) and AI is ready
+        if (typeof shouldShow === 'undefined') {
+            try {
+                const status = await AIService.getAvailability();
+                if (status === 'readily' || status === 'after-download') {
+                    console.log('[Auto-Toggle] AI Available, enabling panel by default.');
+                    shouldShow = true;
+                    chrome.storage.local.set({ aiPanelVisible: true });
+                }
+            } catch (e) {
+                console.warn('[Auto-Toggle] Failed to check status:', e);
+            }
+        }
+
+        if (shouldShow) {
+            aiPanel.classList.remove('hidden');
+        } else {
+            aiPanel.classList.add('hidden');
+        }
+    });
 
     // Right-click context menu for prompts
     els.promptList.addEventListener('contextmenu', handlePromptContextMenu);

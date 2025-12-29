@@ -46,3 +46,4 @@ docs/marketing-image-prompts.md
 test-results/.last-run.json
 
 node_modules
+prompt-keeper-test-local.key-pem

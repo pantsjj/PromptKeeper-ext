@@ -50,24 +50,26 @@ class AIService {
     }
 
     async _attemptSend(message) {
-        console.log('[AIService] Sending message to AI bridge:', message.action);
+        console.log('[AIService] Sending message to AI bridge (Broadcast):', message.action);
 
-        // Get AI bridge tab ID from background
-        const response = await chrome.runtime.sendMessage({ action: 'getAIBridgeTabId' });
-        const tabId = response.tabId;
-
-        if (!tabId) {
-            throw new Error('AI bridge tab not ready');
-        }
+        // We use chrome.runtime.sendMessage which broadcasts to all extension parts,
+        // including the offscreen document. The offscreen document must listen 
+        // and check the action to respond.
 
         return new Promise((resolve, reject) => {
-            chrome.tabs.sendMessage(tabId, message, (response) => {
+            chrome.runtime.sendMessage(message, (response) => {
                 if (chrome.runtime.lastError) {
                     console.error('[AIService] Message error:', chrome.runtime.lastError.message);
+                    // Often "Could not establish connection" means no listener (offscreen not ready)
                     reject(new Error(chrome.runtime.lastError.message));
+                } else if (response && response.error) {
+                    reject(new Error(response.error));
                 } else {
+                    // response might be undefined if other listeners return nothing, 
+                    // but our offscreen should return a value.
+                    // Ideally check if response matches expected format.
                     console.log('[AIService] Received response:', response);
-                    resolve(response);
+                    resolve(response || {});
                 }
             });
         });
@@ -82,7 +84,8 @@ class AIService {
             const response = await this._sendToAIBridge({
                 action: 'checkAIAvailability'
             });
-            return response.available || 'no';
+            // Handle case where other listeners might return null
+            return response?.available || 'no';
         } catch (e) {
             console.error("Error checking AI availability:", e);
             return 'no';
@@ -95,9 +98,10 @@ class AIService {
      */
     async getDiagnostic() {
         try {
-            return await this._sendToAIBridge({
+            const res = await this._sendToAIBridge({
                 action: 'getDiagnostic'
             });
+            return typeof res === 'string' ? res : (res?.diagnostic || "Communication Error");
         } catch (e) {
             return `Error: ${e.message}`;
         }
