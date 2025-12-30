@@ -9,6 +9,10 @@ let currentPromptId = null;
 let currentProjectId = null; // null = 'all'
 let searchFilter = '';
 
+// Active AI Streams (promptId -> currentText)
+// Prevents overwriting UI if user navigates away during stream
+const activeStreams = new Map();
+
 // Auto-save / editor state
 let isEditorDirty = false;
 let autoSaveEnabled = true;
@@ -195,64 +199,7 @@ async function waitForAIAPI(timeoutMs = 2000) {
 }
 
 function applyLanguageModelShims() {
-    // Default language options to prevent Chrome's "No output language was specified" warning
-    // capabilities/availability should take NO args by default in this shim
-    const defaultLangOpts = {};
-
-    try {
-        // If the page already loaded `language-model-shim.js`, do nothing (failsafe only)
-        if (window.LanguageModel?.__pkShimmed || window.LanguageModel?.__pkWrapped) return;
-        if (window.ai?.languageModel?.__pkShimmed || window.ai?.languageModel?.__pkWrapped) return;
-
-        // Wrap window.LanguageModel
-        if (window.LanguageModel && !window.LanguageModel.__pkWrapped) {
-            // Wrap create()
-            if (typeof window.LanguageModel.create === 'function') {
-                const origCreate = window.LanguageModel.create.bind(window.LanguageModel);
-                window.LanguageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
-                    return origCreate(merged);
-                };
-            }
-            // Wrap availability()
-            if (typeof window.LanguageModel.availability === 'function') {
-                const origAvail = window.LanguageModel.availability.bind(window.LanguageModel);
-                window.LanguageModel.availability = (options) => {
-                    return origAvail(options);
-                };
-            }
-            // Wrap capabilities()
-            if (typeof window.LanguageModel.capabilities === 'function') {
-                const origCaps = window.LanguageModel.capabilities.bind(window.LanguageModel);
-                window.LanguageModel.capabilities = (options) => {
-                    return origCaps(options);
-                };
-            }
-            window.LanguageModel.__pkWrapped = true;
-        }
-
-        // Wrap window.ai.languageModel
-        if (window.ai && window.ai.languageModel && !window.ai.languageModel.__pkWrapped) {
-            // Wrap create()
-            if (typeof window.ai.languageModel.create === 'function') {
-                const origCreate = window.ai.languageModel.create.bind(window.ai.languageModel);
-                window.ai.languageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
-                    return origCreate(merged);
-                };
-            }
-            // Wrap capabilities()
-            if (typeof window.ai.languageModel.capabilities === 'function') {
-                const origCaps = window.ai.languageModel.capabilities.bind(window.ai.languageModel);
-                window.ai.languageModel.capabilities = (options = {}) => {
-                    return origCaps(options);
-                };
-            }
-            window.ai.languageModel.__pkWrapped = true;
-        }
-    } catch (e) {
-        console.warn('[Options] Failed to install LanguageModel shims', e);
-    }
+    // Local shim removed. We rely on language-model-shim.js loaded in <head>.
 }
 
 function applyEditorFontSize(size) {
@@ -1017,7 +964,14 @@ function selectPrompt(prompt) {
     els.titleInput.value = prompt.title;
 
     const currentVersion = prompt.versions.find(v => v.id === prompt.currentVersionId);
-    els.textArea.value = currentVersion ? currentVersion.content : '';
+    let contentToShow = currentVersion ? currentVersion.content : '';
+
+    // ID-Alive Concurrency: If this prompt is currently streaming, show the latest stream content
+    if (activeStreams.has(prompt.id)) {
+        contentToShow = activeStreams.get(prompt.id);
+        // Optional: you could add a visual indicator here that it's "Live"
+    }
+    els.textArea.value = contentToShow;
 
     updateStats();
     updateFooterStats();
@@ -1282,8 +1236,7 @@ async function handleRefine(type, sourceBtn) {
 
     const btn = sourceBtn || els.saveBtn;
     const originalLabel = btn ? btn.textContent : '';
-    const originalEditorText = els.textArea.value;
-    const originalStatsText = els.localModelStats ? els.localModelStats.textContent : null;
+    // Removed duplicate declarations here
 
     // Abort/cancel support (web-ai-demos pattern)
     // If the same button is clicked while an AI request is active, treat it as "Cancel".
@@ -1293,17 +1246,19 @@ async function handleRefine(type, sourceBtn) {
     }
 
     const abortController = new AbortController();
-    window.__pkAiAbortController = abortController;
-
-    if (btn) {
-        btn.dataset.pkAiCancel = '1';
-        btn.textContent = "Cancel";
-        btn.disabled = false; // allow click again to cancel
-        btn.classList.add('ai-busy');
-    }
-    document.body.style.cursor = 'wait';
+    window.__pkAiAbortController = abortController; // Assign the controller to the global variable
+    const targetPromptId = currentPromptId; // Lock target ID
+    let originalEditorText = els.textArea.value;
+    let originalStatsText = els.localModelStats ? els.localModelStats.textContent : '';
 
     try {
+        if (btn) {
+            btn.dataset.pkAiCancel = "true";
+            btn.textContent = "Stop";
+            btn.classList.add('ai-busy');
+            document.body.style.cursor = 'wait';
+        }
+
         let inputCtx = text;
         if (currentProjectId) {
             const projects = await StorageService.getProjects();
@@ -1325,16 +1280,26 @@ async function handleRefine(type, sourceBtn) {
             });
         };
 
+        // Initialize active stream for this prompt
+        activeStreams.set(targetPromptId, originalEditorText);
+
         const refined = await AIService.refinePrompt(inputCtx, type, {
             signal: abortController.signal,
             monitor,
             preferStreaming: true,
+            promptId: targetPromptId,
             // Streaming: update editor progressively but do NOT mark unsaved until completion
-            onChunk: (partial) => {
-                els.textArea.value = partial;
-                const previewDiv = document.getElementById('markdown-preview');
-                if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
-                    previewDiv.innerHTML = window.marked.parse(partial);
+            onChunk: (partial, chunkPromptId) => {
+                // Update the background map first
+                activeStreams.set(chunkPromptId, partial);
+
+                // Update UI ONLY if we are still viewing this prompt
+                if (chunkPromptId === currentPromptId) {
+                    els.textArea.value = partial;
+                    const previewDiv = document.getElementById('markdown-preview');
+                    if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+                        previewDiv.innerHTML = window.marked.parse(partial);
+                    }
                 }
             },
             onStats: (stats) => {
@@ -1356,22 +1321,40 @@ async function handleRefine(type, sourceBtn) {
         });
 
         if (refined) {
-            // Ensure final text is set and only now mark as unsaved
-            setPromptText(refined);
+            // Final update handling
+            const completionPromptId = targetPromptId;
+
+            // If we are still on that prompt, update UI final state
+            if (completionPromptId === currentPromptId) {
+                setPromptText(refined);
+            } else {
+                // We navigated away; the background map has the data. 
+                // We MUST update the persistent storage now so 'loadPrompts' sees it next time?
+                // OR we just rely on standard save? 
+                // setPromptText handles saving. Since we are away, we must manually save the data model.
+                // Assuming StorageService.updatePrompt works by ID:
+                await StorageService.updatePrompt(completionPromptId, refined);
+            }
         }
     } catch (e) {
         // On cancel, revert partial streamed content and exit quietly.
         if (e?.name === 'AbortError' || String(e?.message || '').toLowerCase().includes('aborted')) {
-            els.textArea.value = originalEditorText;
-            const previewDiv = document.getElementById('markdown-preview');
-            if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
-                previewDiv.innerHTML = window.marked.parse(originalEditorText);
+            // Restore ONLY if we are currently looking at it
+            if (targetPromptId === currentPromptId) {
+                els.textArea.value = originalEditorText;
+                const previewDiv = document.getElementById('markdown-preview');
+                if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
+                    previewDiv.innerHTML = window.marked.parse(originalEditorText);
+                }
+                if (els.localModelStats && originalStatsText) els.localModelStats.textContent = originalStatsText;
             }
-            if (els.localModelStats && originalStatsText) els.localModelStats.textContent = originalStatsText;
             return;
         }
         alert("Refine failed: " + e.message);
     } finally {
+        // Cleanup stream map
+        activeStreams.delete(targetPromptId);
+
         if (btn) {
             delete btn.dataset.pkAiCancel;
             btn.textContent = originalLabel || "Save";
@@ -1380,7 +1363,7 @@ async function handleRefine(type, sourceBtn) {
         }
         window.__pkAiAbortController = null;
         document.body.style.cursor = 'default';
-        updateStats();
+        if (targetPromptId === currentPromptId) updateStats();
     }
 }
 

@@ -324,26 +324,36 @@ Return ONLY the rewritten prompt text in markdown, following the rules above. Do
                 opts.onStats(stats);
             };
 
-            if (typeof session.promptStreaming === 'function') {
-                const stream = session.promptStreaming(metaPrompt, opts.signal ? { signal: opts.signal } : undefined);
-                let full = '';
+            const isStream = typeof opts.onChunk === 'function';
+            const onChunk = opts.onChunk;
+            const options = opts; // Use 'options' to avoid conflict with 'opts' in the outer scope if needed
+
+            if (isStream) {
+                opts.monitor = (m) => {
+                    // Pass download progress if needed
+                };
+                const stream = await session.promptStreaming(metaPrompt, opts.signal ? { signal: opts.signal } : undefined); // Use metaPrompt here
+
+                let fullText = '';
                 for await (const chunk of stream) {
-                    full += chunk;
-                    if (typeof opts.onChunk === 'function') opts.onChunk(full);
+                    fullText += chunk; // Accumulate full text
+                    // Pass promptId back so UI knows where to route this chunk
+                    if (onChunk) onChunk(fullText, options.promptId); // Pass fullText and promptId
                     emitStats();
                 }
                 emitStats();
-                return full;
+                emitStats();
+                return fullText;
+            } else {
+                // Fallback: non-streaming
+                const res = typeof session.prompt === 'function'
+                    ? await session.prompt(metaPrompt, opts.signal ? { signal: opts.signal } : undefined)
+                    : await session.prompt(metaPrompt);
+
+                if (typeof opts.onChunk === 'function') opts.onChunk(res, options.promptId); // Also pass ID here
+                emitStats();
+                return res;
             }
-
-            // Fallback: non-streaming
-            const res = typeof session.prompt === 'function'
-                ? await session.prompt(metaPrompt, opts.signal ? { signal: opts.signal } : undefined)
-                : await session.prompt(metaPrompt);
-
-            if (typeof opts.onChunk === 'function') opts.onChunk(res);
-            emitStats();
-            return res;
         } finally {
             // If we're using the cached session, we do not destroy it here.
             if (!window.PKBuiltinAI) {
