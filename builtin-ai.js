@@ -12,7 +12,8 @@
 (function initPKBuiltinAI() {
   // Include expectedOutputLanguage for ALL API calls (availability, capabilities, create)
   // No arguments for capabilities/availability per reference implementation
-  const DEFAULT_LANG_OPTS = {};
+  // UPDATE: Chrome now explicitly warns if outputLanguage is missing.
+  const DEFAULT_LANG_OPTS = { outputLanguage: 'en', expectedOutputLanguage: 'en' };
   // Keep outputLanguage for create() as create() requires it
   const DEFAULT_CREATE_OPTS = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', monitor: undefined };
   const DEFAULT_SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -33,7 +34,7 @@
       // Prioritize capabilities() as availability() appears to be broken
       if (typeof window.LanguageModel.capabilities === 'function') {
         try {
-          const caps = await window.LanguageModel.capabilities();
+          const caps = await window.LanguageModel.capabilities(langOpts);
           return caps?.available || 'no';
         } catch (e) {
           return 'no';

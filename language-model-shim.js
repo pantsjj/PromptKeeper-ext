@@ -7,7 +7,8 @@
  */
 (function applyLanguageModelShims() {
     // capabilities/availability should take NO args, or only what the caller provides
-    const defaultLangOpts = {};
+    // UPDATE: Now providing default language to prevent "No output language" warnings
+    const defaultLangOpts = { outputLanguage: 'en', expectedOutputLanguage: 'en' };
     // create() usually requires language specifiers
     const createOpts = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en' };
 
