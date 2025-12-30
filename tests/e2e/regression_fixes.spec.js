@@ -99,4 +99,22 @@ test.describe('UI Regression Fixes', () => {
         // 3. Verify stats reset
         await expect(page.locator('#footer-word-count')).toHaveText('Words: 0');
     });
+    test('Should not emit "No output language" warning in console', async ({ page, extensionId }) => {
+        // Monitor console messages
+        const consoleErrors = [];
+        page.on('console', msg => {
+            const text = msg.text();
+            if (text.includes("No output language was specified")) {
+                consoleErrors.push(text);
+            }
+        });
+
+        await page.goto(`chrome-extension://${extensionId}/options.html`);
+
+        // Wait to ensure scripts load and run (builtin-ai.js runs immediately)
+        await page.waitForTimeout(1000);
+
+        // Fail if we caught the specific warning
+        expect(consoleErrors).toEqual([]);
+    });
 });
