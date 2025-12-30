@@ -36,14 +36,22 @@ describe('AIService with Offscreen', () => {
     });
 
     test('getAvailability handles errors gracefully', async () => {
+        jest.useFakeTimers();
         global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
             // Simulate missing offscreen (connection error) by setting lastError
             global.chrome.runtime.lastError = { message: 'Could not establish connection' };
-            if (typeof callback === 'function') callback(undefined);
+            if (typeof callback === 'function') setTimeout(() => callback(undefined), 10);
         });
 
-        const status = await AIService.getAvailability(); // internal wrapper catches and returns 'no'
+        const statusPromise = AIService.getAvailability();
+
+        // Fast-forward through retries
+        // Total retry wait is approx 500 + 1000 + 1500 + 1000 (healing) = ~4000ms
+        await jest.advanceTimersByTimeAsync(5000);
+
+        const status = await statusPromise;
         expect(status).toBe('no');
+        jest.useRealTimers();
     });
 
     test('getDiagnostic returns diagnostic string', async () => {
@@ -123,5 +131,27 @@ describe('AIService with Offscreen', () => {
         const result = await AIService.refinePrompt('test', 'formalize');
         expect(result).toBe('Recovered');
         expect(attempt).toBe(2);
+    });
+    test('refinePrompt passes language options when running locally', async () => {
+        // Mock window.LanguageModel
+        const mockPrompt = jest.fn().mockResolvedValue('Local response');
+        const mockCreate = jest.fn().mockResolvedValue({
+            prompt: mockPrompt,
+            destroy: jest.fn()
+        });
+
+        global.window.LanguageModel = {
+            create: mockCreate
+        };
+
+        // Ensure PKBuiltinAI doesn't interfere (force fallback to LanguageModel logic in _runLocally)
+        delete global.window.PKBuiltinAI;
+
+        await AIService.refinePrompt('test', 'formalize');
+
+        expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
+            outputLanguage: 'en',
+            expectedOutputLanguage: 'en'
+        }));
     });
 });
