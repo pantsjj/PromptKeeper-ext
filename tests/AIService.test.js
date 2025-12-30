@@ -22,7 +22,7 @@ describe('AIService with Offscreen', () => {
         // Mock runtime.sendMessage for broadcast
         global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
             if (message.action === 'checkAIAvailability') {
-                callback({ available: 'readily' });
+                if (typeof callback === 'function') callback({ available: 'readily' });
             }
         });
 
@@ -39,7 +39,7 @@ describe('AIService with Offscreen', () => {
         global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
             // Simulate missing offscreen (connection error) by setting lastError
             global.chrome.runtime.lastError = { message: 'Could not establish connection' };
-            callback(undefined);
+            if (typeof callback === 'function') callback(undefined);
         });
 
         const status = await AIService.getAvailability(); // internal wrapper catches and returns 'no'
@@ -49,7 +49,7 @@ describe('AIService with Offscreen', () => {
     test('getDiagnostic returns diagnostic string', async () => {
         global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
             if (message.action === 'getDiagnostic') {
-                callback({ diagnostic: 'PromptAPI:readily' }); // mock return obj
+                if (typeof callback === 'function') callback({ diagnostic: 'PromptAPI:readily' }); // mock return obj
             }
         });
 
@@ -59,10 +59,12 @@ describe('AIService with Offscreen', () => {
 
     test('getDetailedStatus returns status object', async () => {
         global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
-            callback({
-                prompt: 'readily',
-                rewriter: 'readily'
-            });
+            if (typeof callback === 'function') {
+                callback({
+                    prompt: 'readily',
+                    rewriter: 'readily'
+                });
+            }
         });
 
         const status = await AIService.getDetailedStatus();
@@ -72,10 +74,12 @@ describe('AIService with Offscreen', () => {
 
     test('refinePrompt sends correct message and returns result', async () => {
         global.chrome.runtime.sendMessage.mockImplementation((message, callback) => {
-            callback({
-                success: true,
-                result: 'Refined prompt text'
-            });
+            if (typeof callback === 'function') {
+                callback({
+                    success: true,
+                    result: 'Refined prompt text'
+                });
+            }
         });
 
         const result = await AIService.refinePrompt('test prompt', 'formalize');
@@ -109,10 +113,10 @@ describe('AIService with Offscreen', () => {
             attempt++;
             if (attempt === 1) {
                 global.chrome.runtime.lastError = { message: 'Could not establish connection' };
-                callback(undefined);
+                if (typeof callback === 'function') callback(undefined);
             } else {
                 global.chrome.runtime.lastError = null;
-                callback({ success: true, result: 'Recovered' });
+                if (typeof callback === 'function') callback({ success: true, result: 'Recovered' });
             }
         });
 

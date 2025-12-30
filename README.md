@@ -48,10 +48,11 @@ While AI is running, buttons will switch to **Cancel**, and on supported builds 
 
 ## 📖 How It Works
 
-### 🎥 v2.0 Demo
+### 🎥 v2.1 Demo
 
-Watch the v2.0 walkthrough (side panel, workspaces, Drive backup, and docs integration):  
-`https://youtu.be/qIIJ2YItDPA`
+Watch the v2.1 walkthrough (Local AI streaming, cancel button, improved layout, and full Google Drive backup):  
+[![PromptKeeper v2.1 Walkthrough](https://img.youtube.com/vi/bictdOsBC30/0.jpg)](https://www.youtube.com/watch?v=bictdOsBC30)  
+[Watch: https://youtu.be/bictdOsBC30](https://youtu.be/bictdOsBC30)
 
 ### Full-Screen IDE
 Click **Manage Prompts** in the popup (or right-click → Options):

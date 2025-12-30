@@ -160,10 +160,13 @@ test.describe('Side Panel', () => {
         await saveButton.click();
 
         // Save a second version
+        // Save defaults to preview mode, so switch back to edit
+        await page.click('#toggle-preview-btn');
         await textArea.fill('v2');
         await saveButton.click();
 
         // Save a third version
+        await page.click('#toggle-preview-btn');
         await textArea.fill('v3');
         await saveButton.click();
 
