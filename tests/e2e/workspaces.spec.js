@@ -156,9 +156,15 @@ test.describe('Workspace Management', () => {
         await textArea.fill('v1');
         await saveBtn.click();
 
+        // Switch back to Edit Mode
+        await page.click('#toggle-preview-btn');
         await textArea.fill('v2');
         await saveBtn.click();
 
+        await saveBtn.click();
+
+        // Switch back to Edit Mode
+        await page.click('#toggle-preview-btn');
         await textArea.fill('v3');
         await saveBtn.click();
 

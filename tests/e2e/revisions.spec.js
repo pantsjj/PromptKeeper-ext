@@ -23,14 +23,10 @@ test.describe('Revisions and Markdown Sync', () => {
         await expect(page.locator('#footer-version-selector')).toContainText('v1');
 
         // 2. Version 2
-        // Check if in preview mode and toggle if needed
-        const textArea = page.locator('#prompt-text-area');
-        if (await textArea.isHidden()) {
-            await page.click('#toggle-preview-btn');
-        }
-
+        // Check if in preview mode and toggle if needed (Save forces preview)
+        await page.click('#toggle-preview-btn');
         await page.fill('#prompt-text-area', 'Version 2 Content');
-        await page.click('#save-button');
+        await page.click('#save-btn');
         // Wait for save sync
         await page.waitForTimeout(500);
 
@@ -46,7 +42,10 @@ test.describe('Revisions and Markdown Sync', () => {
         // Assuming v1 is at index 1 (0 is HEAD/Current?) OR v1, v2... 
         // Let's assume standard behavior: new versions at top or bottom?
         // We'll select the one containing 'v1'
-        await selector.selectOption({ label: 'v1' }); // Attempt by label
+        // Find option containing 'v1'
+        const option = await selector.locator('option', { hasText: 'v1' }).first();
+        const val = await option.getAttribute('value');
+        await selector.selectOption(val);
         // If label doesn't match 'v1' exactly (might be 'v1 - <date>'), we use value or index.
         // Let's force value selection if possible, or just select the second option (history).
 

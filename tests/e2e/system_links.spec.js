@@ -22,6 +22,8 @@ test.describe('System Links and Footer Actions', () => {
 
         const download = await downloadPromise;
         expect(download.suggestedFilename()).toContain('promptkeeper_export');
+        // Cleanup download to prevent teardown hangs
+        await download.delete();
     });
 
     // Import is harder to test without a file, but we can verify the input exists
