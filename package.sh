@@ -13,6 +13,23 @@ echo "📦 Packaging PromptKeeper v${VERSION}..."
 # Remove old zip if exists
 rm -f "${OUTPUT_FILE}"
 
+# Create a temporary production manifest without the key
+echo "🔧 preparing manifest for production..."
+cp manifest.json manifest.json.bak
+# Remove the 'key' field and swap client_id using node
+PROD_CLIENT_ID="804678258987-trop26ei3lek64gvdscchg2pfijo82mq.apps.googleusercontent.com"
+node -e "const fs = require('fs'); const m = JSON.parse(fs.readFileSync('manifest.json', 'utf8')); delete m.key; m.oauth2.client_id = '${PROD_CLIENT_ID}'; fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2));"
+
+# Ensure cleanup happens even if script fails
+cleanup() {
+    if [ -f manifest.json.bak ]; then
+        mv manifest.json.bak manifest.json
+        echo "🔄 Restored original manifest.json"
+    fi
+}
+trap cleanup EXIT
+
+
 # Create zip excluding dev files
 zip -r "${OUTPUT_FILE}" . \
   -x ".git/*" \
@@ -36,6 +53,8 @@ zip -r "${OUTPUT_FILE}" . \
   -x "*.code-workspace" \
   -x "package-lock.json" \
   -x "*.sh" \
+  -x "manifest.json.bak" \
+  -x "verify_id.py" \
   -x ".DS_Store"
 
 echo "✅ Created: ${OUTPUT_FILE}"
