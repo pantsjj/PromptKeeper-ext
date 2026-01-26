@@ -8,6 +8,9 @@ test.describe('User Journey: AI + Settings + Saving', () => {
                 availability: async () => 'readily',
                 create: async () => ({
                     prompt: async () => 'AI-REFINED PROMPT',
+                    promptStreaming: async function* () {
+                        yield 'AI-REFINED PROMPT';
+                    },
                     destroy: () => { }
                 })
             };
