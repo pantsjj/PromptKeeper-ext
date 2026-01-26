@@ -706,13 +706,24 @@ function setupEventListeners() {
     }
 
     // Helper: Select placeholder text in textarea
+    // Tries multiple patterns: plain [text], backtick-wrapped `[text]`, etc.
     function selectPlaceholderInEditor(placeholderText) {
         if (!els.textArea || !placeholderText) return;
         const text = els.textArea.value;
-        const index = text.indexOf(placeholderText);
-        if (index !== -1) {
-            els.textArea.setSelectionRange(index, index + placeholderText.length);
-            els.textArea.focus();
+
+        // Try different patterns the placeholder might appear as in raw text
+        const patterns = [
+            '`' + placeholderText + '`',  // Backtick-wrapped: `[text]`
+            placeholderText,               // Plain: [text]
+        ];
+
+        for (const pattern of patterns) {
+            const index = text.indexOf(pattern);
+            if (index !== -1) {
+                els.textArea.setSelectionRange(index, index + pattern.length);
+                els.textArea.focus();
+                return;
+            }
         }
     }
 
@@ -755,9 +766,22 @@ function setupEventListeners() {
         previewDiv.addEventListener('click', (e) => {
             // Only switch if currently visible
             if (!previewDiv.classList.contains('hidden')) {
-                // Check if a placeholder was clicked
+                // Check if a placeholder was clicked (.placeholder span or <code> with placeholder pattern)
                 const placeholderEl = e.target.closest('.placeholder');
-                const placeholderText = placeholderEl?.dataset?.placeholder;
+                let placeholderText = placeholderEl?.dataset?.placeholder;
+
+                // Also check for <code> elements containing placeholder patterns
+                // (markdown renders `[text]` as <code>[text]</code>)
+                if (!placeholderText) {
+                    const codeEl = e.target.closest('code');
+                    if (codeEl) {
+                        const codeText = codeEl.textContent;
+                        // Check if it looks like a placeholder pattern
+                        if (/^\[[^\]]+\]$/.test(codeText) || /^\{\{[^}]+\}\}$/.test(codeText)) {
+                            placeholderText = codeText;
+                        }
+                    }
+                }
 
                 showEditor();
 
