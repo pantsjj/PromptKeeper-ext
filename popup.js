@@ -311,8 +311,8 @@ function sortPrompts(prompts) {
 
 function applyLanguageModelShims() {
     // Default language options to prevent Chrome's "No output language was specified" warning
-    // capabilities/availability should take NO args by default in this shim
-    const defaultLangOpts = {};
+    const defaultLangOpts = { outputLanguage: 'en', expectedOutputLanguage: 'en' };
+    const createOpts = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en' };
 
     try {
         // If the page already loaded `language-model-shim.js`, do nothing (failsafe only)
@@ -325,22 +325,21 @@ function applyLanguageModelShims() {
             if (typeof window.LanguageModel.create === 'function') {
                 const origCreate = window.LanguageModel.create.bind(window.LanguageModel);
                 window.LanguageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
-                    return origCreate(merged);
+                    return origCreate({ ...createOpts, ...options });
                 };
             }
             // Wrap availability()
             if (typeof window.LanguageModel.availability === 'function') {
                 const origAvail = window.LanguageModel.availability.bind(window.LanguageModel);
-                window.LanguageModel.availability = (options) => {
-                    return origAvail(options);
+                window.LanguageModel.availability = (options = {}) => {
+                    return origAvail({ ...defaultLangOpts, ...options });
                 };
             }
             // Wrap capabilities()
             if (typeof window.LanguageModel.capabilities === 'function') {
                 const origCaps = window.LanguageModel.capabilities.bind(window.LanguageModel);
-                window.LanguageModel.capabilities = (options) => {
-                    return origCaps(options);
+                window.LanguageModel.capabilities = (options = {}) => {
+                    return origCaps({ ...defaultLangOpts, ...options });
                 };
             }
             window.LanguageModel.__pkWrapped = true;
@@ -352,16 +351,14 @@ function applyLanguageModelShims() {
             if (typeof window.ai.languageModel.create === 'function') {
                 const origCreate = window.ai.languageModel.create.bind(window.ai.languageModel);
                 window.ai.languageModel.create = (options = {}) => {
-                    const merged = { expectedContext: 'en', outputLanguage: 'en', expectedOutputLanguage: 'en', ...options };
-                    return origCreate(merged);
+                    return origCreate({ ...createOpts, ...options });
                 };
             }
             // Wrap capabilities()
             if (typeof window.ai.languageModel.capabilities === 'function') {
                 const origCaps = window.ai.languageModel.capabilities.bind(window.ai.languageModel);
                 window.ai.languageModel.capabilities = (options = {}) => {
-                    const merged = { ...defaultLangOpts, ...options };
-                    return origCaps(merged);
+                    return origCaps({ ...defaultLangOpts, ...options });
                 };
             }
             window.ai.languageModel.__pkWrapped = true;
