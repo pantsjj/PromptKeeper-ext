@@ -10,6 +10,7 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 - **Prompt Sorting**: Sort prompts by Name (A-Z/Z-A), Newest First, Oldest First, or Recently Modified. Preference persists across sessions.
 - **Theme Toggle**: Choose Light, Dark, or Auto (system) theme. Syncs consistently between Side Panel and Options page.
 - **Keyboard Shortcut Settings**: Quick link to `chrome://extensions/shortcuts` for configuring the side panel hotkey (default: `Ctrl+Shift+P` / `⌘+Shift+P`).
+- **Placeholder UX**: Double-click to select entire placeholder patterns (`[placeholder]`, `` `[placeholder]` ``, `{{mustache}}`). Placeholders are visually highlighted in preview mode (blue, bold) for easy identification.
 
 ### 🐛 Bug Fixes
 
@@ -21,6 +22,7 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 - **Settings Scroll**: Fixed right sidebar scrolling so all settings are accessible.
 - **Sort Dropdown**: Fixed prompts disappearing when cycling through sort options.
 - **Prompt Coach Version Selection**: Score now updates correctly when selecting historical revisions.
+- **Markdown Preview Scroll**: Fixed missing scrollbar in preview mode for long prompts.
 
 ### 🧪 Technical
 
