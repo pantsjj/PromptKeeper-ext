@@ -12,7 +12,10 @@
 - **Theme Toggle**: Light / Dark / Auto theme selector synced across Side Panel and Options page.
 - **Keyboard Shortcut Settings**: Easy access to configure side panel hotkey.
 - **Custom Modal System**: Eliminated flickering dialogs in Chrome Side Panel.
-- **Placeholder UX**: Double-click to select entire placeholder patterns. Visual highlighting (blue, bold) in preview mode.
+- **Placeholder UX**: Smart placeholder handling for templates:
+  - Visual highlighting (blue, bold) in preview mode
+  - Click-to-select: Click placeholder in preview → auto-select in editor
+  - Double-click to select entire pattern (including backtick-wrapped)
 
 ### 🐛 Bug Fixes (v2.2)
 - **Sort Dropdown**: Fixed prompts disappearing when cycling through sort options.
@@ -20,8 +23,9 @@
 - **Markdown Preview Scroll**: Fixed missing scrollbar for long prompts in preview mode.
 
 ### 🧪 Test Coverage (v2.2)
-- **E2E Tests**: 89+ passed, 1 skipped
+- **E2E Tests**: 90 total (88 passed, 1 skipped, 1 flaky AI test)
 - **Unit Tests**: 29/29 passed (5 suites)
+- **Visual Validation**: 14 screenshots captured and verified
 - **New Test Suites**: `theme_settings.spec.js`, `bugfix_sorting_and_coach.spec.js`
 - **Updated Tests**: Modal dialogs, workspace lifecycle, AI streaming
 
@@ -121,7 +125,7 @@ For a detailed breakdown, see `docs/test-strategy.md`.
 
 ### Weaknesses (Gaps vs. Market Leaders)
 *   **Organization Depth**: Workspaces exist, but there is no nesting, tags, or saved filters yet.
-*   **Templating**: Basic placeholder support (`[placeholder]`, `{{name}}`) with double-click selection; no forms or variable binding yet.
+*   **Templating**: Good placeholder support (`[placeholder]`, `{{name}}`) with highlighting, click-to-select, and double-click selection; no forms or variable binding yet.
 *   **Collaboration**: Google Drive sync covers backup and multi‑device use for a single user, but there is no shared library or team workspace model.
 *   **AI Dependency on Chrome**: Gemini Nano availability depends on Chrome flags / rollout; when missing, PromptKeeper is “prompt library only” (no AI optimization).
 *   **UI Polish**: v2.1 brings a refined UI (Apple‑style theming, collapsible sidebars, drag‑and‑drop, context menus) and **Rich Markdown Support**, but lacks inline diff view or analytics dashboards common in heavier SaaS tools.

@@ -17,6 +17,7 @@
 | 🔀 **Prompt Sorting** | **NEW!** Sort prompts by Name (A-Z/Z-A), Newest First, Oldest First, or Recently Modified. |
 | 🎨 **Theme Toggle** | **NEW!** Choose Light, Dark, or Auto (system) theme. Consistent across Side Panel and Options page. |
 | ⌨️ **Keyboard Shortcuts** | **NEW!** Configure side panel hotkey via settings. Default: `Ctrl+Shift+P` / `⌘+Shift+P`. |
+| 🎯 **Placeholder UX** | **NEW!** Smart template placeholders: `[text]` and `{{mustache}}` are highlighted in preview. Click to auto-select in editor. Double-click to select entire pattern. |
 | 📝 **Markdown Support** | Rich text preview with **bold**, *italics*, lists, and headers, plus **Click-to-Edit** previews. |
 | 🧠 **Local AI (Gemini Nano)** | On-device optimization using Chrome's Gemini Nano APIs. Includes **Magic Enhance**, **Formalize**, **Improve Clarity**, **Shorten**. |
 | ⚡ **Streaming + Cancel AI** | AI output streams into the editor progressively. Click **Stop** to abort long operations safely. |
