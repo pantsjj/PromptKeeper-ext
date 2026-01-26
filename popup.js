@@ -110,6 +110,7 @@ function applyTheme(theme) {
 /**
  * Highlight placeholder patterns in HTML for preview rendering
  * Makes [placeholder] and {{mustache}} patterns visually distinct
+ * Adds data-placeholder attribute for click-to-select functionality
  */
 function highlightPlaceholders(html) {
     const temp = document.createElement('div');
@@ -120,7 +121,11 @@ function highlightPlaceholders(html) {
         const pattern = /(\[[^\]]+\]|\{\{[^}]+\}\})/g;
         if (pattern.test(text)) {
             const span = document.createElement('span');
-            span.innerHTML = text.replace(pattern, '<span class="placeholder">$1</span>');
+            // Store placeholder text in data attribute for click-to-select
+            span.innerHTML = text.replace(pattern, (match) => {
+                const escaped = match.replace(/"/g, '&quot;');
+                return `<span class="placeholder" data-placeholder="${escaped}">${match}</span>`;
+            });
             node.parentNode.replaceChild(span, node);
         }
     }
@@ -140,6 +145,19 @@ function highlightPlaceholders(html) {
 
     walkNodes(temp);
     return temp.innerHTML;
+}
+
+/**
+ * Select placeholder text in textarea after switching from preview to edit
+ */
+function selectPlaceholderInEditor(placeholderText) {
+    if (!els.textArea || !placeholderText) return;
+    const text = els.textArea.value;
+    const index = text.indexOf(placeholderText);
+    if (index !== -1) {
+        els.textArea.setSelectionRange(index, index + placeholderText.length);
+        els.textArea.focus();
+    }
 }
 
 async function init() {
@@ -672,9 +690,13 @@ function setupListeners() {
     const previewDiv = document.getElementById('markdown-preview');
 
     if (togglePreviewBtn && previewDiv) {
-        // Enable Click-to-Edit
-        previewDiv.addEventListener('click', () => {
+        // Enable Click-to-Edit with placeholder selection
+        previewDiv.addEventListener('click', (e) => {
             if (!previewDiv.classList.contains('hidden')) {
+                // Check if a placeholder was clicked
+                const placeholderEl = e.target.closest('.placeholder');
+                const placeholderText = placeholderEl?.dataset?.placeholder;
+
                 // Switch to Edit Mode
                 previewDiv.classList.add('hidden');
                 els.textArea.classList.remove('hidden');
@@ -683,7 +705,14 @@ function setupListeners() {
                 togglePreviewBtn.innerHTML = "👀";
                 togglePreviewBtn.title = "View Preview";
 
-                els.textArea.focus();
+                // If placeholder was clicked, select it in the editor
+                if (placeholderText) {
+                    setTimeout(() => {
+                        selectPlaceholderInEditor(placeholderText);
+                    }, 10);
+                } else {
+                    els.textArea.focus();
+                }
             }
         });
         previewDiv.style.cursor = 'text'; // Visual cue
