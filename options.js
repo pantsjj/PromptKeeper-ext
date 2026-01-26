@@ -421,7 +421,13 @@ function setupEventListeners() {
         // Sort option click
         els.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
             option.addEventListener('click', (e) => {
-                currentSortOrder = e.target.dataset.value;
+                // Use currentTarget to ensure we get the element the listener is on
+                const sortValue = e.currentTarget.dataset.value;
+                if (!sortValue) {
+                    console.warn('[Sort] No sort value found on clicked element');
+                    return;
+                }
+                currentSortOrder = sortValue;
                 chrome.storage.local.set({ promptSortOrder: currentSortOrder });
                 updateSortDropdownUI();
                 els.sortDropdown.classList.add('hidden');
@@ -1430,6 +1436,8 @@ function renderHistoryDropdown(prompt) {
             }
             // Selecting an older revision is a change that is not yet saved
             markEditorDirty();
+            // Update Prompt Coach score for the selected revision
+            debouncePromptAnalysis();
         }
     }
 }
