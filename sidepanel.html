@@ -34,14 +34,203 @@
                 --bg-color: #1e1e1e;
                 --sidebar-bg: #2c2c2e;
                 --text-color: #f5f5f7;
-                --text-secondary: #86868b;
+                --text-secondary: #a0a0a5;
                 --border-color: #424245;
                 --primary-color: #0a84ff;
                 --primary-hover: #409cff;
                 --accent-color: #3a3a3c;
                 --editor-bg: #1e1e1e;
             }
+
+            /* Dark mode text visibility fix */
+            .prompt-entry {
+                color: #f5f5f7;
+            }
+
+            .prompt-entry .prompt-title {
+                color: #f5f5f7;
+            }
+
+            .prompt-entry .prompt-date {
+                color: #a0a0a5;
+            }
+
+            .prompt-entry.active {
+                color: white;
+            }
+
+            .prompt-entry.active .prompt-title {
+                color: white;
+            }
+
+            .prompt-entry.active .prompt-date {
+                color: rgba(255, 255, 255, 0.85);
+            }
         }
+
+        /* Force Light Theme */
+        html.theme-light {
+            --bg-color: #f5f5f7;
+            --sidebar-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --primary-hover: #0077ed;
+            --accent-color: #f5f5f7;
+            --editor-bg: #ffffff;
+        }
+
+        /* Light mode text visibility - ensure dark text on light background */
+        html.theme-light .prompt-entry { color: #1d1d1f; }
+        html.theme-light .prompt-entry .prompt-title { color: #1d1d1f; }
+        html.theme-light .prompt-entry .prompt-date { color: #86868b; }
+        html.theme-light .prompt-entry.active { color: white; }
+        html.theme-light .prompt-entry.active .prompt-title { color: white; }
+        html.theme-light .prompt-entry.active .prompt-date { color: rgba(255, 255, 255, 0.85); }
+        html.theme-light .nav-item { color: #1d1d1f; }
+        html.theme-light .nav-item .item-title { color: #1d1d1f; }
+        html.theme-light .nav-item.active { color: white; }
+        html.theme-light .nav-item.active .item-title { color: white; }
+
+        /* Force Dark Theme */
+        html.theme-dark {
+            --bg-color: #1e1e1e;
+            --sidebar-bg: #2c2c2e;
+            --text-color: #f5f5f7;
+            --text-secondary: #a0a0a5;
+            --border-color: #424245;
+            --primary-color: #0a84ff;
+            --primary-hover: #409cff;
+            --accent-color: #3a3a3c;
+            --editor-bg: #1e1e1e;
+        }
+
+        html.theme-dark .prompt-entry { color: #f5f5f7; }
+        html.theme-dark .prompt-entry .prompt-title { color: #f5f5f7; }
+        html.theme-dark .prompt-entry .prompt-date { color: #a0a0a5; }
+        html.theme-dark .prompt-entry.active { color: white; }
+        html.theme-dark .prompt-entry.active .prompt-title { color: white; }
+        html.theme-dark .prompt-entry.active .prompt-date { color: rgba(255, 255, 255, 0.85); }
+
+        /* Prompt Coach Styles */
+        .prompt-coach {
+            margin-top: 10px;
+            padding: 8px 10px;
+            background: var(--accent-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        #prompt-coach-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .coach-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .prompt-score-link {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+
+        .prompt-score-link:hover {
+            background: var(--bg-color);
+        }
+
+        .prompt-score-link .info-icon {
+            font-size: 9px;
+            font-weight: 600;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+        }
+
+        .prompt-score-link:hover .info-icon {
+            opacity: 1;
+        }
+
+        .prompt-score {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .prompt-score.score-low { color: #ff6b6b; }
+        .prompt-score.score-medium { color: #ffd93d; }
+        .prompt-score.score-high { color: #6bcf7f; }
+
+        .coach-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .coach-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 500;
+            border-radius: 10px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .coach-tag.tag-positive {
+            background: rgba(107, 207, 127, 0.15);
+            color: #6bcf7f;
+            border-color: rgba(107, 207, 127, 0.3);
+        }
+
+        .coach-tag.tag-negative {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .coach-tag.tag-neutral {
+            background: rgba(255, 217, 61, 0.15);
+            color: #ffd93d;
+            border-color: rgba(255, 217, 61, 0.3);
+        }
+
+        .coach-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 6px;
+            background: rgba(255, 159, 67, 0.1);
+            border: 1px solid rgba(255, 159, 67, 0.3);
+            border-radius: 6px;
+            font-size: 10px;
+            color: #ff9f43;
+        }
+
+        .coach-warning .warning-icon { flex-shrink: 0; }
+        .coach-warning .warning-text { line-height: 1.3; }
 
         * {
             box-sizing: border-box;
@@ -209,6 +398,92 @@
 
         .section-content.collapsed {
             display: none;
+        }
+
+        /* Sort Icon and Dropdown */
+        .sort-wrapper {
+            position: relative;
+        }
+
+        .sort-icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sort-icon-btn:hover {
+            color: var(--primary-color);
+            background: var(--accent-color);
+        }
+
+        .sort-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 12px;
+        }
+
+        .sort-icon::before,
+        .sort-icon::after {
+            content: '';
+            height: 2px;
+            background: currentColor;
+            border-radius: 1px;
+        }
+
+        .sort-icon::before {
+            width: 100%;
+        }
+
+        .sort-icon::after {
+            width: 50%;
+        }
+
+        .sort-icon {
+            position: relative;
+        }
+
+        .sort-icon::before {
+            box-shadow: 0 4px 0 0 currentColor;
+        }
+
+        .sort-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            min-width: 130px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .sort-dropdown.hidden {
+            display: none;
+        }
+
+        .sort-option {
+            padding: 8px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .sort-option:hover {
+            background: var(--accent-color);
+        }
+
+        .sort-option.active {
+            background: var(--primary-color);
+            color: white;
         }
 
         /* Add Project & Prompt Buttons */
@@ -612,6 +887,19 @@
             <div id="prompts-toggle" class="section-header">
                 <h2 class="section-title">Prompts</h2>
                 <div style="display: flex; gap: 8px; align-items: center;">
+                    <!-- Sort Icon Button with Dropdown -->
+                    <div class="sort-wrapper">
+                        <button id="sort-btn" class="sort-icon-btn" title="Sort prompts">
+                            <span class="sort-icon"></span>
+                        </button>
+                        <div id="sort-dropdown" class="sort-dropdown hidden">
+                            <div class="sort-option" data-value="newest">Newest First</div>
+                            <div class="sort-option" data-value="oldest">Oldest First</div>
+                            <div class="sort-option" data-value="name-asc">Name (A-Z)</div>
+                            <div class="sort-option" data-value="name-desc">Name (Z-A)</div>
+                            <div class="sort-option" data-value="modified">Recently Modified</div>
+                        </div>
+                    </div>
                     <button id="add-prompt-btn-sidebar" title="Add Prompt">+</button>
                     <span class="section-toggle">▼</span>
                 </div>
@@ -668,6 +956,23 @@
                         style="margin-top:6px; font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         Local Model Stats: —
                     </div>
+                    <!-- Prompt Coach: Real-time Hashtag Attributes -->
+                    <div id="prompt-coach-container" class="prompt-coach hidden">
+                        <div id="prompt-coach-header">
+                            <span class="coach-label">Prompt Coach</span>
+                            <a href="#" id="prompt-score-link" class="prompt-score-link" title="Click to learn how scoring works">
+                                <span id="prompt-score" class="prompt-score">—</span>
+                                <span class="info-icon">?</span>
+                            </a>
+                        </div>
+                        <div id="prompt-coach-tags" class="coach-tags">
+                            <!-- Hashtag attributes populated by JS -->
+                        </div>
+                        <div id="prompt-coach-warning" class="coach-warning hidden">
+                            <span class="warning-icon">⚠️</span>
+                            <span class="warning-text">Prompt Coach requires Chrome with Gemini Nano built-in AI.</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="editor-buttons">
@@ -684,7 +989,7 @@
                         style="background: linear-gradient(135deg, #34c759, #30b350); color: white; border: none;">✨
                         Magic Optimize</button>
                     <button id="clarity-btn"
-                        style="background: var(--bg-color); border: 1px solid var(--border-color);">🔍 Improve
+                        style="background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color);">🔍 Improve
                         Clarity</button>
                 </div>
             </div>
@@ -711,6 +1016,100 @@
         <!-- Hidden elements for compatibility -->
         <input type="file" id="import-file" accept=".json" style="display: none;">
     </footer>
+
+    <!-- Custom Modal Dialog (replaces native confirm/alert in side panel) -->
+    <div id="pk-modal-overlay" class="pk-modal-overlay hidden">
+        <div class="pk-modal">
+            <div class="pk-modal-header">
+                <h3 id="pk-modal-title">Confirm</h3>
+            </div>
+            <div class="pk-modal-body">
+                <p id="pk-modal-message"></p>
+            </div>
+            <div class="pk-modal-footer">
+                <button id="pk-modal-cancel" class="pk-modal-btn">Cancel</button>
+                <button id="pk-modal-confirm" class="pk-modal-btn pk-modal-btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .pk-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .pk-modal-overlay.hidden { display: none; }
+        .pk-modal {
+            background: var(--bg-color);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+        .pk-modal-header {
+            padding: 16px 16px 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .pk-modal-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .pk-modal-body {
+            padding: 16px;
+        }
+        .pk-modal-body p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+        .pk-modal-footer {
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            border-top: 1px solid var(--border-color);
+        }
+        .pk-modal-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: var(--accent-color);
+            color: var(--text-color);
+        }
+        .pk-modal-btn:hover {
+            background: var(--border-color);
+        }
+        .pk-modal-btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        .pk-modal-btn-primary:hover {
+            background: var(--primary-hover);
+        }
+        .pk-modal-btn-danger {
+            background: #ff3b30;
+            color: white;
+            border-color: #ff3b30;
+        }
+        .pk-modal-btn-danger:hover {
+            background: #d62d23;
+        }
+    </style>
 
     <script src="libs/marked.min.js"></script>
     <script src="popup.js" type="module"></script>

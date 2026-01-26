@@ -32,13 +32,104 @@
                 --bg-color: #1e1e1e;
                 --sidebar-bg: #2c2c2e;
                 --text-color: #f5f5f7;
-                --text-secondary: #86868b;
+                --text-secondary: #a0a0a5;
                 --border-color: #424245;
                 --primary-color: #0a84ff;
                 --primary-hover: #409cff;
                 --accent-color: #3a3a3c;
                 --editor-bg: #1e1e1e;
             }
+
+            /* Dark mode nav item text visibility fix */
+            .nav-item {
+                color: #f5f5f7;
+            }
+
+            .nav-item .item-title {
+                color: #f5f5f7;
+            }
+
+            .nav-item .item-subtitle {
+                color: #a0a0a5;
+            }
+
+            .nav-item.active {
+                color: white;
+            }
+
+            .nav-item.active .item-title {
+                color: white;
+            }
+
+            .nav-item.active .item-subtitle {
+                color: rgba(255, 255, 255, 0.85);
+            }
+
+            /* Dark mode context menu fix */
+            .context-menu {
+                background: #2c2c2e;
+                border-color: #555;
+            }
+
+            .menu-item {
+                color: #f5f5f7;
+            }
+
+            .menu-item:hover {
+                background-color: var(--primary-color);
+                color: white;
+            }
+        }
+
+        /* Force Light Theme */
+        html.theme-light {
+            --bg-color: #f5f5f7;
+            --sidebar-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #86868b;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --primary-hover: #0077ed;
+            --accent-color: #f5f5f7;
+            --editor-bg: #ffffff;
+        }
+
+        /* Light mode text visibility - ensure dark text on light background */
+        html.theme-light .nav-item { color: #1d1d1f; }
+        html.theme-light .nav-item .item-title { color: #1d1d1f; }
+        html.theme-light .nav-item .item-subtitle { color: #86868b; }
+        html.theme-light .nav-item.active { color: white; }
+        html.theme-light .nav-item.active .item-title { color: white; }
+        html.theme-light .nav-item.active .item-subtitle { color: rgba(255, 255, 255, 0.85); }
+
+        /* Force Dark Theme */
+        html.theme-dark {
+            --bg-color: #1e1e1e;
+            --sidebar-bg: #2c2c2e;
+            --text-color: #f5f5f7;
+            --text-secondary: #a0a0a5;
+            --border-color: #424245;
+            --primary-color: #0a84ff;
+            --primary-hover: #409cff;
+            --accent-color: #3a3a3c;
+            --editor-bg: #1e1e1e;
+        }
+
+        html.theme-dark .nav-item { color: #f5f5f7; }
+        html.theme-dark .nav-item .item-title { color: #f5f5f7; }
+        html.theme-dark .nav-item .item-subtitle { color: #a0a0a5; }
+        html.theme-dark .nav-item.active { color: white; }
+        html.theme-dark .nav-item.active .item-title { color: white; }
+        html.theme-dark .nav-item.active .item-subtitle { color: rgba(255, 255, 255, 0.85); }
+        html.theme-dark .context-menu { background: #2c2c2e; border-color: #555; }
+        html.theme-dark .menu-item { color: #f5f5f7; }
+        html.theme-dark .menu-item:hover { background-color: var(--primary-color); color: white; }
+
+        /* Theme button active state */
+        .theme-btn.active {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+            border-color: var(--primary-color) !important;
         }
 
         body {
@@ -184,8 +275,10 @@
         #sidebar-right {
             border-left: 1px solid var(--border-color);
             border-right: none;
-            overflow-y: auto;
+            overflow-y: auto !important;
+            overflow-x: hidden;
             min-height: 0;
+            max-height: 100%;
         }
 
         .sidebar-section {
@@ -253,6 +346,87 @@
             overflow-y: auto;
         }
 
+        /* Sort Icon and Dropdown */
+        .sort-wrapper {
+            position: relative;
+        }
+
+        .sort-icon-btn {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sort-icon {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            width: 12px;
+        }
+
+        .sort-icon::before,
+        .sort-icon::after {
+            content: '';
+            height: 2px;
+            background: currentColor;
+            border-radius: 1px;
+        }
+
+        .sort-icon::before {
+            width: 100%;
+        }
+
+        .sort-icon::after {
+            width: 60%;
+        }
+
+        /* Middle line via box-shadow trick */
+        .sort-icon {
+            position: relative;
+        }
+
+        .sort-icon::before {
+            box-shadow: 0 4px 0 0 currentColor;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sort-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            min-width: 140px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .sort-dropdown.hidden {
+            display: none;
+        }
+
+        .sort-option {
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .sort-option:hover {
+            background: var(--accent-color);
+        }
+
+        .sort-option.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
         /* Workspace & Prompt Items */
         .nav-item {
             padding: 6px 10px;
@@ -300,6 +474,138 @@
             overflow: hidden;
             text-overflow: ellipsis;
             margin-top: 2px;
+        }
+
+        /* Prompt Coach Styles */
+        .prompt-coach {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: var(--accent-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        #prompt-coach-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .coach-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .prompt-score-link {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 6px;
+            transition: background 0.15s;
+        }
+
+        .prompt-score-link:hover {
+            background: var(--bg-color);
+        }
+
+        .prompt-score-link .info-icon {
+            font-size: 10px;
+            font-weight: 600;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+            color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+        }
+
+        .prompt-score-link:hover .info-icon {
+            opacity: 1;
+        }
+
+        .prompt-score {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .prompt-score.score-low {
+            color: #ff6b6b;
+        }
+
+        .prompt-score.score-medium {
+            color: #ffd93d;
+        }
+
+        .prompt-score.score-high {
+            color: #6bcf7f;
+        }
+
+        .coach-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .coach-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 12px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .coach-tag.tag-positive {
+            background: rgba(107, 207, 127, 0.15);
+            color: #6bcf7f;
+            border-color: rgba(107, 207, 127, 0.3);
+        }
+
+        .coach-tag.tag-negative {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .coach-tag.tag-neutral {
+            background: rgba(255, 217, 61, 0.15);
+            color: #ffd93d;
+            border-color: rgba(255, 217, 61, 0.3);
+        }
+
+        .coach-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255, 159, 67, 0.1);
+            border: 1px solid rgba(255, 159, 67, 0.3);
+            border-radius: 6px;
+            font-size: 11px;
+            color: #ff9f43;
+        }
+
+        .coach-warning .warning-icon {
+            flex-shrink: 0;
+        }
+
+        .coach-warning .warning-text {
+            line-height: 1.4;
         }
 
         /* Expand Button */
@@ -474,6 +780,19 @@
                 <div class="sidebar-header">
                     <h2 id="prompts-section-title" class="section-title">PROMPTS</h2>
                     <div style="display:flex; align-items:center; gap:4px;">
+                        <!-- Sort Icon Button with Dropdown -->
+                        <div class="sort-wrapper">
+                            <button id="sort-btn" class="icon-btn sort-icon-btn" title="Sort prompts">
+                                <span class="sort-icon"></span>
+                            </button>
+                            <div id="sort-dropdown" class="sort-dropdown hidden">
+                                <div class="sort-option" data-value="newest">Newest First</div>
+                                <div class="sort-option" data-value="oldest">Oldest First</div>
+                                <div class="sort-option" data-value="name-asc">Name (A-Z)</div>
+                                <div class="sort-option" data-value="name-desc">Name (Z-A)</div>
+                                <div class="sort-option" data-value="modified">Recently Modified</div>
+                            </div>
+                        </div>
                         <button id="new-prompt-btn" class="icon-btn" title="New Prompt">+</button>
                         <span id="prompts-chevron" class="chevron-icon">▼</span>
                     </div>
@@ -510,6 +829,23 @@
                 <div id="local-model-stats"
                     style="margin-top:6px; font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                     Local Model Stats: —
+                </div>
+                <!-- Prompt Coach: Real-time Hashtag Attributes -->
+                <div id="prompt-coach-container" class="prompt-coach hidden">
+                    <div id="prompt-coach-header">
+                        <span class="coach-label">Prompt Coach</span>
+                        <a href="#" id="prompt-score-link" class="prompt-score-link" title="Click to learn how scoring works">
+                            <span id="prompt-score" class="prompt-score">—</span>
+                            <span class="info-icon">?</span>
+                        </a>
+                    </div>
+                    <div id="prompt-coach-tags" class="coach-tags">
+                        <!-- Hashtag attributes populated by JS -->
+                    </div>
+                    <div id="prompt-coach-warning" class="coach-warning hidden">
+                        <span class="warning-icon">⚠️</span>
+                        <span class="warning-text">Prompt Coach requires Chrome with Gemini Nano built-in AI. This feature is not available on your current browser.</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -581,6 +917,38 @@
                             <input type="checkbox" id="autosave-on-switch-checkbox">
                             Auto-save when switching prompts
                         </label>
+                    </div>
+
+                    <div id="theme-controls"
+                        style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--text-color); margin-top:12px; padding-top:12px; border-top:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Appearance</span>
+                        </div>
+                        <div style="display:flex; gap:4px;">
+                            <button id="theme-light" class="secondary-btn theme-btn" data-theme="light"
+                                style="padding:4px 10px; font-size:11px; flex:1;">☀️ Light</button>
+                            <button id="theme-dark" class="secondary-btn theme-btn" data-theme="dark"
+                                style="padding:4px 10px; font-size:11px; flex:1;">🌙 Dark</button>
+                            <button id="theme-auto" class="secondary-btn theme-btn active" data-theme="auto"
+                                style="padding:4px 10px; font-size:11px; flex:1;">🖥️ Auto</button>
+                        </div>
+                    </div>
+
+                    <div id="shortcut-controls"
+                        style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--text-color); margin-top:12px; padding-top:12px; border-top:1px solid var(--border-color);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Keyboard Shortcut</span>
+                        </div>
+                        <p style="font-size:10px; color:var(--text-secondary); margin:0 0 8px 0;">
+                            Open PromptKeeper side panel quickly with a keyboard shortcut.
+                        </p>
+                        <a href="#" id="open-shortcuts-link" class="secondary-btn"
+                            style="padding:6px 10px; font-size:11px; text-align:center; text-decoration:none; display:block;">
+                            ⌨️ Configure in Chrome Settings
+                        </a>
+                        <p style="font-size:10px; color:var(--text-secondary); margin:4px 0 0 0;">
+                            Default: <code style="background:var(--accent-color); padding:2px 6px; border-radius:4px;">Ctrl+Shift+P</code> (Windows) or <code style="background:var(--accent-color); padding:2px 6px; border-radius:4px;">⌘+Shift+P</code> (Mac)
+                        </p>
                     </div>
                 </div>
             </div>
@@ -929,6 +1297,89 @@
     <div id="context-menu" class="context-menu hidden">
         <div class="menu-item" id="ctx-delete-workspace">Delete Workspace</div>
     </div>
+
+    <!-- Custom Modal (replaces native confirm/alert to prevent flickering) -->
+    <div id="pk-modal-overlay" class="pk-modal-overlay hidden">
+        <div class="pk-modal">
+            <div class="pk-modal-header">
+                <h3 id="pk-modal-title">Confirm</h3>
+            </div>
+            <div class="pk-modal-body">
+                <p id="pk-modal-message"></p>
+            </div>
+            <div class="pk-modal-footer">
+                <button id="pk-modal-cancel" class="pk-modal-btn">Cancel</button>
+                <button id="pk-modal-confirm" class="pk-modal-btn pk-modal-btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        .pk-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .pk-modal-overlay.hidden { display: none; }
+        .pk-modal {
+            background: var(--sidebar-bg, #fff);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 320px;
+            max-width: 450px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .pk-modal-header h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: var(--text-color, #333);
+        }
+        .pk-modal-body p {
+            margin: 0 0 16px 0;
+            color: var(--text-secondary, #666);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .pk-modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .pk-modal-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color, #ddd);
+            background: var(--editor-bg, #f5f5f5);
+            color: var(--text-color, #333);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .pk-modal-btn:hover {
+            background: var(--bg-color, #eee);
+        }
+        .pk-modal-btn-primary {
+            background: var(--primary-color, #007AFF);
+            color: white;
+            border-color: var(--primary-color, #007AFF);
+        }
+        .pk-modal-btn-primary:hover {
+            background: var(--primary-hover, #0056b3);
+        }
+        .pk-modal-btn-danger {
+            background: #ff3b30;
+            color: white;
+            border-color: #ff3b30;
+        }
+        .pk-modal-btn-danger:hover {
+            background: #d32f2f;
+        }
+    </style>
 
     <!-- Scripts -->
     <script type="module" src="options.js"></script>

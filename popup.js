@@ -3,14 +3,116 @@ import GoogleDriveService from './services/GoogleDriveService.js';
 import AIService from './services/AIService.js';
 
 let currentPromptId = null;
+let currentSortOrder = 'newest'; // Default sort order
 
 // DOM Elements Cache
 const els = {};
+
+// ===========================================================================
+// Custom Modal System (replaces native confirm/alert in Chrome Side Panel)
+// Native dialogs can flicker/disappear in side panels
+// ===========================================================================
+
+let modalResolve = null;
+
+/**
+ * Show a custom confirmation modal
+ * @param {string} message - The message to display
+ * @param {object} options - { title, confirmText, cancelText, isDanger }
+ * @returns {Promise<boolean>} - true if confirmed, false if cancelled
+ */
+function pkConfirm(message, options = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('pk-modal-overlay');
+        const title = document.getElementById('pk-modal-title');
+        const msg = document.getElementById('pk-modal-message');
+        const confirmBtn = document.getElementById('pk-modal-confirm');
+        const cancelBtn = document.getElementById('pk-modal-cancel');
+
+        if (!overlay) {
+            // Fallback to native if modal not found
+            resolve(confirm(message));
+            return;
+        }
+
+        title.textContent = options.title || 'Confirm';
+        msg.textContent = message;
+        confirmBtn.textContent = options.confirmText || 'OK';
+        cancelBtn.textContent = options.cancelText || 'Cancel';
+        cancelBtn.style.display = options.hideCancel ? 'none' : 'inline-block';
+
+        // Reset button styling
+        confirmBtn.className = 'pk-modal-btn pk-modal-btn-primary';
+        if (options.isDanger) {
+            confirmBtn.className = 'pk-modal-btn pk-modal-btn-danger';
+        }
+
+        modalResolve = resolve;
+        overlay.classList.remove('hidden');
+
+        // Handle clicks
+        const handleConfirm = () => {
+            overlay.classList.add('hidden');
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            overlay.classList.add('hidden');
+            cleanup();
+            resolve(false);
+        };
+
+        const handleOverlayClick = (e) => {
+            if (e.target === overlay) {
+                handleCancel();
+            }
+        };
+
+        const cleanup = () => {
+            confirmBtn.removeEventListener('click', handleConfirm);
+            cancelBtn.removeEventListener('click', handleCancel);
+            overlay.removeEventListener('click', handleOverlayClick);
+        };
+
+        confirmBtn.addEventListener('click', handleConfirm);
+        cancelBtn.addEventListener('click', handleCancel);
+        overlay.addEventListener('click', handleOverlayClick);
+    });
+}
+
+/**
+ * Show a custom alert modal (single OK button)
+ * @param {string} message - The message to display
+ * @param {string} title - Optional title
+ * @returns {Promise<void>}
+ */
+async function pkAlert(message, title = 'Notice') {
+    await pkConfirm(message, { title, confirmText: 'OK', hideCancel: true });
+}
+
+/**
+ * Apply theme to the document
+ * @param {'light' | 'dark' | 'auto'} theme
+ */
+function applyTheme(theme) {
+    const html = document.documentElement;
+    html.classList.remove('theme-light', 'theme-dark');
+
+    if (theme === 'light') {
+        html.classList.add('theme-light');
+    } else if (theme === 'dark') {
+        html.classList.add('theme-dark');
+    }
+    // 'auto' - no class, uses media query
+}
 
 async function init() {
     bindElements();
     setupListeners();
     initFontSize();
+    initSortPreference(); // Load sort preference
+    initTheme(); // Load theme preference
     setupUI(); // Initialize UI interactions (toggles, resize)
     loadWorkspaces(); // Load workspace list
     loadPrompts();
@@ -21,7 +123,18 @@ async function init() {
     waitForAIAPI().then(() => {
         applyLanguageModelShims();
         checkAIAvailability(); // Check if AI buttons should be shown
+    }).catch(() => {
+        // Fallback: Initialize Prompt Coach without AI if API check fails
+        initPromptCoach(false);
     });
+
+    // Fallback: Ensure Prompt Coach is initialized even if AI check hangs
+    setTimeout(() => {
+        if (!promptCoachAvailable && els.promptCoachContainer?.classList.contains('hidden')) {
+            console.log('[Popup] AI check timeout - initializing Prompt Coach without AI');
+            initPromptCoach(false);
+        }
+    }, 3000);
 
     // Real-time updates when storage changes (e.g., after restore from Google Drive)
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -40,7 +153,21 @@ async function init() {
                     : 13;
                 document.documentElement.style.setProperty('--prompt-font-size', `${next}px`);
             }
+            if (changes['themePreference']) {
+                const theme = changes.themePreference.newValue || 'auto';
+                applyTheme(theme);
+            }
         }
+    });
+}
+
+/**
+ * Load and apply theme preference from storage
+ */
+function initTheme() {
+    chrome.storage.local.get(['themePreference'], (result) => {
+        const theme = result.themePreference || 'auto';
+        applyTheme(theme);
     });
 }
 
@@ -61,6 +188,84 @@ function initFontSize() {
         const size = typeof result.editorFontSize === 'number' ? result.editorFontSize : 13;
         document.documentElement.style.setProperty('--prompt-font-size', `${size}px`);
     });
+}
+
+function initSortPreference() {
+    // Load sort preference from storage
+    chrome.storage.local.get(['promptSortOrder'], (result) => {
+        currentSortOrder = result.promptSortOrder || 'newest';
+        updateSortDropdownUI();
+    });
+
+    // Sort icon button click - toggle dropdown
+    if (els.sortBtn && els.sortDropdown) {
+        els.sortBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            els.sortDropdown.classList.toggle('hidden');
+        });
+
+        // Sort option click
+        els.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                currentSortOrder = e.target.dataset.value;
+                chrome.storage.local.set({ promptSortOrder: currentSortOrder });
+                updateSortDropdownUI();
+                els.sortDropdown.classList.add('hidden');
+                loadPrompts();
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!els.sortBtn.contains(e.target) && !els.sortDropdown.contains(e.target)) {
+                els.sortDropdown.classList.add('hidden');
+            }
+        });
+    }
+}
+
+/**
+ * Update sort dropdown UI to show active selection
+ */
+function updateSortDropdownUI() {
+    if (!els.sortDropdown) return;
+    els.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
+        if (option.dataset.value === currentSortOrder) {
+            option.classList.add('active');
+        } else {
+            option.classList.remove('active');
+        }
+    });
+}
+
+/**
+ * Sort prompts based on current sort order
+ * @param {Array} prompts - Array of prompt objects
+ * @returns {Array} - Sorted array
+ */
+function sortPrompts(prompts) {
+    const sorted = [...prompts];
+
+    switch (currentSortOrder) {
+        case 'name-asc':
+            sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            break;
+        case 'name-desc':
+            sorted.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+            break;
+        case 'oldest':
+            sorted.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+            break;
+        case 'modified':
+            sorted.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            break;
+        case 'newest':
+        default:
+            sorted.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            break;
+    }
+
+    return sorted;
 }
 
 function applyLanguageModelShims() {
@@ -168,6 +373,17 @@ function bindElements() {
     els.aiRow = document.getElementById('ai-buttons-row');
     els.magicBtn = document.getElementById('magic-btn');
     els.clarityBtn = document.getElementById('clarity-btn');
+
+    // Sort Controls
+    els.sortBtn = document.getElementById('sort-btn');
+    els.sortDropdown = document.getElementById('sort-dropdown');
+
+    // Prompt Coach Elements
+    els.promptCoachContainer = document.getElementById('prompt-coach-container');
+    els.promptCoachTags = document.getElementById('prompt-coach-tags');
+    els.promptCoachWarning = document.getElementById('prompt-coach-warning');
+    els.promptScore = document.getElementById('prompt-score');
+    els.promptScoreLink = document.getElementById('prompt-score-link');
 }
 
 function setupListeners() {
@@ -194,7 +410,7 @@ function setupListeners() {
         const text = els.textArea.value.trim();
 
         if (!text) {
-            alert('Please enter some text for the prompt.');
+            await pkAlert('Please enter some text for the prompt.', 'Missing Content');
             return;
         }
 
@@ -225,7 +441,7 @@ function setupListeners() {
             setTimeout(() => els.textArea.classList.remove('pulse-green'), 1000);
         } catch (err) {
             console.error('Save failed:', err);
-            alert('Failed to save prompt.');
+            await pkAlert('Failed to save prompt.', 'Error');
         }
     });
 
@@ -268,7 +484,7 @@ function setupListeners() {
     // Delete
     els.deleteBtn.addEventListener('click', async () => {
         if (!currentPromptId) return;
-        if (confirm('Are you sure you want to delete this prompt?')) {
+        if (await pkConfirm('Are you sure you want to delete this prompt?', { title: 'Delete Prompt', confirmText: 'Delete', isDanger: true })) {
             await StorageService.deletePrompt(currentPromptId);
             currentPromptId = null;
             els.titleInput.value = '';
@@ -337,9 +553,9 @@ function setupListeners() {
             console.warn("Markdown stripping failed, using raw text", e);
         }
 
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
             if (!tabs[0] || tabs[0].url.startsWith('chrome://')) {
-                alert('Cannot paste into this page.');
+                await pkAlert('Cannot paste into this page.', 'Paste Error');
                 return;
             }
 
@@ -476,10 +692,9 @@ function initContextMenu() {
 
             if (projectId && projectName) {
                 // Confirm Smart Delete
-                const confirmed = confirm(
-                    `Delete workspace '${projectName}'?\n\n` +
-                    `Prompts will NOT be deleted. They will be tagged '${projectName}' ` +
-                    `and moved to "All Prompts".`
+                const confirmed = await pkConfirm(
+                    `Delete workspace '${projectName}'?\n\nPrompts will NOT be deleted. They will be tagged '${projectName}' and moved to "All Prompts".`,
+                    { title: 'Delete Workspace', confirmText: 'Delete', isDanger: true }
                 );
 
                 if (confirmed) {
@@ -491,7 +706,7 @@ function initContextMenu() {
                         if (allLi) allLi.click();
                     } catch (err) {
                         console.error('Failed to delete workspace:', err);
-                        alert('Failed to delete workspace.');
+                        await pkAlert('Failed to delete workspace.', 'Error');
                     }
                 }
             }
@@ -550,7 +765,7 @@ function showInlineWorkspaceInput() {
                     loadWorkspaces(); // Refresh workspace list
                 } catch (err) {
                     console.error('Failed to add workspace:', err);
-                    alert('Failed to add workspace: ' + err.message);
+                    await pkAlert('Failed to add workspace: ' + err.message, 'Error');
                 }
             }
         } else if (e.key === 'Escape') {
@@ -676,7 +891,7 @@ async function refreshUI() {
 
 async function loadPrompts(filterProjectId = null) {
     try {
-        const prompts = await StorageService.getPrompts();
+        let prompts = await StorageService.getPrompts();
         if (!els.promptList) return; // Guard against missing list (popup vs sidepanel differences)
 
         els.promptList.innerHTML = ''; // Clear
@@ -686,6 +901,9 @@ async function loadPrompts(filterProjectId = null) {
             clearStats();
             return;
         }
+
+        // Apply sorting
+        prompts = sortPrompts(prompts);
 
         // Apply Search Filter if any
         const searchTerm = els.searchInput ? els.searchInput.value.toLowerCase() : '';
@@ -755,6 +973,11 @@ function selectPrompt(prompt) {
 
     updateStats();
     renderVersionSelector(prompt);
+
+    // Trigger Prompt Coach re-evaluation on prompt selection
+    if (promptCoachAvailable && els.textArea.value) {
+        analyzePromptQuality(els.textArea.value);
+    }
 
     // Highlight in list
     const items = els.promptList.querySelectorAll('.prompt-entry');
@@ -956,12 +1179,12 @@ async function handleGoogleSignIn() {
         console.log('[GoogleDrive] Signed in with 5-min auto-backup:', userInfo.email);
     } catch (err) {
         console.error('[GoogleDrive] Sign in failed:', err);
-        alert('Sign in failed: ' + err.message);
+        await pkAlert('Sign in failed: ' + err.message, 'Error');
     }
 }
 
 async function handleGoogleSignOut() {
-    if (!confirm('Sign out of Google Drive?')) return;
+    if (!await pkConfirm('Sign out of Google Drive?', { title: 'Sign Out' })) return;
 
     try {
         await GoogleDriveService.signOut();
@@ -976,7 +1199,7 @@ async function handleGoogleSignOut() {
         console.log('[GoogleDrive] Signed out');
     } catch (err) {
         console.error('[GoogleDrive] Sign out failed:', err);
-        alert('Sign out failed: ' + err.message);
+        await pkAlert('Sign out failed: ' + err.message, 'Error');
     }
 }
 
@@ -987,7 +1210,7 @@ async function handleBackupToDrive() {
     try {
         const { driveConnected } = await chrome.storage.local.get(['driveConnected']);
         if (!driveConnected) {
-            alert('Please sign in with Google first.');
+            await pkAlert('Please sign in with Google first.', 'Sign In Required');
             return;
         }
 
@@ -998,37 +1221,213 @@ async function handleBackupToDrive() {
 
         await chrome.storage.local.set({ lastBackupTime: result.timestamp });
 
-        alert(`✅ Backed up ${prompts.length} prompts to Google Drive!`);
+        await pkAlert(`Backed up ${prompts.length} prompts to Google Drive!`, 'Backup Complete');
         console.log('[GoogleDrive] Backup complete:', result);
     } catch (err) {
         console.error('[GoogleDrive] Backup failed:', err);
-        alert('Backup failed: ' + err.message);
+        await pkAlert('Backup failed: ' + err.message, 'Backup Error');
     }
 }
 
 /**
  * Restore prompts from Google Drive
+ * Automatically merges imported prompts with local library (no confirmation needed)
  */
 async function handleRestoreFromDrive() {
     try {
         const { driveConnected } = await chrome.storage.local.get(['driveConnected']);
         if (!driveConnected) {
-            alert('Please sign in with Google first.');
+            await pkAlert('Please sign in with Google first.', 'Sign In Required');
             return;
         }
 
-        if (!confirm('Merge prompts from Google Drive with local library?')) return;
+        // No confirmation needed - user explicitly clicked "Restore from Drive"
+        // Just show progress indication
+        console.log('[GoogleDrive] Starting restore...');
 
         const data = await GoogleDriveService.restoreFromDrive();
         const importedCount = await StorageService.importPrompts(data);
 
-        alert(`✅ Restored ${importedCount} prompts from Google Drive!`);
+        await pkAlert(`Restored ${importedCount} prompts from Google Drive!`, 'Restore Complete');
         await refreshUI();
         console.log('[GoogleDrive] Restore complete');
     } catch (err) {
         console.error('[GoogleDrive] Restore failed:', err);
-        alert('Restore failed: ' + err.message);
+        await pkAlert('Restore failed: ' + err.message, 'Restore Error');
     }
+}
+
+// ===========================================================================
+// Prompt Coach - Real-time prompt analysis with AI
+// ===========================================================================
+
+let promptCoachAvailable = false;
+let promptCoachDebounceTimer = null;
+
+/**
+ * Check if browser supports Gemini Nano (Chrome only feature)
+ */
+function isGeminiNanoSupported() {
+    const isChrome = /Chrome/.test(navigator.userAgent) && !/Edg|Edge|OPR|Opera/.test(navigator.userAgent);
+    const hasAIAPI = typeof window !== 'undefined' && (
+        window.LanguageModel ||
+        window.PKBuiltinAI ||
+        (window.ai && window.ai.languageModel)
+    );
+    return { isChrome, hasAIAPI };
+}
+
+/**
+ * Initialize Prompt Coach with AI availability status
+ */
+function initPromptCoach(aiAvailable) {
+    if (!els.promptCoachContainer) return;
+
+    const { isChrome } = isGeminiNanoSupported();
+
+    if (!isChrome || !aiAvailable) {
+        // Show warning for non-Chrome browsers or unavailable AI
+        els.promptCoachContainer.classList.remove('hidden');
+        els.promptCoachTags.innerHTML = '';
+        els.promptCoachWarning.classList.remove('hidden');
+
+        if (!isChrome) {
+            els.promptCoachWarning.querySelector('.warning-text').textContent =
+                'Prompt Coach is ONLY available on Chrome with Gemini Nano built-in AI.';
+        } else {
+            els.promptCoachWarning.querySelector('.warning-text').textContent =
+                'Prompt Coach requires Gemini Nano. Enable Chrome\'s AI features in chrome://flags.';
+        }
+
+        promptCoachAvailable = false;
+        return;
+    }
+
+    // AI is available - enable Prompt Coach
+    promptCoachAvailable = true;
+    els.promptCoachContainer.classList.remove('hidden');
+    els.promptCoachWarning.classList.add('hidden');
+
+    // Add click handler for score link to open guide
+    if (els.promptScoreLink) {
+        els.promptScoreLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const guideUrl = chrome.runtime.getURL('how_to.html#prompt-coach');
+            window.open(guideUrl, '_blank');
+        });
+    }
+
+    // Add real-time analysis on text changes
+    if (els.textArea) {
+        els.textArea.addEventListener('input', debouncePromptAnalysis);
+    }
+
+    // Run initial analysis if there's content
+    if (els.textArea && els.textArea.value.trim()) {
+        analyzePromptQuality(els.textArea.value);
+    }
+}
+
+function debouncePromptAnalysis() {
+    if (!promptCoachAvailable) return;
+    clearTimeout(promptCoachDebounceTimer);
+    promptCoachDebounceTimer = setTimeout(() => {
+        analyzePromptQuality(els.textArea?.value || '');
+    }, 500);
+}
+
+function analyzePromptQuality(text) {
+    if (!els.promptCoachTags || !els.promptScore) return;
+    els.promptCoachTags.innerHTML = '';
+
+    if (!text.trim()) {
+        els.promptScore.textContent = '—';
+        els.promptScore.className = 'prompt-score';
+        return;
+    }
+
+    const metrics = calculatePromptMetrics(text);
+    const score = calculateOverallScore(metrics);
+
+    els.promptScore.textContent = `${score}/100`;
+    els.promptScore.className = 'prompt-score ' + getScoreClass(score);
+
+    const tags = generateHashtagAttributes(metrics);
+    tags.forEach(tag => {
+        const tagEl = document.createElement('span');
+        tagEl.className = `coach-tag ${tag.type}`;
+        tagEl.textContent = tag.label;
+        tagEl.title = tag.tooltip;
+        els.promptCoachTags.appendChild(tagEl);
+    });
+}
+
+function calculatePromptMetrics(text) {
+    const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    return {
+        wordCount,
+        charCount: text.length,
+        sentenceCount: (text.match(/[.!?]+/g) || []).length,
+        hasQuestionMark: text.includes('?'),
+        hasPlaceholders: /\[.*?\]|{.*?}|<.*?>/.test(text),
+        hasStructure: /^(#|\*|-|\d+\.)/m.test(text),
+        hasContext: /(context|background|scenario|situation)/i.test(text),
+        hasRole: /(you are|act as|imagine you|pretend to be|role)/i.test(text),
+        hasFormat: /(format|structure|output|response should|return as)/i.test(text),
+        hasExamples: /(example|for instance|e\.g\.|such as)/i.test(text),
+        hasConstraints: /(must|should|do not|don't|never|always|only)/i.test(text),
+        hasSpecificity: /(\d+|specific|exactly|precisely|detailed)/i.test(text),
+        isTooBrief: wordCount < 10,
+        isTooLong: wordCount > 500,
+        hasAdequateLength: wordCount >= 20 && wordCount <= 300
+    };
+}
+
+function calculateOverallScore(metrics) {
+    let score = 0;
+    if (metrics.hasAdequateLength) score += 25;
+    else if (metrics.isTooBrief) score += 5;
+    else if (metrics.isTooLong) score += 15;
+    else score += 10;
+
+    if (metrics.hasStructure) score += 10;
+    if (metrics.hasPlaceholders) score += 10;
+    if (metrics.sentenceCount >= 2) score += 5;
+    if (metrics.hasContext) score += 10;
+    if (metrics.hasSpecificity) score += 10;
+    if (metrics.hasExamples) score += 5;
+    if (metrics.hasRole) score += 10;
+    if (metrics.hasFormat) score += 8;
+    if (metrics.hasConstraints) score += 7;
+
+    return Math.min(100, Math.max(0, score));
+}
+
+function getScoreClass(score) {
+    if (score >= 70) return 'score-high';
+    if (score >= 40) return 'score-medium';
+    return 'score-low';
+}
+
+function generateHashtagAttributes(metrics) {
+    const tags = [];
+    if (metrics.hasRole) tags.push({ label: '#persona', type: 'tag-positive', tooltip: 'Has a defined role/persona' });
+    if (metrics.hasContext) tags.push({ label: '#context', type: 'tag-positive', tooltip: 'Provides context/background' });
+    if (metrics.hasFormat) tags.push({ label: '#format', type: 'tag-positive', tooltip: 'Specifies output format' });
+    if (metrics.hasExamples) tags.push({ label: '#examples', type: 'tag-positive', tooltip: 'Includes examples' });
+    if (metrics.hasConstraints) tags.push({ label: '#constraints', type: 'tag-positive', tooltip: 'Has clear constraints' });
+    if (metrics.hasSpecificity) tags.push({ label: '#specific', type: 'tag-positive', tooltip: 'Contains specific details' });
+    if (metrics.hasStructure) tags.push({ label: '#structured', type: 'tag-positive', tooltip: 'Well-structured formatting' });
+    if (metrics.hasPlaceholders) tags.push({ label: '#templated', type: 'tag-positive', tooltip: 'Has variable placeholders' });
+    if (metrics.isTooBrief) tags.push({ label: '#too-brief', type: 'tag-negative', tooltip: 'Prompt is too short' });
+    if (metrics.isTooLong) tags.push({ label: '#verbose', type: 'tag-neutral', tooltip: 'Prompt may be too long' });
+    if (!metrics.hasRole && !metrics.hasContext && !metrics.hasFormat) {
+        tags.push({ label: '#needs-structure', type: 'tag-negative', tooltip: 'Add persona, context, or format' });
+    }
+    if (metrics.wordCount >= 10 && !metrics.hasSpecificity && !metrics.hasExamples) {
+        tags.push({ label: '#vague', type: 'tag-neutral', tooltip: 'Could be more specific' });
+    }
+    return tags;
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -1045,12 +1444,15 @@ async function checkAIAvailability() {
         if (status === 'readily' || status === 'available') {
             els.aiRow.classList.remove('hidden');
             setupAIListeners();
+            initPromptCoach(true); // AI available
         } else {
             els.aiRow.classList.add('hidden');
+            initPromptCoach(false); // AI not available
         }
     } catch (e) {
         console.warn('[Popup] AI check failed:', e);
         els.aiRow.classList.add('hidden');
+        initPromptCoach(false); // AI not available
     }
 }
 
@@ -1068,7 +1470,10 @@ function setupAIListeners() {
 
 async function handleAI(type) {
     const text = els.textArea.value.trim();
-    if (!text) return alert("Please enter some text to optimize.");
+    if (!text) {
+        await pkAlert("Please enter some text to optimize.", "Input Required");
+        return;
+    }
 
     // Visual feedback
     const btn = type === 'magic_enhance' ? els.magicBtn : els.clarityBtn;
@@ -1153,7 +1558,7 @@ async function handleAI(type) {
             return;
         }
         console.error("AI Refine Error:", e);
-        alert("Optimization failed: " + e.message);
+        await pkAlert("Optimization failed: " + e.message, "AI Error");
     } finally {
         btn.textContent = originalText;
         btn.disabled = false;
