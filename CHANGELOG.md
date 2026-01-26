@@ -2,6 +2,31 @@
 
 All notable changes to the **PromptKeeper** extension will be documented in this file.
 
+## [2.2.0] - 2026-01-25
+
+### ✨ New Features
+
+- **Prompt Coach**: Real-time AI-powered prompt quality scoring (0-100) with visual hashtag attribute tags (`#persona`, `#context`, `#templated`, `#specific`, `#structured`). Guides users toward better prompts as they type. Powered by Gemini Nano.
+- **Prompt Sorting**: Sort prompts by Name (A-Z/Z-A), Newest First, Oldest First, or Recently Modified. Preference persists across sessions.
+- **Theme Toggle**: Choose Light, Dark, or Auto (system) theme. Syncs consistently between Side Panel and Options page.
+- **Keyboard Shortcut Settings**: Quick link to `chrome://extensions/shortcuts` for configuring the side panel hotkey (default: `Ctrl+Shift+P` / `⌘+Shift+P`).
+
+### 🐛 Bug Fixes
+
+- **Modal Dialogs**: Replaced native `confirm()`/`alert()` with custom modal system to eliminate flickering in Chrome Side Panel.
+- **AI Concurrency**: Fixed data loss when switching prompts during AI streaming. Streams are now prompt-aware.
+- **"No output language" Warning**: Eliminated console warning on first AI call.
+- **Dark Mode**: Fixed context menu visibility, Cancel/Stop button text, and sidebar item colors.
+- **Light Mode**: Fixed faded text in sidebar items when Light theme is forced.
+- **Settings Scroll**: Fixed right sidebar scrolling so all settings are accessible.
+
+### 🧪 Technical
+
+- **E2E Tests**: 81 tests passing. Added `theme_settings.spec.js` (9 tests), updated modal and workspace lifecycle tests.
+- **Prompt Coach Documentation**: Added comprehensive guide at `how_to.html#prompt-coach`.
+
+---
+
 ## [2.1.1] - 2025-12-29
 
 ### ✨ Improvements

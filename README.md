@@ -1,28 +1,29 @@
 # PromptKeeper - The Local AI Prompt IDE
 
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v2.1.1-blue?logo=googlechrome)](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v2.2.0-blue?logo=googlechrome)](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)
 [![License](https://img.shields.io/badge/License-ISC-green.svg)](LICENSE.md)
 
-**PromptKeeper** is a privacy-first Chrome Extension that transforms your browser into a local prompt engineering workspace. Save, organize, version, and (optionally) optimize your AI prompts—with Google Drive sync and built-in Markdown support.
+**PromptKeeper** is a privacy-first Chrome Extension that transforms your browser into a local prompt engineering workspace. Save, organize, version, and optimize your AI prompts—with real-time quality scoring, Google Drive sync, and built-in Markdown support.
 
 > 🚀 **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/promptkeeper/donmkahapkohncialmknoofangooemjb)**
 
 ---
 
-## ✨ Key Features (v2.1)
+## ✨ Key Features (v2.2)
 
 | Feature | Description |
 |---------|-------------|
+| 🎯 **Prompt Coach** | **NEW!** Real-time AI-powered prompt quality scoring (0-100) with visual hashtag tags (`#persona`, `#context`, `#templated`). Guides you toward better prompts as you type. |
+| 🔀 **Prompt Sorting** | **NEW!** Sort prompts by Name (A-Z/Z-A), Newest First, Oldest First, or Recently Modified. |
+| 🎨 **Theme Toggle** | **NEW!** Choose Light, Dark, or Auto (system) theme. Consistent across Side Panel and Options page. |
+| ⌨️ **Keyboard Shortcuts** | **NEW!** Configure side panel hotkey via settings. Default: `Ctrl+Shift+P` / `⌘+Shift+P`. |
 | 📝 **Markdown Support** | Rich text preview with **bold**, *italics*, lists, and headers, plus **Click-to-Edit** previews. |
-| ⌨️ **Shortcuts & Formatting** | Use `Cmd+B` and `Cmd+I` to format quickly. Raw markdown in the editor, clean text via stripped "Paste-to-Page". |
-| 🧠 **Local AI (Gemini Nano)** | On-device optimization using Chrome’s Gemini Nano APIs. Includes **Magic Enhance**, **Formalize**, **Improve Clarity**, **Shorten**. AI meta-prompts avoid invented personas and clearly mark user-fill areas. |
-| ⚡ **Streaming + Cancel AI** | Where supported, AI output streams into the editor progressively. Buttons switch to **Cancel** so you can abort long operations safely. |
-| ⬇️ **Model Download Progress** | When Chrome is downloading/warming the on-device model, PromptKeeper surfaces a **Downloading…** progress indicator instead of failing silently. |
+| 🧠 **Local AI (Gemini Nano)** | On-device optimization using Chrome's Gemini Nano APIs. Includes **Magic Enhance**, **Formalize**, **Improve Clarity**, **Shorten**. |
+| ⚡ **Streaming + Cancel AI** | AI output streams into the editor progressively. Click **Stop** to abort long operations safely. |
 | ☁️ **Google Drive Sync** | Auto-backup to your private Drive. Access prompts on any device. |
 | 🗂️ **Workspaces** | Organize prompts into Projects with drag-and-drop. |
 | 📜 **Version History** | Every save is versioned. Time-travel to restore any version. |
 | 🖥️ **Full-Screen IDE** | A spacious editor for serious prompt engineering with a resizable, scrollable right-hand options & AI panel. |
-| 🔍 **Readable by Design** | Shared font-size controls keep the editor and markdown preview in sync across the full editor and side panel. |
 
 ---
 
