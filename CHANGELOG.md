@@ -10,7 +10,10 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 - **Prompt Sorting**: Sort prompts by Name (A-Z/Z-A), Newest First, Oldest First, or Recently Modified. Preference persists across sessions.
 - **Theme Toggle**: Choose Light, Dark, or Auto (system) theme. Syncs consistently between Side Panel and Options page.
 - **Keyboard Shortcut Settings**: Quick link to `chrome://extensions/shortcuts` for configuring the side panel hotkey (default: `Ctrl+Shift+P` / `⌘+Shift+P`).
-- **Placeholder UX**: Double-click to select entire placeholder patterns (`[placeholder]`, `` `[placeholder]` ``, `{{mustache}}`). Placeholders are visually highlighted in preview mode (blue, bold) for easy identification.
+- **Placeholder UX**: Smart placeholder handling for prompt templates:
+  - **Visual Highlighting**: Placeholders (`[placeholder]`, `{{mustache}}`) are highlighted in blue/bold in preview mode for easy identification.
+  - **Click-to-Select**: Click any placeholder in preview mode to switch to edit mode with the placeholder auto-selected, ready to type.
+  - **Double-Click Selection**: Double-click in edit mode to select entire placeholder patterns including backtick-wrapped versions (`` `[text]` ``).
 
 ### 🐛 Bug Fixes
 
@@ -26,7 +29,8 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 
 ### 🧪 Technical
 
-- **E2E Tests**: 89+ tests passing. Added `theme_settings.spec.js`, `bugfix_sorting_and_coach.spec.js`, updated modal and workspace lifecycle tests.
+- **E2E Tests**: 90 tests (88 passed, 1 skipped, 1 flaky). Added `theme_settings.spec.js`, `bugfix_sorting_and_coach.spec.js`, updated modal and workspace lifecycle tests.
+- **Unit Tests**: 29/29 passing across 5 test suites.
 - **Prompt Coach Documentation**: Added comprehensive guide at `how_to.html#prompt-coach`.
 
 ---
