@@ -663,6 +663,7 @@ function setupEventListeners() {
     }
 
     // Helper: Highlight placeholder patterns in HTML (for preview)
+    // Adds data-placeholder attribute for click-to-select functionality
     function highlightPlaceholders(html) {
         // Match [placeholder text] patterns that aren't inside code tags
         // We process text nodes only to avoid breaking HTML structure
@@ -675,7 +676,11 @@ function setupEventListeners() {
             const pattern = /(\[[^\]]+\]|\{\{[^}]+\}\})/g;
             if (pattern.test(text)) {
                 const span = document.createElement('span');
-                span.innerHTML = text.replace(pattern, '<span class="placeholder">$1</span>');
+                // Store placeholder text in data attribute for click-to-select
+                span.innerHTML = text.replace(pattern, (match) => {
+                    const escaped = match.replace(/"/g, '&quot;');
+                    return `<span class="placeholder" data-placeholder="${escaped}">${match}</span>`;
+                });
                 node.parentNode.replaceChild(span, node);
             }
         }
@@ -698,6 +703,17 @@ function setupEventListeners() {
 
         walkNodes(temp);
         return temp.innerHTML;
+    }
+
+    // Helper: Select placeholder text in textarea
+    function selectPlaceholderInEditor(placeholderText) {
+        if (!els.textArea || !placeholderText) return;
+        const text = els.textArea.value;
+        const index = text.indexOf(placeholderText);
+        if (index !== -1) {
+            els.textArea.setSelectionRange(index, index + placeholderText.length);
+            els.textArea.focus();
+        }
     }
 
     // Helper: Show Preview
@@ -735,11 +751,23 @@ function setupEventListeners() {
     }
 
     if (previewDiv) {
-        // Enable Click-to-Edit
-        previewDiv.addEventListener('click', () => {
+        // Enable Click-to-Edit with placeholder selection
+        previewDiv.addEventListener('click', (e) => {
             // Only switch if currently visible
             if (!previewDiv.classList.contains('hidden')) {
+                // Check if a placeholder was clicked
+                const placeholderEl = e.target.closest('.placeholder');
+                const placeholderText = placeholderEl?.dataset?.placeholder;
+
                 showEditor();
+
+                // If placeholder was clicked, select it in the editor
+                if (placeholderText) {
+                    // Small delay to ensure editor is ready
+                    setTimeout(() => {
+                        selectPlaceholderInEditor(placeholderText);
+                    }, 10);
+                }
             }
         });
         // Improve cursor to indicate interactivity
