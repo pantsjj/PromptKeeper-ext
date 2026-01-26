@@ -107,6 +107,41 @@ function applyTheme(theme) {
     // 'auto' - no class, uses media query
 }
 
+/**
+ * Highlight placeholder patterns in HTML for preview rendering
+ * Makes [placeholder] and {{mustache}} patterns visually distinct
+ */
+function highlightPlaceholders(html) {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+
+    function processTextNode(node) {
+        const text = node.textContent;
+        const pattern = /(\[[^\]]+\]|\{\{[^}]+\}\})/g;
+        if (pattern.test(text)) {
+            const span = document.createElement('span');
+            span.innerHTML = text.replace(pattern, '<span class="placeholder">$1</span>');
+            node.parentNode.replaceChild(span, node);
+        }
+    }
+
+    function walkNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const parent = node.parentNode;
+            if (parent && !['CODE', 'PRE', 'SPAN'].includes(parent.tagName)) {
+                processTextNode(node);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.tagName !== 'CODE' && node.tagName !== 'PRE') {
+                Array.from(node.childNodes).forEach(walkNodes);
+            }
+        }
+    }
+
+    walkNodes(temp);
+    return temp.innerHTML;
+}
+
 async function init() {
     bindElements();
     setupListeners();
@@ -539,6 +574,43 @@ function setupListeners() {
         }
     });
 
+    // ===========================================================================
+    // Placeholder Double-Click Selection
+    // Allows users to double-click on [placeholder] or `[placeholder]` to select entire text
+    // ===========================================================================
+    els.textArea.addEventListener('dblclick', (e) => {
+        const text = els.textArea.value;
+        const cursorPos = els.textArea.selectionStart;
+
+        // Placeholder patterns to detect (order matters - more specific first)
+        const patterns = [
+            /`\[[^\]]+\]`/g,           // Backtick-wrapped: `[placeholder]`
+            /\{\{[^}]+\}\}/g,          // Mustache: {{placeholder}}
+            /\[[^\]]+\]/g,             // Square brackets: [placeholder]
+        ];
+
+        for (const pattern of patterns) {
+            let match;
+            // Reset lastIndex for global regex
+            pattern.lastIndex = 0;
+            while ((match = pattern.exec(text)) !== null) {
+                const start = match.index;
+                const end = start + match[0].length;
+
+                // Check if cursor is within this match
+                if (cursorPos >= start && cursorPos <= end) {
+                    e.preventDefault();
+                    // Small delay to override browser's default word selection
+                    setTimeout(() => {
+                        els.textArea.setSelectionRange(start, end);
+                        els.textArea.focus();
+                    }, 0);
+                    return;
+                }
+            }
+        }
+    });
+
     // Paste (Strip Markdown)
     els.pasteBtn.addEventListener('click', () => {
         const rawText = els.textArea.value.trim();
@@ -627,9 +699,10 @@ function setupListeners() {
                 els.textArea.classList.add('hidden');
                 previewDiv.classList.remove('hidden');
 
-                // Render Markdown
+                // Render Markdown with placeholder highlighting
                 const raw = els.textArea.value;
-                previewDiv.innerHTML = window.marked ? window.marked.parse(raw) : raw;
+                const html = window.marked ? window.marked.parse(raw) : raw;
+                previewDiv.innerHTML = window.marked ? highlightPlaceholders(html) : raw;
 
                 togglePreviewBtn.classList.add('active');
                 togglePreviewBtn.innerHTML = "👨‍💻"; // Code icon
@@ -1001,7 +1074,8 @@ function selectPrompt(prompt) {
         els.textArea.classList.add('hidden');
         previewDiv.classList.remove('hidden');
         const raw = els.textArea.value;
-        previewDiv.innerHTML = window.marked ? window.marked.parse(raw) : raw;
+        const html = window.marked ? window.marked.parse(raw) : raw;
+        previewDiv.innerHTML = window.marked ? highlightPlaceholders(html) : raw;
 
         toggleBtn.innerHTML = "👨‍💻";
         toggleBtn.classList.add('active');
@@ -1039,7 +1113,8 @@ function renderVersionSelector(prompt) {
             if (previewDiv && !previewDiv.classList.contains('hidden')) {
                 if (window.marked) {
                     try {
-                        previewDiv.innerHTML = window.marked.parse(version.content);
+                        const html = window.marked.parse(version.content);
+                        previewDiv.innerHTML = highlightPlaceholders(html);
                     } catch {
                         previewDiv.textContent = version.content;
                     }
@@ -1525,7 +1600,8 @@ async function handleAI(type) {
                 els.textArea.value = partial;
                 const previewDiv = document.getElementById('markdown-preview');
                 if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
-                    previewDiv.innerHTML = window.marked.parse(partial);
+                    const html = window.marked.parse(partial);
+                    previewDiv.innerHTML = highlightPlaceholders(html);
                 }
             },
             onStats: (stats) => {
@@ -1559,7 +1635,8 @@ async function handleAI(type) {
             els.textArea.value = originalEditorText;
             const previewDiv = document.getElementById('markdown-preview');
             if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
-                previewDiv.innerHTML = window.marked.parse(originalEditorText);
+                const html = window.marked.parse(originalEditorText);
+                previewDiv.innerHTML = highlightPlaceholders(html);
             }
             // Restore stats if we had any
             if (els.localModelStats && originalStatsText) els.localModelStats.textContent = originalStatsText;
@@ -1584,6 +1661,7 @@ function setPromptText(text) {
     // Sync Preview if visible
     const previewDiv = document.getElementById('markdown-preview');
     if (previewDiv && !previewDiv.classList.contains('hidden') && window.marked) {
-        previewDiv.innerHTML = window.marked.parse(text);
+        const html = window.marked.parse(text);
+        previewDiv.innerHTML = highlightPlaceholders(html);
     }
 }

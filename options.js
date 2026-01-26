@@ -608,6 +608,43 @@ function setupEventListeners() {
         }
     });
 
+    // ===========================================================================
+    // Placeholder Double-Click Selection
+    // Allows users to double-click on [placeholder] or `[placeholder]` to select entire text
+    // ===========================================================================
+    els.textArea.addEventListener('dblclick', (e) => {
+        const text = els.textArea.value;
+        const cursorPos = els.textArea.selectionStart;
+
+        // Placeholder patterns to detect (order matters - more specific first)
+        const patterns = [
+            /`\[[^\]]+\]`/g,           // Backtick-wrapped: `[placeholder]`
+            /\{\{[^}]+\}\}/g,          // Mustache: {{placeholder}}
+            /\[[^\]]+\]/g,             // Square brackets: [placeholder]
+        ];
+
+        for (const pattern of patterns) {
+            let match;
+            // Reset lastIndex for global regex
+            pattern.lastIndex = 0;
+            while ((match = pattern.exec(text)) !== null) {
+                const start = match.index;
+                const end = start + match[0].length;
+
+                // Check if cursor is within this match
+                if (cursorPos >= start && cursorPos <= end) {
+                    e.preventDefault();
+                    // Small delay to override browser's default word selection
+                    setTimeout(() => {
+                        els.textArea.setSelectionRange(start, end);
+                        els.textArea.focus();
+                    }, 0);
+                    return;
+                }
+            }
+        }
+    });
+
     // Markdown Preview Logic
     const togglePreviewBtn = document.getElementById('toggle-preview-btn');
     const previewDiv = document.getElementById('markdown-preview');
@@ -625,6 +662,44 @@ function setupEventListeners() {
         els.textArea.focus();
     }
 
+    // Helper: Highlight placeholder patterns in HTML (for preview)
+    function highlightPlaceholders(html) {
+        // Match [placeholder text] patterns that aren't inside code tags
+        // We process text nodes only to avoid breaking HTML structure
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        function processTextNode(node) {
+            const text = node.textContent;
+            // Pattern: [text inside brackets] or {{mustache}}
+            const pattern = /(\[[^\]]+\]|\{\{[^}]+\}\})/g;
+            if (pattern.test(text)) {
+                const span = document.createElement('span');
+                span.innerHTML = text.replace(pattern, '<span class="placeholder">$1</span>');
+                node.parentNode.replaceChild(span, node);
+            }
+        }
+
+        function walkNodes(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                // Skip if parent is already code or placeholder
+                const parent = node.parentNode;
+                if (parent && !['CODE', 'PRE', 'SPAN'].includes(parent.tagName)) {
+                    processTextNode(node);
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // Skip code blocks
+                if (node.tagName !== 'CODE' && node.tagName !== 'PRE') {
+                    // Process children (make copy since we're modifying)
+                    Array.from(node.childNodes).forEach(walkNodes);
+                }
+            }
+        }
+
+        walkNodes(temp);
+        return temp.innerHTML;
+    }
+
     // Helper: Show Preview
     function showPreview(content) {
         if (!previewDiv || !els.textArea) return;
@@ -639,7 +714,10 @@ function setupEventListeners() {
 
         if (window.marked) {
             try {
-                previewDiv.innerHTML = window.marked.parse(text);
+                let html = window.marked.parse(text);
+                // Highlight [placeholder] and {{mustache}} patterns
+                html = highlightPlaceholders(html);
+                previewDiv.innerHTML = html;
             } catch (err) {
                 console.error('Markdown parse error:', err);
                 previewDiv.textContent = text; // Fallback
@@ -1173,6 +1251,38 @@ function showEditor() {
     els.textArea.focus();
 }
 
+// Helper: Highlight placeholder patterns in HTML (for preview) - Global
+function highlightPlaceholdersGlobal(html) {
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+
+    function processTextNode(node) {
+        const text = node.textContent;
+        const pattern = /(\[[^\]]+\]|\{\{[^}]+\}\})/g;
+        if (pattern.test(text)) {
+            const span = document.createElement('span');
+            span.innerHTML = text.replace(pattern, '<span class="placeholder">$1</span>');
+            node.parentNode.replaceChild(span, node);
+        }
+    }
+
+    function walkNodes(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            const parent = node.parentNode;
+            if (parent && !['CODE', 'PRE', 'SPAN'].includes(parent.tagName)) {
+                processTextNode(node);
+            }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.tagName !== 'CODE' && node.tagName !== 'PRE') {
+                Array.from(node.childNodes).forEach(walkNodes);
+            }
+        }
+    }
+
+    walkNodes(temp);
+    return temp.innerHTML;
+}
+
 // Helper: Show Preview (Global)
 function showPreview(content) {
     if (!els.previewDiv || !els.textArea) return;
@@ -1185,7 +1295,9 @@ function showPreview(content) {
 
     if (window.marked) {
         try {
-            els.previewDiv.innerHTML = window.marked.parse(text);
+            let html = window.marked.parse(text);
+            html = highlightPlaceholdersGlobal(html);
+            els.previewDiv.innerHTML = html;
         } catch (err) {
             console.error('Markdown parse error:', err);
             els.previewDiv.textContent = text;
