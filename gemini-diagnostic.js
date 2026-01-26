@@ -108,12 +108,14 @@ async function runPromptTest() {
         if (window.ai && window.ai.languageModel) {
             session = await window.ai.languageModel.create({
                 expectedContext: 'en',
-                outputLanguage: 'en'
+                outputLanguage: 'en',
+                expectedOutputLanguage: 'en'
             });
         } else if (window.LanguageModel) {
             session = await window.LanguageModel.create({
                 expectedContext: 'en',
-                outputLanguage: 'en'
+                outputLanguage: 'en',
+                expectedOutputLanguage: 'en'
             });
         }
 
