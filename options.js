@@ -421,6 +421,7 @@ function setupEventListeners() {
         // Sort option click
         els.sortDropdown.querySelectorAll('.sort-option').forEach(option => {
             option.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent bubbling to avoid unintended side effects
                 // Use currentTarget to ensure we get the element the listener is on
                 const sortValue = e.currentTarget.dataset.value;
                 if (!sortValue) {
