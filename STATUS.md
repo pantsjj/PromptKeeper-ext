@@ -2,7 +2,7 @@
 
 ## 🚀 Project Status: v2.2.0 (Release Candidate)
 
-**Date:** 2026-01-25
+**Date:** 2026-01-26
 **Current Version:** 2.2.0
 
 ### ✨ New Features (v2.2)
@@ -13,9 +13,14 @@
 - **Keyboard Shortcut Settings**: Easy access to configure side panel hotkey.
 - **Custom Modal System**: Eliminated flickering dialogs in Chrome Side Panel.
 
+### 🐛 Bug Fixes (v2.2)
+- **Sort Dropdown**: Fixed prompts disappearing when cycling through sort options.
+- **Prompt Coach Version Selection**: Score now updates correctly when selecting historical revisions.
+
 ### 🧪 Test Coverage (v2.2)
-- **E2E Tests**: 81 passed, 1 skipped
-- **New Test Suite**: `theme_settings.spec.js` (9 tests)
+- **E2E Tests**: 89+ passed, 1 skipped
+- **Unit Tests**: 29/29 passed (5 suites)
+- **New Test Suites**: `theme_settings.spec.js`, `bugfix_sorting_and_coach.spec.js`
 - **Updated Tests**: Modal dialogs, workspace lifecycle, AI streaming
 
 ---

@@ -19,10 +19,12 @@ All notable changes to the **PromptKeeper** extension will be documented in this
 - **Dark Mode**: Fixed context menu visibility, Cancel/Stop button text, and sidebar item colors.
 - **Light Mode**: Fixed faded text in sidebar items when Light theme is forced.
 - **Settings Scroll**: Fixed right sidebar scrolling so all settings are accessible.
+- **Sort Dropdown**: Fixed prompts disappearing when cycling through sort options.
+- **Prompt Coach Version Selection**: Score now updates correctly when selecting historical revisions.
 
 ### 🧪 Technical
 
-- **E2E Tests**: 81 tests passing. Added `theme_settings.spec.js` (9 tests), updated modal and workspace lifecycle tests.
+- **E2E Tests**: 89+ tests passing. Added `theme_settings.spec.js`, `bugfix_sorting_and_coach.spec.js`, updated modal and workspace lifecycle tests.
 - **Prompt Coach Documentation**: Added comprehensive guide at `how_to.html#prompt-coach`.
 
 ---
