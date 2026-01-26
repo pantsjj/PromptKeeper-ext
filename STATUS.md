@@ -1,6 +1,26 @@
 # PromptKeeper Extension Status
 
-## 🚀 Project Status: v2.1.1 (Release Candidate)
+## 🚀 Project Status: v2.2.0 (Release Candidate)
+
+**Date:** 2026-01-25
+**Current Version:** 2.2.0
+
+### ✨ New Features (v2.2)
+
+- **Prompt Coach**: Real-time AI-powered prompt quality scoring (0-100) with visual hashtag attribute tags. Guides users toward better prompts as they type.
+- **Prompt Sorting**: Sort by Name (A-Z/Z-A), Newest/Oldest First, or Recently Modified. Persistent preference.
+- **Theme Toggle**: Light / Dark / Auto theme selector synced across Side Panel and Options page.
+- **Keyboard Shortcut Settings**: Easy access to configure side panel hotkey.
+- **Custom Modal System**: Eliminated flickering dialogs in Chrome Side Panel.
+
+### 🧪 Test Coverage (v2.2)
+- **E2E Tests**: 81 passed, 1 skipped
+- **New Test Suite**: `theme_settings.spec.js` (9 tests)
+- **Updated Tests**: Modal dialogs, workspace lifecycle, AI streaming
+
+---
+
+## 🚀 Project Status: v2.1.1 (Released)
 
 **Date:** 2025-12-30
 **Current Version:** 2.1.1
@@ -100,18 +120,24 @@ For a detailed breakdown, see `docs/test-strategy.md`.
 *   **UI Polish**: v2.1 brings a refined UI (Apple‑style theming, collapsible sidebars, drag‑and‑drop, context menus) and **Rich Markdown Support**, but lacks inline diff view or analytics dashboards common in heavier SaaS tools.
 
 ### Peer Comparison
-| Feature | PromptKeeper v2.1 | Market Standard (e.g., AIPRM, PromptGenius) |
+| Feature | PromptKeeper v2.2 | Market Standard (e.g., AIPRM, PromptGenius) |
 | :--- | :--- | :--- |
 | **Storage** | Local (Chrome Storage) + optional Google Drive backup | Cloud / Hosted Sync |
 | **AI** | **Native (Gemini Nano)**, on‑device | External API Keys (OpenAI/Anthropic) |
+| **Prompt Coach** | **Yes (real-time scoring + attribute tags)** | No |
 | **Versioning**| **Yes (per‑prompt history + restore)** | Often Premium Feature |
+| **Sorting** | **Yes (Name, Date, Modified)** | Basic or Premium |
+| **Theme Control** | **Yes (Light/Dark/Auto)** | Limited |
 | **Templates** | No first‑class variables UI | Yes (Variables, Forms) |
 | **Workspaces** | Yes (per‑project grouping) | Folders/Tags/Collections |
 | **Community** | No | Public Libraries / Sharing |
 
 ### Verdict
-PromptKeeper v2.1 is **production‑ready for individual power users** who value privacy, local‑first storage, and on‑device AI, and who do not need multi‑user collaboration yet.  
-We are competitive on **privacy, cost, and core workflow** (workspaces, versioning, sidepanel + IDE), but intentionally lean on advanced SaaS features like templating UIs, team sharing, and analytics.  
+PromptKeeper v2.2 is **production‑ready for individual power users** who value privacy, local‑first storage, and on‑device AI.
+
+**Unique Differentiator**: Prompt Coach provides real-time prompt quality scoring with visual attribute tags—**no competitor has this feature**. It teaches prompt engineering best practices as users write.
+
+We are competitive on **privacy, cost, and core workflow** (workspaces, versioning, sorting, sidepanel + IDE), but intentionally lean on advanced SaaS features like templating UIs, team sharing, and analytics.
 Next maturity steps should focus on: (1) richer organization (tags/nesting), (2) ergonomic templating, and (3) optional sharing/export flows that still respect the privacy‑first positioning.
 
 ### Future Collaboration Direction (Post‑v2)
