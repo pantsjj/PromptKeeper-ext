@@ -38,15 +38,12 @@ local-artifacts/
 key.pem
 pubkey.txt
 
-# Private docs (not for public repo)
-docs/PromptKeeper-GDrive-Auth.md
-docs/OAUTH-SETUP-CRITICAL.md
-docs/google-drive-implementation.md
-docs/marketing-image-prompts.md
-test-results/.last-run.json
+# not for public repo
+docs/*
+test-results/*
 
 node_modules
 prompt-keeper-test-local.key-pem
 claude.md
-.claude/skills/ai-validation.md
-.claude/skills/UI-UX-QA-SKILL-README.md
+.claude/*
+ChromeStore/*
