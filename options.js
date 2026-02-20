@@ -1677,7 +1677,7 @@ async function handleRefine(type, sourceBtn) {
 
     try {
         if (btn) {
-            btn.dataset.pkAiCancel = "true";
+            btn.dataset.pkAiCancel = "1";
             btn.textContent = "Stop";
             btn.classList.add('ai-busy');
             document.body.style.cursor = 'wait';
