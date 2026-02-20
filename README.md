@@ -99,30 +99,33 @@ Here's how PromptKeeper utilizes the [Chrome Prompt API](https://developer.chrom
 This C4 Container diagram illustrates the application boundary and local hardware optimizations:
 
 ```mermaid
-C4Container
-    title Component Diagram for PromptKeeper (Local AI)
+graph TD
+    classDef person fill:#08427b,stroke:#052e56,color:#ffffff
+    classDef system fill:#1168bd,stroke:#0b4884,color:#ffffff
+    classDef container fill:#438dd5,stroke:#2e6295,color:#ffffff
+    classDef external fill:#999999,stroke:#666666,color:#ffffff
 
-    Person(user, "Prompt Engineer", "A user building and testing AI prompts")
-    
-    System_Boundary(chrome_browser, "Google Chrome Browser") {
-        Container(side_panel, "PromptKeeper UI", "HTML/JS", "IDE, Workspaces, and Markdown Editor")
-        Container(background_worker, "Service Worker", "JS", "Manages state, sync, and orchestration")
-        Container(ai_shim, "AI Bridge / Shim", "JS", "Handles streaming, cancellation, and CSP compliance")
-        Container(chrome_storage, "Chrome Storage", "Local Data", "Persists snippets and version history")
-        Container(gemini_nano, "Built-in AI (Gemini Nano)", "On-Device Model", "Executes all semantic refinement locally")
-    }
-    
-    System_Ext(google_drive, "Google Drive (AppData)", "Optional cloud backup syncing")
-    System_Ext(target_website, "Target AI Platform", "ChatGPT, Claude, etc.")
+    User(("Prompt Engineer\n(User)")):::person
 
-    Rel(user, side_panel, "Writes & manages prompts")
-    Rel(side_panel, background_worker, "Requests AI optimization / Syncing")
-    Rel(background_worker, ai_shim, "Proxies AI context")
-    Rel(ai_shim, gemini_nano, "Invokes window.ai APIs (Prompt API)")
-    Rel(gemini_nano, ai_shim, "Returns semantic streams")
-    Rel(background_worker, chrome_storage, "Reads/Writes state")
-    Rel(background_worker, google_drive, "Backs up local storage safely")
-    Rel(user, target_website, "Pastes polished prompt from Side Panel")
+    subgraph Chrome ["Google Chrome Browser"]
+        UI["PromptKeeper UI<br/>(HTML/JS)"]:::container
+        Worker["Service Worker<br/>(JS)"]:::container
+        Shim["AI Bridge / Shim<br/>(JS)"]:::container
+        Storage[("Chrome Storage<br/>(Local Data)")]:::container
+        Nano["Gemini Nano<br/>(On-Device Model)"]:::container
+    end
+
+    Drive["Google Drive<br/>(Optional Sync)"]:::external
+    Platform["Target AI Platform<br/>(ChatGPT, Claude, etc.)"]:::external
+
+    User -->|Writes & manages| UI
+    UI -->|Requests AI / Sync| Worker
+    Worker -->|Proxies context| Shim
+    Shim -->|Invokes window.ai| Nano
+    Nano -->|Returns streams| Shim
+    Worker -->|Reads/Writes state| Storage
+    Worker -->|Backups safely| Drive
+    User -->|Pastes polished prompt| Platform
 ```
 
 ### User Journey Flow
