@@ -50,11 +50,19 @@ While AI is running, buttons will switch to **Cancel**, and on supported builds 
 
 ## 📖 How It Works
 
-### 🎥 v2.1 Demo
+### 🎥 v2.2 Demo
 
-Watch the v2.1 walkthrough (Local AI streaming, cancel button, improved layout, and full Google Drive backup):  
-[![PromptKeeper v2.1 Walkthrough](https://img.youtube.com/vi/bictdOsBC30/0.jpg)](https://www.youtube.com/watch?v=bictdOsBC30)  
-[Watch: https://youtu.be/bictdOsBC30](https://youtu.be/bictdOsBC30)
+PromptKeeper v2.2 brings the intelligence of **Chrome's built-in Gemini Nano** to your browser, featuring real-time **Prompt Coaching**, **Dark Mode**, and **Smart Sorting**—running completely locally and privately.
+
+[![PromptKeeper v2.2 Walkthrough](https://img.youtube.com/vi/istJeTS1UOs/maxresdefault.jpg)](https://www.youtube.com/watch?v=istJeTS1UOs)  
+[Watch the Full Demo on YouTube (v2.2)](https://youtu.be/istJeTS1UOs)
+
+### 🤖 Built-In Gemini Nano Support
+
+Enjoy absolute privacy and zero latency. With Chrome's local AI, all optimizations—like identifying prompt weaknesses or auto-correcting context—are processed on your device. Here is a look at the seamless side panel integration:
+
+![PromptKeeper Local Gemini Integration](images/gemini_full_sized-resized.png)
+
 
 ### Full-Screen IDE
 Click **Manage Prompts** in the popup (or right-click → Options):
