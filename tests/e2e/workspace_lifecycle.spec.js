@@ -34,19 +34,27 @@ test.describe('Workspace Lifecycle & Smart Deletion', () => {
         await expect(page.locator('.nav-item-prompt:has-text("Budget Prompt")')).toBeVisible();
 
         // 3. Delete Workspace (Right-click context menu)
-        // Handle confirm dialog
-        page.on('dialog', async dialog => {
-            expect(dialog.message()).toContain('Prompts will NOT be deleted');
-            await dialog.accept();
-        });
-
         await wsItem.click({ button: 'right' });
         const deleteOption = page.locator('#ctx-delete-workspace');
         await expect(deleteOption).toBeVisible();
         await deleteOption.click();
 
+        // Handle custom modal confirmation (replaced native dialog)
+        const modalOverlay = page.locator('#pk-modal-overlay');
+        await expect(modalOverlay).toBeVisible({ timeout: 3000 });
+
+        // Verify modal message mentions prompts won't be deleted
+        const modalMessage = page.locator('#pk-modal-message');
+        await expect(modalMessage).toContainText('Prompts will NOT be deleted');
+
+        // Click confirm to delete
+        await page.locator('#pk-modal-confirm').click();
+
+        // Wait for modal to close
+        await expect(modalOverlay).toHaveClass(/hidden/, { timeout: 3000 });
+
         // Verify workspace is gone
-        await expect(wsItem).not.toBeVisible();
+        await expect(wsItem).not.toBeVisible({ timeout: 5000 });
 
         // 4. Verify Prompt is ORPHANED (Visible in All Prompts)
         const allPrompts = page.locator('.nav-item[data-id="all"]');

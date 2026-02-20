@@ -18,14 +18,14 @@
 
             if (typeof window.LanguageModel.availability === 'function') {
                 const orig = window.LanguageModel.availability.bind(window.LanguageModel);
-                window.LanguageModel.availability = (opts) => {
-                    return orig(opts);
+                window.LanguageModel.availability = (opts = {}) => {
+                    return orig({ ...defaultLangOpts, ...opts });
                 };
             }
             if (typeof window.LanguageModel.capabilities === 'function') {
                 const orig = window.LanguageModel.capabilities.bind(window.LanguageModel);
-                window.LanguageModel.capabilities = (opts) => {
-                    return orig(opts);
+                window.LanguageModel.capabilities = (opts = {}) => {
+                    return orig({ ...defaultLangOpts, ...opts });
                 };
             }
             if (typeof window.LanguageModel.create === 'function') {

@@ -34,14 +34,40 @@ async function setupAIBridge() {
 }
 
 // Since offscreen docs don't have tab IDs like tabs, we adjust message passing 
+// Enable Side Panel to open on action click
+async function enableSidePanelOnClick() {
+  if (chrome.sidePanel) {
+    try {
+      await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+      console.log('[Background] Side panel opens on action click enabled');
+    } catch (err) {
+      console.log('[Background] SidePanel behavior error (ignorable):', err);
+    }
+  }
+}
+
 // Initial setup
-chrome.runtime.onStartup.addListener(setupAIBridge);
+chrome.runtime.onStartup.addListener(() => {
+  setupAIBridge();
+  enableSidePanelOnClick();
+});
+
 chrome.runtime.onInstalled.addListener(() => {
   setupAIBridge();
-  if (chrome.sidePanel) {
-    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((err) => {
-      console.log("SidePanel behavior error (ignorable):", err);
-    });
+  enableSidePanelOnClick();
+});
+
+// Also ensure side panel is enabled immediately when service worker starts
+enableSidePanelOnClick();
+
+// Handle keyboard shortcut command
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === 'open-sidepanel') {
+    // Get the current tab to open side panel
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab && chrome.sidePanel) {
+      chrome.sidePanel.open({ tabId: tab.id });
+    }
   }
 });
 

@@ -2,6 +2,39 @@
 
 All notable changes to the **PromptKeeper** extension will be documented in this file.
 
+## [2.2.0] - 2026-01-25
+
+### ✨ New Features
+
+- **Prompt Coach**: Real-time AI-powered prompt quality scoring (0-100) with visual hashtag attribute tags (`#persona`, `#context`, `#templated`, `#specific`, `#structured`). Guides users toward better prompts as they type. Powered by Gemini Nano.
+- **Prompt Sorting**: Sort prompts by Name (A-Z/Z-A), Newest First, Oldest First, or Recently Modified. Preference persists across sessions.
+- **Theme Toggle**: Choose Light, Dark, or Auto (system) theme. Syncs consistently between Side Panel and Options page.
+- **Keyboard Shortcut Settings**: Quick link to `chrome://extensions/shortcuts` for configuring the side panel hotkey (default: `Ctrl+Shift+P` / `⌘+Shift+P`).
+- **Placeholder UX**: Smart placeholder handling for prompt templates:
+  - **Visual Highlighting**: Placeholders (`[placeholder]`, `{{mustache}}`) are highlighted in blue/bold in preview mode for easy identification.
+  - **Click-to-Select**: Click any placeholder in preview mode to switch to edit mode with the placeholder auto-selected, ready to type.
+  - **Double-Click Selection**: Double-click in edit mode to select entire placeholder patterns including backtick-wrapped versions (`` `[text]` ``).
+
+### 🐛 Bug Fixes
+
+- **Modal Dialogs**: Replaced native `confirm()`/`alert()` with custom modal system to eliminate flickering in Chrome Side Panel.
+- **AI Concurrency**: Fixed data loss when switching prompts during AI streaming. Streams are now prompt-aware.
+- **"No output language" Warning**: Eliminated console warning on first AI call.
+- **Dark Mode**: Fixed context menu visibility, Cancel/Stop button text, and sidebar item colors.
+- **Light Mode**: Fixed faded text in sidebar items when Light theme is forced.
+- **Settings Scroll**: Fixed right sidebar scrolling so all settings are accessible.
+- **Sort Dropdown**: Fixed prompts disappearing when cycling through sort options.
+- **Prompt Coach Version Selection**: Score now updates correctly when selecting historical revisions.
+- **Markdown Preview Scroll**: Fixed missing scrollbar in preview mode for long prompts.
+
+### 🧪 Technical
+
+- **E2E Tests**: 90 tests (88 passed, 1 skipped, 1 flaky). Added `theme_settings.spec.js`, `bugfix_sorting_and_coach.spec.js`, updated modal and workspace lifecycle tests.
+- **Unit Tests**: 29/29 passing across 5 test suites.
+- **Prompt Coach Documentation**: Added comprehensive guide at `how_to.html#prompt-coach`.
+
+---
+
 ## [2.1.1] - 2025-12-29
 
 ### ✨ Improvements
