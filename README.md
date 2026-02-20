@@ -79,6 +79,73 @@ Click the extension icon for quick access:
 
 ---
 
+## 🏗️ Architecture & How It's Built
+
+PromptKeeper is designed around Chrome's cutting-edge **Built-in AI (Gemini Nano)**. By moving AI execution directly to the client side, we eliminate server round-trips, ensuring zero latency, offline capability, and total data privacy.
+
+### Benefits of Chrome's Built-in AI Integration
+Here's how PromptKeeper utilizes the [Chrome Prompt API](https://developer.chrome.com/docs/ai/built-in) to deliver a superior developer experience:
+- **Total Privacy (End-to-End Local Processing):** Your prompts, which often contain sensitive API keys or proprietary business logic, never leave your device.
+- **Snappy User Experience:** Bypassing standard cloud inference delays lets our **Prompt Coach** score your inputs and suggest improvements in real-time as you type.
+- **Hardware Acceleration:** Chrome's AI runtime dynamically optimizes inference using your machine's GPU/NPU for peak efficiency.
+
+**Features Fully Powered by Gemini Nano in v2.2.0:**
+* **Prompt Coach:** Real-time semantic analysis to score prompt strength.
+* **Magic Enhance:** Fills in missing context and expands details.
+* **Formalize & Clarify:** Rewrites prompts for a cleaner, professional tone.
+* **Shorten:** Condenses long-winded logic into punchy instructions without losing meaning.
+
+### C4 Component Diagram
+This C4 Container diagram illustrates the application boundary and local hardware optimizations:
+
+```mermaid
+C4Container
+    title Component Diagram for PromptKeeper (Local AI)
+
+    Person(user, "Prompt Engineer", "A user building and testing AI prompts")
+    
+    System_Boundary(chrome_browser, "Google Chrome Browser") {
+        Container(side_panel, "PromptKeeper UI", "HTML/JS", "IDE, Workspaces, and Markdown Editor")
+        Container(background_worker, "Service Worker", "JS", "Manages state, sync, and orchestration")
+        Container(ai_shim, "AI Bridge / Shim", "JS", "Handles streaming, cancellation, and CSP compliance")
+        Container(chrome_storage, "Chrome Storage", "Local Data", "Persists snippets and version history")
+        Container(gemini_nano, "Built-in AI (Gemini Nano)", "On-Device Model", "Executes all semantic refinement locally")
+    }
+    
+    System_Ext(google_drive, "Google Drive (AppData)", "Optional cloud backup syncing")
+    System_Ext(target_website, "Target AI Platform", "ChatGPT, Claude, etc.")
+
+    Rel(user, side_panel, "Writes & manages prompts")
+    Rel(side_panel, background_worker, "Requests AI optimization / Syncing")
+    Rel(background_worker, ai_shim, "Proxies AI context")
+    Rel(ai_shim, gemini_nano, "Invokes window.ai APIs (Prompt API)")
+    Rel(gemini_nano, ai_shim, "Returns semantic streams")
+    Rel(background_worker, chrome_storage, "Reads/Writes state")
+    Rel(background_worker, google_drive, "Backs up local storage safely")
+    Rel(user, target_website, "Pastes polished prompt from Side Panel")
+```
+
+### User Journey Flow
+```text
+[ User ] -> Opens Side Panel on ChatGPT/Claude
+   |
+   +--> Types rough prompt: "write a python script to parse logs"
+   |
+   +--> [ PromptKeeper Editor ]
+          |-- Real-time trigger -> [ Prompt Coach (Gemini Nano) ]
+          |-- Evaluates Constraints, Persona, Clarity
+          |<- Returns Score: 45/100, Needs "#persona"
+   |
+   +--> User clicks "Magic Enhance"
+          |-- Sends context -> [ AI Bridge / Shim ] -> [ Gemini Nano ]
+          |-- Streams output -> "Act as a Senior Python Developer. Write a robust script..."
+          |-- Saves new revision to [ Chrome Storage ]
+   |
+   +--> User clicks "Copy" or "Paste to Page" -> Injects straight into target website
+```
+
+---
+
 ## 🔒 Privacy & Security
 
 | | |
