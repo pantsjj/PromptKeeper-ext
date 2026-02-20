@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Coach Guide - PromptKeeper</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f7;
+            --card-bg: #ffffff;
+            --text-color: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --border-color: #d2d2d7;
+            --primary-color: #0071e3;
+            --success-color: #34c759;
+            --warning-color: #ff9f0a;
+            --error-color: #ff3b30;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --card-bg: #2c2c2e;
+                --text-color: #f5f5f7;
+                --text-secondary: #a0a0a5;
+                --border-color: #424245;
+                --primary-color: #0a84ff;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h1 .badge {
+            background: linear-gradient(135deg, var(--primary-color), #5856d6);
+            color: white;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-color);
+            border-radius: 8px;
+        }
+
+        .score-item .points {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
+            min-width: 50px;
+        }
+
+        .score-item .label {
+            font-size: 14px;
+        }
+
+        .tag-demo {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .tag-positive {
+            background: rgba(52, 199, 89, 0.15);
+            color: #34c759;
+            border: 1px solid rgba(52, 199, 89, 0.3);
+        }
+
+        .tag-negative {
+            background: rgba(255, 59, 48, 0.15);
+            color: #ff3b30;
+            border: 1px solid rgba(255, 59, 48, 0.3);
+        }
+
+        .tag-neutral {
+            background: rgba(255, 159, 10, 0.15);
+            color: #ff9f0a;
+            border: 1px solid rgba(255, 159, 10, 0.3);
+        }
+
+        .source-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .source-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .source-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .source-logo.openai {
+            background: #10a37f;
+        }
+
+        .source-logo.google {
+            background: linear-gradient(135deg, #4285f4, #34a853);
+        }
+
+        .source-logo.anthropic {
+            background: #d4a27f;
+        }
+
+        .source-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .source-info p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .example-box {
+            background: var(--bg-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: "SF Mono", "Menlo", monospace;
+            font-size: 13px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .example-box.good {
+            border-left-color: var(--success-color);
+        }
+
+        .example-box.bad {
+            border-left-color: var(--error-color);
+        }
+
+        .example-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .example-label.good {
+            color: var(--success-color);
+        }
+
+        .example-label.bad {
+            color: var(--error-color);
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: var(--bg-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "SF Mono", "Menlo", monospace;
+            font-size: 13px;
+        }
+
+        .footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>
+        Prompt Coach
+        <span class="badge">Powered by Gemini Nano</span>
+    </h1>
+    <p class="subtitle">Learn how PromptKeeper evaluates your prompts and discover best practices from leading AI providers.</p>
+
+    <div class="card">
+        <h2 style="margin-top:0; border:none; padding:0;">How Scoring Works</h2>
+        <p>Prompt Coach analyzes your prompt in real-time and provides a score out of 100 based on proven prompt engineering best practices. The score is calculated across four key dimensions:</p>
+
+        <div class="score-breakdown">
+            <div class="score-item">
+                <span class="points">25</span>
+                <span class="label"><strong>Length</strong><br>Optimal 20-300 words</span>
+            </div>
+            <div class="score-item">
+                <span class="points">25</span>
+                <span class="label"><strong>Structure</strong><br>Formatting & templates</span>
+            </div>
+            <div class="score-item">
+                <span class="points">25</span>
+                <span class="label"><strong>Context</strong><br>Background & specificity</span>
+            </div>
+            <div class="score-item">
+                <span class="points">25</span>
+                <span class="label"><strong>Instructions</strong><br>Role, format, constraints</span>
+            </div>
+        </div>
+    </div>
+
+    <h2>Hashtag Attributes Explained</h2>
+
+    <h3>Positive Attributes (Green)</h3>
+    <p>These indicate your prompt follows best practices:</p>
+    <div>
+        <span class="tag-demo tag-positive">#persona</span>
+        <span class="tag-demo tag-positive">#context</span>
+        <span class="tag-demo tag-positive">#format</span>
+        <span class="tag-demo tag-positive">#examples</span>
+        <span class="tag-demo tag-positive">#constraints</span>
+        <span class="tag-demo tag-positive">#specific</span>
+        <span class="tag-demo tag-positive">#structured</span>
+        <span class="tag-demo tag-positive">#templated</span>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <ul style="margin:0;">
+            <li><strong>#persona</strong> - Defines a role (e.g., "You are a senior developer...")</li>
+            <li><strong>#context</strong> - Provides background information or scenario</li>
+            <li><strong>#format</strong> - Specifies desired output format</li>
+            <li><strong>#examples</strong> - Includes examples for clarity</li>
+            <li><strong>#constraints</strong> - Sets boundaries (must, should, don't)</li>
+            <li><strong>#specific</strong> - Contains specific details or numbers</li>
+            <li><strong>#structured</strong> - Uses markdown formatting (lists, headers)</li>
+            <li><strong>#templated</strong> - Has placeholders like <code>[variable]</code> or <code>{{variable}}</code></li>
+        </ul>
+    </div>
+
+    <h3>Warning Attributes (Yellow/Red)</h3>
+    <p>These suggest areas for improvement:</p>
+    <div>
+        <span class="tag-demo tag-negative">#too-brief</span>
+        <span class="tag-demo tag-neutral">#verbose</span>
+        <span class="tag-demo tag-negative">#needs-structure</span>
+        <span class="tag-demo tag-neutral">#vague</span>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+        <ul style="margin:0;">
+            <li><strong>#too-brief</strong> - Prompt is under 10 words; add more detail</li>
+            <li><strong>#verbose</strong> - Prompt exceeds 500 words; consider simplifying</li>
+            <li><strong>#needs-structure</strong> - Missing persona, context, or format instructions</li>
+            <li><strong>#vague</strong> - Could benefit from specific details or examples</li>
+        </ul>
+    </div>
+
+    <h2>Best Practices Examples</h2>
+
+    <h3>Before & After</h3>
+
+    <div class="example-box bad">
+        <span class="example-label bad">Before (Score: ~15)</span>
+        Write me a blog post about AI.
+    </div>
+
+    <div class="example-box good">
+        <span class="example-label good">After (Score: ~85)</span>
+        You are a technology journalist with expertise in artificial intelligence.<br><br>
+        Write a 500-word blog post about the impact of AI on healthcare. Include:<br>
+        - 3 specific examples of AI applications in hospitals<br>
+        - Statistics on efficiency improvements<br>
+        - A balanced view of benefits and concerns<br><br>
+        Format: Use headers, bullet points, and a compelling introduction.
+    </div>
+
+    <h2>Official Prompt Engineering Guides</h2>
+    <p>These best practices are derived from official documentation by leading AI providers:</p>
+
+    <a href="https://platform.openai.com/docs/guides/prompt-engineering" target="_blank" class="source-card">
+        <div class="source-logo openai">O</div>
+        <div class="source-info">
+            <h4>OpenAI Prompt Engineering Guide</h4>
+            <p>Strategies and tactics for getting better results from large language models. Covers writing clear instructions, providing reference text, and using delimiters.</p>
+        </div>
+    </a>
+
+    <a href="https://ai.google.dev/gemini-api/docs/prompting-strategies" target="_blank" class="source-card">
+        <div class="source-logo google">G</div>
+        <div class="source-info">
+            <h4>Google Gemini Prompting Strategies</h4>
+            <p>Best practices for designing effective prompts for Gemini models. Includes persona assignment, task decomposition, and output formatting techniques.</p>
+        </div>
+    </a>
+
+    <a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank" class="source-card">
+        <div class="source-logo anthropic">A</div>
+        <div class="source-info">
+            <h4>Anthropic Claude Prompt Engineering</h4>
+            <p>Comprehensive guide to prompt engineering for Claude. Covers chain-of-thought prompting, role prompting, and handling complex tasks.</p>
+        </div>
+    </a>
+
+    <h2>The CO-STAR Framework</h2>
+    <p>A proven structure for writing effective prompts:</p>
+
+    <div class="card">
+        <ul style="margin:0;">
+            <li><strong>C - Context:</strong> Background information the AI needs</li>
+            <li><strong>O - Objective:</strong> The specific task you want completed</li>
+            <li><strong>S - Style:</strong> Writing style or tone to use</li>
+            <li><strong>T - Tone:</strong> Emotional quality (formal, casual, enthusiastic)</li>
+            <li><strong>A - Audience:</strong> Who the output is intended for</li>
+            <li><strong>R - Response:</strong> Desired format (list, essay, code, JSON)</li>
+        </ul>
+    </div>
+
+    <h2>Quick Tips</h2>
+    <div class="card">
+        <ul style="margin:0;">
+            <li><strong>Be specific:</strong> "Write 5 bullet points" beats "write some points"</li>
+            <li><strong>Use delimiters:</strong> Triple quotes, XML tags, or markdown to separate sections</li>
+            <li><strong>Specify format:</strong> Tell the AI exactly how you want the output structured</li>
+            <li><strong>Provide examples:</strong> Show the AI what good output looks like</li>
+            <li><strong>Iterate:</strong> Refine your prompt based on results</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>Prompt Coach uses rule-based heuristics inspired by best practices from OpenAI, Google, and Anthropic.<br>
+            For AI-powered enhancements, use the <strong>Magic Optimize</strong> button powered by Gemini Nano.</p>
+        <p><a href="options.html">Back to PromptKeeper</a></p>
+    </div>
+</body>
+
+</html>

@@ -47,3 +47,6 @@ test-results/.last-run.json
 
 node_modules
 prompt-keeper-test-local.key-pem
+claude.md
+.claude/skills/ai-validation.md
+.claude/skills/UI-UX-QA-SKILL-README.md

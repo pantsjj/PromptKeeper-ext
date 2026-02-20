@@ -33,8 +33,8 @@ test.describe('AI Streaming + Cancel', () => {
     const magicBtn = page.locator('.refine-btn[data-type="magic_enhance"]');
     await magicBtn.click();
 
-    // Button should flip to Cancel quickly
-    await expect(magicBtn).toHaveText(/Cancel/i);
+    // Button should flip to Stop quickly (indicates AI is running)
+    await expect(magicBtn).toHaveText(/Stop/i);
 
     // Cancel while streaming
     await magicBtn.click();
